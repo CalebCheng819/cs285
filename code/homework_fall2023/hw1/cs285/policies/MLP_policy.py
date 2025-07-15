@@ -94,15 +94,15 @@ class MLPPolicySL(BasePolicy, nn.Module, metaclass=abc.ABCMeta):
         self.training = training
         self.nn_baseline = nn_baseline
 
-        self.mean_net = build_mlp(
+        self.mean_net = build_mlp(#mean_net是一个神经网络，用于输出连续动作的均值,输入和输出的维度分别为ob_dim和ac_dim                                                      
             input_size=self.ob_dim,
             output_size=self.ac_dim,
             n_layers=self.n_layers, size=self.size,
-        )
+        )#同时学习mean和logstd
         self.mean_net.to(ptu.device)
         self.logstd = nn.Parameter(
 
-            torch.zeros(self.ac_dim, dtype=torch.float32, device=ptu.device)
+            torch.zeros(self.ac_dim, dtype=torch.float32, device=ptu.device)#将logstd作为可学习参数
         )
         self.logstd.to(ptu.device)
         self.optimizer = optim.Adam(
@@ -116,7 +116,7 @@ class MLPPolicySL(BasePolicy, nn.Module, metaclass=abc.ABCMeta):
         """
         torch.save(self.state_dict(), filepath)
 
-    def forward(self, observation: torch.FloatTensor) -> Any:
+    def forward(self, observation: torch.FloatTensor) -> Any:#这个是内部调用函数，故为tensor类型
         """
         Defines the forward pass of the network
 
@@ -129,7 +129,28 @@ class MLPPolicySL(BasePolicy, nn.Module, metaclass=abc.ABCMeta):
         # through it. For example, you can return a torch.FloatTensor. You can also
         # return more flexible objects, such as a
         # `torch.distributions.Distribution` object. It's up to you!
-        raise NotImplementedError
+        observation = observation.to(ptu.device)
+        mean = self.mean_net(observation)#调用mean_net进行前向传播
+        logstd = self.logstd.expand_as(mean)  # logstd is a single value
+        std = torch.exp(logstd)  # convert logstd to std
+        dist = distributions.Normal(mean, std)  # create a normal distribution  
+        action = dist.rsample()  # sample an action from the distribution,使用rsample可以使得梯度可以通过采样传递
+        action = torch.tanh(action)  # apply tanh to the action限制
+        return action, dist
+    
+    @torch.no_grad()
+    def get_action(self, observation:np.ndarray) -> np.ndarray:
+        """
+        Returns an action given an observation
+
+        :param observation: observation(s) to query the policy
+        :return:
+            action: sampled action(s) from the policy
+        """
+        observation = ptu.from_numpy(observation).to(ptu.device)
+        action, _ = self.forward(observation)
+        return ptu.to_numpy(action)
+        
 
     def update(self, observations, actions):
         """
@@ -141,7 +162,19 @@ class MLPPolicySL(BasePolicy, nn.Module, metaclass=abc.ABCMeta):
             dict: 'Training Loss': supervised learning loss
         """
         # TODO: update the policy and return the loss
-        loss = TODO
+        observations = ptu.from_numpy(observations).to(ptu.device)#将observations转换为pytorch张量并移动到ptu.device上
+        actions = ptu.from_numpy(actions).to(ptu.device)
+        self.optimizer.zero_grad()
+        _, dist = self.forward(observations)
+        # Calculate the loss as the negative log likelihood of the actions under the policy 
+        log_probs = dist.log_prob(actions)
+        log_probs = log_probs.sum(dim=-1)  # sum over action dimensions
+        loss = -log_probs.mean()  # mean over batch
+        # Backpropagate the loss
+        loss.backward()
+        self.optimizer.step()
+        # Return a dictionary with the training loss
+        # You can add extra logging information here, but keep this line
         return {
             # You can add extra logging information here, but keep this line
             'Training Loss': ptu.to_numpy(loss),

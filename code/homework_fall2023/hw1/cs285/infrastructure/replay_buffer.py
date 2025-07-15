@@ -59,4 +59,7 @@ class ReplayBuffer(object):
             self.terminals = np.concatenate(
                 [self.terminals, terminals]
             )[-self.max_size:]
-
+    def sample(self, batch_size):
+        """Sample given batch size of observations and actions. """
+        indices = np.random.randint(0, len(self.acs), size=(batch_size,))
+        return self.obs[indices], self.acs[indices]
