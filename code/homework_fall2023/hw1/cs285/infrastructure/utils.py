@@ -108,7 +108,7 @@ def convert_listofrollouts(paths, concat_rew=True):
     if concat_rew:
         rewards = np.concatenate([path["reward"] for path in paths])
     else:
-        rewards = [path["reward"] for path in paths]
+        rewards = [path["reward"] for path in paths]#保留每个reward的列表形式
     next_observations = np.concatenate([path["next_observation"] for path in paths])
     terminals = np.concatenate([path["terminal"] for path in paths])
     return observations, actions, rewards, next_observations, terminals

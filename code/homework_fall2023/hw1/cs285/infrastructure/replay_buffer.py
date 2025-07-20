@@ -50,7 +50,7 @@ class ReplayBuffer(object):
             else:
                 if isinstance(rewards, list):
                     self.rews += rewards
-                else:
+                else:#用于单个追加
                     self.rews.append(rewards)
                 self.rews = self.rews[-self.max_size:]
             self.next_obs = np.concatenate(

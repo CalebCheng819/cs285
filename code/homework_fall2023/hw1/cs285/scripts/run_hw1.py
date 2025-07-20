@@ -22,7 +22,7 @@ from cs285.policies.loaded_gaussian_policy import LoadedGaussianPolicy
 
 
 # how many rollouts to save as videos to tensorboard
-MAX_NVIDEO = 2
+MAX_NVIDEO = 2#每次迭代最多保存两个视频
 MAX_VIDEO_LEN = 40  # we overwrite this in the code below
 
 MJ_ENV_NAMES = ["Ant-v4", "Walker2d-v4", "HalfCheetah-v4", "Hopper-v4"]
@@ -69,7 +69,7 @@ def run_training_loop(params):
     params['ep_len'] = params['ep_len'] or env.spec.max_episode_steps
     MAX_VIDEO_LEN = params['ep_len']
 
-    assert isinstance(env.action_space, gym.spaces.Box), "Environment must be continuous"
+    assert isinstance(env.action_space, gym.spaces.Box), "Environment must be continuous"#连续动作空间
     # Observation and action sizes
     ob_dim = env.observation_space.shape[0]
     ac_dim = env.action_space.shape[0]

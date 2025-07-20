@@ -22,17 +22,17 @@ class Logger:
         assert(len(image.shape) == 3)  # [C, H, W]
         self._summ_writer.add_image('{}'.format(name), image, step)
 
-    def log_video(self, video_frames, name, step, fps=10):
+    def log_video(self, video_frames, name, step, fps=10):#记录视频
         assert len(video_frames.shape) == 5, "Need [N, T, C, H, W] input tensor for video logging!"
         self._summ_writer.add_video('{}'.format(name), video_frames, step, fps=fps)
 
-    def log_paths_as_videos(self, paths, step, max_videos_to_save=2, fps=10, video_title='video'):
+    def log_paths_as_videos(self, paths, step, max_videos_to_save=2, fps=10, video_title='video'):#从路径中记录视频
 
         # reshape the rollouts
         videos = [np.transpose(p['image_obs'], [0, 3, 1, 2]) for p in paths]
 
         # max rollout length
-        max_videos_to_save = np.min([max_videos_to_save, len(videos)])
+        max_videos_to_save = np.min([max_videos_to_save, len(videos)])#选取最小值，防止冲突
         max_length = videos[0].shape[0]
         for i in range(max_videos_to_save):
             if videos[i].shape[0]>max_length:
