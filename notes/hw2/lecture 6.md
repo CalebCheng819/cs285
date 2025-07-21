@@ -68,7 +68,7 @@ $$
 &\nabla_\theta J(\theta) \approx \frac{1}{N} \sum_{i=1}^N \sum_{t=1}^T \nabla_\theta \log \pi_\theta\left(\mathbf{a}_{i, t} \mid \mathbf{s}_{i, t}\right)(\overbrace{r\left(\mathbf{s}_{i, t}, \mathbf{a}_{i, t}\right)+\gamma \hat{V}_\phi^\pi\left(\mathbf{s}_{i, t+1}\right)-\hat{V}_\phi^\pi\left(\mathbf{s}_{i, t}\right)})
 \end{aligned}
 $$
-那么，对于Monte Carlo来说，有以下option，只用其中两个是正确的
+那么，对于Monte Carlo来说，有以下option，只用其中两个是正确的reward to go
 
 ![](https://cdn.mathpix.com/snip/images/oKjchvubc65zabZnb-SpZS4uOQbmsvQFMlZ3RhxaJs8.original.fullsize.png)
 
