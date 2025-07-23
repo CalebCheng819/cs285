@@ -98,6 +98,8 @@ ImportError: numpy.core.multiarray failed to import
 
 > 在这里插一个为linux安装clash的快捷blog，实测非常好用[clash-for-linux-install: 优雅地部署基于 clash/mihomo 的代理环境](https://gitee.com/tools-repo/clash-for-linux-install)
 
+当然在安装环境依赖的时候，也可以考虑使用清华镜像源`pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple`
+
 ### networks
 
 #### policies.py
@@ -173,3 +175,389 @@ pythonCopyEditdef __call__(self, *input, **kwargs):
 ```
 
 也就是说，**当你调用 `self(obs)` 时，其实内部就是在调用 `self.forward(obs)`**。
+
+#### critics.py
+
+##### forward
+
+ 给定一个 batch 的 observation `obs`，返回网络预测的 $V(s)$ 值。
+
+```python
+    def forward(self, obs: torch.Tensor) -> torch.Tensor:#
+        # TODO: implement the forward pass of the critic network
+        return self.network(obs).squeeze(-1)  # Remove the last dimension
+        # This should return a tensor of shape (batch_size,) where each element corresponds to the
+        # value of the observation in the batch.
+        # If you want to keep the output as a 2D tensor with shape (batch_size, 1), you can remove the .squeeze(-1) part.
+        
+```
+
+1. 注意 `squeeze(-1)` 是把形状 `(batch_size, 1)` 转成 `(batch_size,)`，以匹配后续计算。
+
+##### update
+
+```python
+    def update(self, obs: np.ndarray, q_values: np.ndarray) -> dict:
+        obs = ptu.from_numpy(obs)
+        q_values = ptu.from_numpy(q_values)
+
+        # TODO: update the critic using the observations and q_values
+        self.optimizer.zero_grad()
+        predictions = self(obs)
+        loss = F.mse_loss(predictions, q_values)
+        loss.backward()
+        self.optimizer.step()
+        # The loss is the mean squared error between the predicted values and the target q_values.
+        # The target q_values are the expected returns for the given observations.
+        return {
+            "Baseline Loss": ptu.to_numpy(loss),
+        }
+```
+
+1. loss计算也可以通过`loss = torch.square(self(obs) - q_values).mean()`但更加推荐`F.mse_loss(predictions, q_values)`这个方法
+
+### agents
+
+#### pg_agent
+
+##### _calculate_q_vals
+
+计算动作价值函数，**关键特性**：
+
+- 同时依赖状态 和动作 
+- 包含即时奖励
+
+```python
+    def _calculate_q_vals(self, rewards: Sequence[np.ndarray]) -> Sequence[np.ndarray]:#Q相对于V多包含了一个即使奖励，返回的是一个列表
+        """Monte Carlo estimation of the Q function."""
+
+        if not self.use_reward_to_go:
+            # Case 1: in trajectory-based PG, we ignore the timestep and instead use the discounted return for the entire
+            # trajectory at each point.
+            # In other words: Q(s_t, a_t) = sum_{t'=0}^T gamma^t' r_{t'}
+            # TODO: use the helper function self._discounted_return to calculate the Q-values
+            q_values = [np.array(self._discounted_return(r),dtype=np.float32) for r in rewards]
+        else:
+            # Case 2: in reward-to-go PG, we only use the rewards after timestep t to estimate the Q-value for (s_t, a_t).
+            # In other words: Q(s_t, a_t) = sum_{t'=t}^T gamma^(t'-t) * r_{t'}
+            # TODO: use the helper function self._discounted_reward_to_go to calculate the Q-values
+            q_values = [np.array(self._discounted_reward_to_go(r),dtype=np.float32) for r in rewards]
+        return q_values
+```
+
+1. 额外引入一个_calculate_q_vals便于将**多条轨迹的rewards**拆分后处理
+
+2. 对于`q_values = [np.array(self._discounted_return(r),dtype=np.float32) for r in rewards]`:
+
+   假设你收集了一批 `n` 条 trajectory，每条 trajectory 是一个长度为 `T_i` 的 reward 序列 `r_i`，我们想对每条都计算它的 discounted return
+
+###### _discounted_return
+
+$$
+\text { Return }=\sum_{t^{\prime}=0}^T \gamma^{t^{\prime}} r_{t^{\prime}}
+$$
+
+返回一个具有相同total_return的列表
+
+```python
+    def _discounted_return(self, rewards: Sequence[float]) -> Sequence[float]:
+        """
+        Helper function which takes a list of rewards {r_0, r_1, ..., r_t', ... r_T} and returns
+        a list where each index t contains sum_{t'=0}^T gamma^t' r_{t'}
+
+        Note that all entries of the output list should be the exact same because each sum is from 0 to T (and doesn't
+        involve t)!
+        """
+        total_return = 0.0
+        for t, r in enumerate(rewards):
+            total_return += self.gamma ** t * r
+        return [total_return] * len(rewards)  # Return the same value for each
+        # index, since the return is the same for all timesteps in the trajectory.
+        # This is because the return is calculated from the start of the trajectory to the end,
+        # and does not depend on the specific timestep t.
+```
+
+1. `for t, r in ...`：将每一对 `(index, value)` 解包为 `t`（时间步索引）和 `r`（该时间步的奖励值）。
+
+###### _discounted_reward_to_go
+
+$$
+Q\left(s_t, a_t\right)=\sum_{t^{\prime}=t}^T \gamma^{t^{\prime}-t} \cdot r_{t^{\prime}}
+$$
+
+**计算每一个时间步 `t` 对应的 Reward-to-Go 值**，也就是从当前时间步开始，到轨迹终止为止的累计折扣回报，返回的是一个具有不同值的列表
+
+```python
+    def _discounted_reward_to_go(self, rewards: Sequence[float]) -> Sequence[float]:
+        """
+        Helper function which takes a list of rewards {r_0, r_1, ..., r_t', ... r_T} and returns a list where the entry
+        in each index t' is sum_{t'=t}^T gamma^(t'-t) * r_{t'}.
+        """
+        # batch_size = len(rewards)
+        # q_values = np.zeros(batch_size)
+        # for t in range(batch_size):
+        #     for t_prime in range(t, batch_size):
+        #         q_values[t] += (self.gamma ** (t_prime - t)) * rewards[t_prime]
+        # return q_values
+        returns,current_return = [], 0.0
+        for r in reversed(rewards):
+            current_return = r + self.gamma * current_return
+            returns.append(current_return)
+        returns.reverse()
+        return returns
+        # This function calculates the discounted reward-to-go for each timestep in the trajectory.
+        # It starts from the end of the trajectory and works backwards, accumulating the rewards while applying
+        # the discount factor. The result is a list where each entry corresponds to the total discounted
+        # reward from that timestep to the end of the trajectory.
+```
+
+1. 在原始方式中，回报 $G_t$ 是从当前时间步 $t$ 开始，到episode结束所有奖励的加权和：
+   $$
+   G_t = r_t + \gamma r_{t+1} + \gamma^2 r_{t+2} + \dots + \gamma^{T-t} r_T
+   $$
+   这会导致一个嵌套循环。为了优化，可以使用 **向后累加（reverse accumulation）** 的单循环版本。
+
+##### _estimate_advantage
+
+**策略梯度的目标**是用：
+$$
+\nabla_\theta \log \pi_\theta(a_t | s_t) \cdot A_t
+$$
+其中 $A_t = Q(s_t, a_t) - V(s_t)$
+
+```python
+    def _estimate_advantage(
+        self,
+        obs: np.ndarray,
+        rewards: np.ndarray,
+        q_values: np.ndarray,
+        terminals: np.ndarray,
+    ) -> np.ndarray:
+        """Computes advantages by (possibly) subtracting a value baseline from the estimated Q-values.
+
+        Operates on flat 1D NumPy arrays.
+        """ 
+
+        if self.critic is None:
+            # TODO: if no baseline, then what are the advantages?
+            advantages = q_values
+        else:
+            # TODO: run the critic and use it as a baseline
+            with torch.no_grad():
+                obs_tensor = ptu.from_numpy(obs)
+                values = self.critic(obs_tensor).cpu().numpy()
+            
+            assert values.shape == q_values.shape
+
+            if self.gae_lambda is None:
+                # TODO: if using a baseline, but not GAE, what are the advantages?
+                advantages = q_values - values
+            else:
+                # TODO: implement GAE
+                batch_size = obs.shape[0]
+
+                # HINT: append a dummy T+1 value for simpler recursive calculation,方便递归
+                values = np.append(values, [0])
+                advantages = np.zeros(batch_size + 1)
+                
+                for i in reversed(range(batch_size)):
+                    # TODO: recursively compute advantage estimates starting from timestep T.
+                    # HINT: use terminals to handle edge cases. terminals[i] is 1 if the state is the last in its
+                    # trajectory, and 0 otherwise.
+                    delta = rewards[i] + self.gamma * values[i + 1] * (1 - terminals[i]) - values[i]#在计算value函数时，考虑了gamma和终止状态
+                    advantages[i] = delta + self.gamma * self.gae_lambda * advantages[i + 1] * (1 - terminals[i])#往回递归在外面加一个dummy
+
+                # remove dummy advantage
+                advantages = advantages[:-1]
+
+        # TODO: normalize the advantages to have a mean of zero and a standard deviation of one within the batch
+        if self.normalize_advantages:
+            advantages = (advantages - np.mean(advantages)) / (np.std(advantages) + 1e-8)
+        # This normalization helps stabilize training by ensuring that the advantages have a consistent scale.
+        # It prevents large advantages from disproportionately influencing the policy updates, which can lead to
+        # instability in the learning process.
+
+        return advantages
+```
+
+1. 如果没有 `baseline`（即 critic），那就用 $A_t = Q(s_t, a_t)$
+
+2. 有 baseline，可以减少方差，用 $A_t = Q(s_t, a_t) - V(s_t)$，在计算value的时候，记得`with torch.no_grad():`
+
+3. `terminals` 就是一个布尔列表：
+
+   每一个元素 `terminals[t]` 表示第 `t` 步是否为终止状态（`True` 表示终止，`False` 表示还在进行中）；
+
+   如果你使用如 `OpenAI Gym` 或 `CS285` 框架，`terminals` 通常是由 `env.step()` 的 `done` 字段得到的。
+
+4. **`delta`（TD error）** 是：
+   $$
+   \delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)
+   $$
+   如果 `terminals[i] == 1`（即 episode 结束），那么 $\delta_t = r_t - V(s_t)$。
+
+5. **append dummy 值**为了在循环中方便地处理 $V(s_{t+1})$，防止越界。
+
+6. **归一化 (`normalize_advantages`)**：
+
+   - 这一步是为了提升训练稳定性。
+   - 处理后的 advantage 有零均值和单位标准差，有助于减小梯度爆炸/消失的风险。
+
+##### update
+
+整个函数的流程图
+
+```scss
+采样的多个 trajectory
+   └── obs, actions, rewards, terminals
+        └──➡ _calculate_q_vals(rewards)
+              └── q_values (list)
+        └──➡ flatten 成 batch
+              └── obs, actions, q_values, rewards, terminals
+        └──➡ _estimate_advantage()
+              └── advantages
+        └──➡ actor.update()
+              └── info dict
+        └──(optional) critic.update()
+              └── 更新 info dict
+```
+
+```python
+    def update(
+        self,
+        obs: Sequence[np.ndarray],
+        actions: Sequence[np.ndarray],
+        rewards: Sequence[np.ndarray],
+        terminals: Sequence[np.ndarray],
+    ) -> dict:
+        """The train step for PG involves updating its actor using the given observations/actions and the calculated
+        qvals/advantages that come from the seen rewards.
+
+        Each input is a list of NumPy arrays, where each array corresponds to a single trajectory. The batch size is the
+        total number of samples across all trajectories (i.e. the sum of the lengths of all the arrays).
+        """
+        # obs = np.concatenate(obs, axis=0)  # shape (batch_size, ob_dim)
+        # actions = np.concatenate(actions, axis=0)  # shape (batch_size, ac_dim)
+        
+        # terminals = np.concatenate(terminals, axis=0)  # shape (batch_size,
+        # step 1: calculate Q values of each (s_t, a_t) point, using rewards (r_0, ..., r_t, ..., r_T)
+        q_values: Sequence[np.ndarray] = self._calculate_q_vals(rewards)
+        # q_values should be a list of NumPy arrays, where each array corresponds to a single trajectory.
+        # this line flattens it into a single NumPy array.
+        # q_values = np.concatenate(q_values, axis=0)  # shape (batch_size,)
+        # TODO: flatten the lists of arrays into single arrays, so that the rest of the code can be written in a vectorized
+        # way. obs, actions, rewards, terminals, and q_values should all be arrays with a leading dimension of `batch_size`
+        # beyond this point.
+        obs = self.safe_concatenate("obs", obs)  # shape (batch_size, ob_dim)
+        actions = self.safe_concatenate("actions", actions)  # shape (batch_size, ac_dim)
+        rewards = self.safe_concatenate("rewards", rewards)  # shape (batch_size,)
+        q_values = self.safe_concatenate("q_values", q_values)  # shape (batch_size,)
+        terminals = self.safe_concatenate("terminals", terminals)  # shape (batch_size,) 
+        # step 2: calculate advantages from Q values
+        advantages: np.ndarray = self._estimate_advantage(
+            obs, rewards, q_values, terminals
+        )
+       
+        # step 3: use all datapoints (s_t, a_t, adv_t) to update the PG actor/policy
+        # TODO: update the PG actor/policy network once using the advantages
+        info: dict = self.actor.update(obs, actions, advantages)
+
+        # step 4: if needed, use all datapoints (s_t, a_t, q_t) to update the PG critic/baseline
+        if self.critic is not None:
+            
+            # TODO: perform `self.baseline_gradient_steps` updates to the critic/baseline network
+            for _ in range(self.baseline_gradient_steps):
+                critic_info: dict = self.critic.update(obs, q_values)
+                # critic_info should contain the loss and any other metrics you want to log.
+                # You can use critic_info to log the critic's performance.
+                info.update(critic_info)    
+            # critic_info should contain the loss and any other metrics you want to log.
+            # You can use critic_info to log the critic's performance.
+
+            
+
+        return info
+```
+
+1. 首先计算q值，在计算q值的时候，rewards是一个含有多条轨迹的列表
+
+2. 然后把这些数据“打平”为一个批次（`batch_size = 所有时间步总和`），才能做向量化训练。
+
+3. 因为_estimate_advantage传入的参数是已经被打平的numpy，所以在计算advantage前需要展平
+
+   ```python
+   def _estimate_advantage(
+           self,
+           obs: np.ndarray,
+           rewards: np.ndarray,
+           q_values: np.ndarray,
+           terminals: np.ndarray,
+       ) -> np.ndarray:
+   ```
+
+   
+
+### scripts
+
+#### run_hw2.py
+
+##### run_training_loop
+
+```python
+    # add action noise, if needed
+    if args.action_noise_std > 0:
+        assert not discrete, f"Cannot use --action_noise_std for discrete environment {args.env_name}"
+        env = ActionNoiseWrapper(env, args.seed, args.action_noise_std)
+```
+
+**在连续动作空间的环境中，添加动作噪声（action noise）以增强策略探索能力**。
+
+```python
+    for itr in range(args.n_iter):
+        print(f"\n********** Iteration {itr} ************")
+        # TODO: sample `args.batch_size` transitions using utils.sample_trajectories
+        # make sure to use `max_ep_len`
+        trajs, envsteps_this_batch = utils.sample_trajectories(env,agent.actor,args.batch_size,max_ep_len)  # TODO
+        total_envsteps += envsteps_this_batch
+```
+
+1. 在这里面的sample_trajectories，参数应该是agent.actor和args.batch_size
+
+   - 在 CS285 框架中，一个 `agent` 往往是一个类（比如 `PGAgent`），里面包含了多个模块，例如：
+
+     ```
+     pythonCopyEditclass PGAgent:
+         def __init__(self):
+             self.actor = MLPPolicy(...)
+             self.replay_buffer = ...
+             self.critic = ...
+     ```
+
+     其中，`actor` 是负责给定状态 $s$ 产生动作 $a$ 的策略（policy），是我们真正要在环境中 roll out 的“智能体”。
+
+     所以，`agent.actor` 表示从这个 agent 里 **拿出策略网络（policy）**，用于采样轨迹（trajectory）。
+
+   - `args.batch_size` **在 CS285 的代码框架中，实际上是表示“每个策略更新批次中总共收集多少个时间步（timesteps）”**，而不是传统意义上神经网络中的“样本个数”的 batch size。
+
+```python
+        trajs_dict = {k: [traj[k] for traj in trajs] for k in trajs[0]}
+
+        # TODO: train the agent using the sampled trajectories and the agent's update function
+        train_info: dict = agent.update(
+            obs=trajs_dict["observation"],
+            actions=trajs_dict["action"],
+            rewards=trajs_dict["reward"],
+            terminals=trajs_dict["terminal"],
+        )
+```
+
+1. **外层字典推导式**：`{k: ... for k in trajs[0]}`
+
+   - 遍历第一个 trajectory 的所有键（如 `'observation'`, `'action'`, `'reward'`）
+   - 也就是说：对于每种 key，我们要收集所有轨迹中的对应值
+
+   **内层列表推导式**：`[traj[k] for traj in trajs]`
+
+   - 对于每一条轨迹 `traj`，提取当前 key（例如 `'reward'`）对应的值
+   - 最终生成一个列表：这个 key 在所有 trajectory 中的值的集合
+
