@@ -495,7 +495,9 @@ $$
        ) -> np.ndarray:
    ```
 
-   
+4. 如果使用了基线（baseline），就要训练一个 critic 网络去拟合 `q_values`。
+
+   执行若干次 critic 更新，并将 critic 的日志信息更新到 `info` 中。
 
 ### scripts
 
@@ -561,3 +563,95 @@ $$
    - 对于每一条轨迹 `traj`，提取当前 key（例如 `'reward'`）对应的值
    - 最终生成一个列表：这个 key 在所有 trajectory 中的值的集合
 
+## experiments
+
+### reward to go&&normalize_advantages
+
+```python
+python cs285/scripts/run_hw2.py --env_name CartPole-v0 -n 100 -b 1000 \
+--exp_name cartpole
+python cs285/scripts/run_hw2.py --env_name CartPole-v0 -n 100 -b 1000 \
+-rtg --exp_name cartpole_rtg
+python cs285/scripts/run_hw2.py --env_name CartPole-v0 -n 100 -b 1000 \
+-na --exp_name cartpole_na
+python cs285/scripts/run_hw2.py --env_name CartPole-v0 -n 100 -b 1000 \
+-rtg -na --exp_name cartpole_rtg_na
+python cs285/scripts/run_hw2.py --env_name CartPole-v0 -n 100 -b 4000 \
+--exp_name cartpole_lb
+python cs285/scripts/run_hw2.py --env_name CartPole-v0 -n 100 -b 4000 \
+-rtg --exp_name cartpole_lb_rtg
+python cs285/scripts/run_hw2.py --env_name CartPole-v0 -n 100 -b 4000 \
+-na --exp_name cartpole_lb_na
+python cs285/scripts/run_hw2.py --env_name CartPole-v0 -n 100 -b 4000 \
+-rtg -na --exp_name cartpole_lb_rtg_na
+```
+
+相应文件位置：
+
+![](https://cdn.mathpix.com/snip/images/PpSDEUj_isAedFkqEnljv9s_gRCMY6u0FN3buxb89A0.original.fullsize.png)
+
+小batch_size:
+
+![](https://cdn.mathpix.com/snip/images/HTx9F9b3VrcX2K53MgqJSX8KgVuDG8s5DwUF91BhYeI.original.fullsize.png)
+
+大batch_size
+
+![](https://cdn.mathpix.com/snip/images/6vRcaXODPRhWlpryLzy03aNvCnCrr_gVqVrGZYH2D5c.original.fullsize.png)
+
+### baseline
+
+```python
+# No baseline
+python cs285/scripts/run_hw2.py --env_name HalfCheetah-v4 \
+-n 100 -b 5000 -rtg --discount 0.95 -lr 0.01 \
+--exp_name cheetah
+# Baseline
+python cs285/scripts/run_hw2.py --env_name HalfCheetah-v4 \
+-n 100 -b 5000 -rtg --discount 0.95 -lr 0.01 \
+--use_baseline -blr 0.01 -bgs 5 --exp_name cheetah_baseline
+
+```
+
+文件存储位置
+
+![](https://cdn.mathpix.com/snip/images/nqHNtCrqgaFIYA5sB8GlmI52V_m5WE_OF0CZdWmgeeU.original.fullsize.png)
+
+baseline loss
+
+![](https://cdn.mathpix.com/snip/images/gC-SAxMrzSn1q0gVI5V9xvy0luAEKDWb-GLAcZ7_7CQ.original.fullsize.png)
+
+Eval_AverageReturn
+
+![](https://cdn.mathpix.com/snip/images/Rkn5ZgpvKRqXBR2kdmyQeMp3sfARVNp4iCOcAinXcO0.original.fullsize.png)
+
+#### 更小的blr
+
+```python
+python cs285/scripts/run_hw2.py --env_name HalfCheetah-v4 \
+-n 100 -b 5000 -rtg --discount 0.95 -lr 0.01 \
+--use_baseline -blr 0.005 -bgs 5 --exp_name cheetah_baseline_lower_lr
+```
+
+baseline_loss:
+
+![](https://cdn.mathpix.com/snip/images/10s2CN6MKjy9s4qi-Lh9_vF53KjnG4eHt35gNMhVrD4.original.fullsize.png)
+
+Eval_AverageReturn：
+
+![](https://cdn.mathpix.com/snip/images/onBABcckY6XrfBoQjTh9SdgjhrLkFLP1DFFUvRw_t98.original.fullsize.png)
+
+#### 更小的bgs
+
+```python
+python cs285/scripts/run_hw2.py --env_name HalfCheetah-v4 \
+-n 100 -b 5000 -rtg --discount 0.95 -lr 0.01 \
+--use_baseline -blr 0.01 -bgs 3 --exp_name cheetah_baseline_lower_lr
+```
+
+baseline_loss
+
+![](https://cdn.mathpix.com/snip/images/vgiJMuvGDTIDibktCXc_c01Xs3DdVsppyEcpOwi4pvo.original.fullsize.png)
+
+Eval_AverageReturn
+
+![](https://cdn.mathpix.com/snip/images/3GLQ7ZpzgJxdcWDyicPXURV6eS-CMuuh5aoPgLu90Hw.original.fullsize.png)
