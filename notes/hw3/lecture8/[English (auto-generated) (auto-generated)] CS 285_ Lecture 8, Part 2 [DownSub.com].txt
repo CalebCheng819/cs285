@@ -1,0 +1,373 @@
+okay so at this point we've almost
+developed a practical
+deep q learning algorithm that we could
+actually use but there's another
+component that we need to discuss
+to really get a stable and reliable
+procedure
+so there is another problem that we
+haven't tackled yet
+so so far we dealt with the problem of
+our samples being correlated
+by introducing a replay buffer where we
+store
+all the data that we've collected so far
+and each time we have to take a step on
+the parameters of our q function
+we actually take that step using a batch
+of transitions
+that are sampled iid from our buffer
+but we still have this other problem to
+contend with which is that q
+learning is not gradient descent and in
+particular
+the problem that q learning has is that
+it has a moving target
+so you could think of it as square error
+regression
+except that the regression target itself
+changes all the time
+and it changes out from under us which
+makes it very hard
+for the learning process to ever
+converge
+so we'll deal with the correlation by
+using a replay buffer but this part is
+still a problem
+so what does q learning really have to
+do with regression
+in the full fitted queue iteration
+algorithm that i described before
+step 3 performs what looks a lot like
+supervised learning essentially
+regression onto target values y i
+and in fact in general step three in the
+full fitted q iteration algorithm will
+converge if you run into convergence but
+then your targets will change out from
+under you so maybe you don't want it to
+converge
+essentially trading to convergence on
+the wrong targets isn't necessarily
+a good thing to do which is why in
+practice
+we often use a much smaller number of
+gradient steps as few as one gradient
+step
+and then we have this moving target
+problem where every grading step our
+targets change
+and our gradient is not accounting for
+the change in the targets
+so intuitively what we would like to
+resolve this issue is something that's a
+little bit in between
+where we could have some of the
+stability of
+the full fitted queue iteration
+algorithm where in step three we trained
+a convergence
+but at the same time don't actually
+train the convergence
+so here's how we can do q learning with
+a replay buffer and a target network
+and this is going to look like a kind of
+mix between the online q learning
+algorithm
+and the full batch fitted q-learning
+algorithm
+so we're going to collect our data set
+using some policy
+and we add that policy to our buffer
+this is now step two step one will be
+revealed later
+we're going to then in an inner loop
+sample a batch
+s-i-a-i-s-i prime ri from this buffer
+and then we will make an update on the
+parameters of our q function
+this update looks a lot like the update
+from before with
+replay buffers but i've made one very
+small
+change where now the parameters and the
+max
+are are different parameter vectors so
+it used to be that i would take the max
+over a prime
+of q phi and now it's q phi prime
+where phi prime is some other parameter
+vector
+and then of course after i make k of
+these
+back and forth updates which could be
+just k equals 1
+i go out and collect more data and then
+i have a big
+outer loop where after n steps of data
+collection
+i'm going to actually update phi prime
+and set it to be phi
+so this looks a lot like the fit
+accuration procedure i had before
+because essentially
+i'm making multiple updates with the
+same
+target uh values because if phi prime
+stays the same that the entire target
+value stays the same
+except that i might still be collecting
+more data in that inner loop
+so step two the data collection is now
+inside the updates to phi prime
+and the reason for doing this is because
+in practice you often want to collect
+data as much as possible
+whereas for stability you typically
+don't want to update your target
+network parameters quite as often
+so you know some some sensible back of
+the envelope choices
+k could be between 1 and 4 so we might
+take between 1 and 4 steps
+between each time we collect more data
+but n might be around ten thousand
+so it might take as many as ten thousand
+steps before we change our target values
+and that's to make sure that we're not
+trying to hit a moving target because
+it's very hard
+to hit a moving target with supervised
+regression
+so uh initially we initialized both phi
+and phi
+prime to be essentially a random
+initialization and then after the first
+n steps which could be 10 000 we're
+going to update five prime
+to set it to be equal to phi but then
+five prime will remain static for the
+next ten thousand steps
+and that means that step four starts
+looking a lot more like supervised
+regression
+and for that reason step four is easier
+to do
+it's much more stable and you're much
+more likely to get an algorithm that
+learns a meaningful q function
+so your targets don't change in the
+inner loop
+and that means that essentially step two
+three and four
+looks a lot like supervised regression
+with the only real difference being that
+you might collect
+more data and that data could be
+collected using your latest
+for instance epsilon greedy policy
+so based on this general recipe one of
+the things we can derive
+is the kind of classic deep q learning
+algorithm which is sometimes called
+dqm don't be too confused by the name
+dqn is essentially just
+q learning with deep neural networks
+which is a special case of this kind of
+general recipe that i outlined
+so this particular special case uh looks
+like this
+step one take an action ai and observe
+the resulting transition
+and then add it to the buffer so this
+looks a lot like online q learning
+step 2 sample a mini batch from your
+buffer
+uniformly at random so this mini batch
+might not even contain
+the transition that you just took in the
+real world
+step 3 compute a target value for every
+element in your mini batch
+and you compute these target values now
+using your target network
+q5 prime step four
+update the current network parameters
+phi
+by essentially taking the gradient for
+the regression onto those target values
+now notice that so far phi has not been
+used anywhere else
+except maybe in step one if you're using
+an epsilon gradient policy because then
+in step one
+you take your action based on the
+epsilon greedy sampling rule
+for the policy induced implicitly by the
+argmax over q5 so that's the other place
+where q5 might be used
+and then step five which is only done
+every n steps
+is to update five prime by replacing
+five prime or phi
+and as i said n might be around maybe
+ten thousand
+and then you repeat this process
+now something to note is that this
+procedure is basically a special case
+of the more general procedure at the top
+of the slide
+take a moment to think about this take a
+moment to think about what particular
+settings
+of the parameters of the algorithm at
+the top would yield
+the classic dq learning algorithm at the
+bottom
+so you would basically get this
+algorithm if you choose k equals one
+that's essentially the only the only
+thing you have to do and if you choose k
+equals one
+uh then you will recover exactly the
+procedure at the bottom
+take a moment to think about this it's
+not entirely obvious because the
+numbering of the steps has been
+rearranged a little bit but they are
+basically the same method
+okay and it's a good idea to have a
+pretty thorough understanding of this
+procedure
+because all of you will actually be
+implementing it for homework 3.
+so if you use k equals 1 then you get
+exactly the procedure at the top
+now there are some other ways to handle
+target networks
+that have been used in the literature
+and that could be worth experimenting
+with
+there's something a little strange about
+this way of updating target networks
+and here's some intuition to illustrate
+some of the strangeness this strangeness
+is not necessarily
+really bad it's just a little bit
+strange
+so let's say that i sampled my
+transition
+and then i updated my phone and then i
+sampled another transition and i updated
+my fi again so
+blue boxes are samples that's basically
+step one
+green boxes that's uh that's step uh
+two three and four and then i keep going
+like this
+and then over here on this step uh maybe
+my target network is obtained from the
+first step so perhaps at the first step
+when i started out five prime is equal
+to five
+so the third step i give my target
+values
+back from the first step and at the
+second step i get them from the first
+step
+and the fourth step i get them from the
+first step and then if
+the fourth step is where i update 5
+prime to be equal to 5 so basically if
+my n is equal to 4
+in practice n would be much larger but
+let's say it's equal to 4 then at the
+fifth step
+i get my 5 prime from the preceding step
+so it seems like at different steps the
+target values are lagged by very
+different amounts
+if you're at the step right after n if
+you're at the n plus one step
+your target network is only one step old
+and if you're
+right before a flip then it's n minus
+one step sold
+so it seems like at different points in
+time
+your target values look more like moving
+target than others if you're like right
+after
+that point where you set five prime to
+five if you're right after one of these
+flips
+then it your target really looks like a
+moving target and if it's been a long
+time then it really doesn't look like a
+moving target
+so this feels a little off it's not
+actually that big of a problem
+but it feels a little bit off then one
+common choice that you could do
+is you could use a different kind of
+update uh which is kind of similar to
+poliak averaging so those of you that
+are familiar with
+convex optimization might recognize this
+uh as
+uh essentially a variant of polyjack
+averaging so a popular alternative
+is the set phi prime at every single
+step
+to be tau times the old phi prime plus
+one minus tau times the new phi
+so you can think of this as five prime
+is gradually interpolating
+between its old value and the new value
+defined by phi
+and you would choose tau to be a pretty
+big number so for instance you might
+choose it to be
+0.999 so that means that uh one part of
+out of uh a thousand is essentially
+coming from phi and the rest is coming
+from phi prime
+now it might seem a little weird to mix
+neural network parameters in this way
+uh so one might suppose that well if
+you're mixing neural network parameters
+in this way like you know
+networks are not linear in their
+parameters so linearly interpolating
+their parameters might produce just
+complete garbage
+it actually turns out that if phi prime
+was
+previously set to phi so it's
+essentially just a lag version of phi
+this procedure does have some
+theoretical justification not very
+formal justification but some
+and that comes from the connection to
+polio capturing i'm not going to go into
+it in this lecture
+but if you want to learn more about why
+it's okay to linearly interpolate
+parameters to nonlinear functions in
+this way
+look up polyjack averaging and of course
+the caveat is that this only makes sense
+if phi prime is similar to phi so
+phi prime was a totally different neural
+network trained in a totally separate
+way
+this might be a little bit strange but
+because you're gradually making phi
+prime more and more similar to phi this
+procedure is actually all right
+and of course the nice thing about this
+is that now 5 prime is updated the same
+way every single step
+so every step is lagged by the same
+amount
+you

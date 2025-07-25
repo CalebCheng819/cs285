@@ -1,0 +1,515 @@
+the last topic i'll cover in this
+lecture
+is a little bit of theory in regard to
+value-based methods
+and a little bit more explanation for
+what i meant before when i said that
+value-based methods with neural networks
+don't in general converge to the optimal
+solution
+so to get started let's start with the
+the value iteration algorithm that we
+covered before it's a pretty simple
+algorithm
+and it's a little easier for us to think
+about but we'll get back to the queue
+iteration methods
+a little bit later so to remind
+everybody in value iteration
+we can think of it as having two steps
+step one construct your table of q
+values
+as the reward plus gamma times the
+expected value at the next state
+and then step two set your value
+function to be the max
+over the rows of that table
+so you can think of it as constructing
+this table of values
+and then iterating this procedure so
+the question we could ask is does this
+algorithm converge and if it does
+converge what does it converge to
+so one of the ways that we can get
+started with this analysis
+is we can define an operator which i'm
+going to write as
+uh script b and this operator is called
+the bellman operator
+the bellman operator when applied to a
+value function
+and remember the value function here is
+a table so you can think of it as just a
+vector of numbers
+when applied to this vector of numbers
+it performs the following operation
+first it takes v and applies the
+operator
+t subscript a t subscript a is a matrix
+with dimensionality s by s where every
+entry in that matrix
+is the probability of s prime given
+s comma a where a is
+uh chosen according to that max so this
+this is basically
+computing that expectation the
+expectation is a linear operating
+we multiply it by gamma and we add this
+vector r a
+the vector r a is a vector of rewards
+where
+for every state uh you pick the uh the
+reward for the corresponding action a
+and then outside of this you perform a
+max over a
+and crucially this max is per element so
+for every state we take a max
+so this funny way of writing the
+the belmont backup basically just
+captures the value iteration algorithm
+so the value iteration algorithm
+consists of repeatedly applying the
+operator b
+to the vector v the max comes from step
+two
+and the stuff inside the max comes from
+step one
+so the reward is a stack vector of
+rewards
+at all states fraction a and t a is a
+matrix of transitions fraction a
+such that t a i j is the probability
+that s prime equals i
+given that s equals j and we took the
+action a
+now one interesting property that we can
+show is that v
+star is a fixed point of b what is v
+star v star is the value function for
+the optimal policy
+so if we can get v star then we will
+recover the optimal policy
+v star is equal to the max over a of rsa
+plus gamma
+times the expected value of v star s
+prime right
+so if we if we find a value function if
+we find a vector that satisfies this
+equation
+we found the optimal value function and
+if we use the arg max policy with
+respect to that
+we'll get the optimal policy the policy
+that maximizes total rewards
+so that means that v star is equal to b
+times v star
+so v star is a fixed point of b
+so that's very nice if we find a fixed
+point of b
+then we'll found the optimal value
+function
+and furthermore it's actually possible
+to show that v star always exists
+this fixed point always exists it's
+always unique and it always corresponds
+to the optimal policy
+so the only question that we're left
+with is does repeatedly applying
+b to v actually find this fixed point
+so it's a it's a fixed point iteration
+algorithm does the fixed point iteration
+algorithm converge
+if it does converge it will converge to
+the optimal policy
+and it has a unique solution so will we
+reach it
+so the so i won't go through the proof
+in detail in this lecture but
+the high-level sketch behind how we
+argue
+that value iteration converges uh is by
+arguing
+that it's a contraction so we can prove
+that value iteration reaches v
+star because b is a contraction what
+does it mean to be a contraction
+it means that if you have any two
+vectors v and v bar
+then applying b to both v and v bar will
+bring
+those vectors closer together meaning
+that b v minus v
+b v bar their norm is less than or equal
+to
+the norm of v minus v bar in fact
+it's a contraction by some coefficient
+that coefficient happens to be gamma
+so not only is bv minus bb bar norm
+less than or equal to v minus v bar norm
+it's actually less than or equal to v
+minus v bar norm times gamma so you will
+contract
+and you'll actually contract by some
+non-trivial amount
+which means that you will uh the v and v
+bar will always get closer together
+as you apply b to them now
+the proof that uh the b is a contraction
+is not actually all that complicated i
+just don't want to go through it
+on this slide but you can look it up as
+a standard kind of textbook result
+but just to very briefly explain why
+showing that it's a contraction
+implies that value iteration converges
+if you choose v star as your v bar
+you know that v star is a fixed point of
+b so if you substitute in v star for v
+bar then you get the equation b v minus
+v star
+norm is less than or equal to gamma
+times v minus v star norm
+which means that each time you apply b
+to v
+you get closer to v star
+so each time you change your value
+function by applying the linear
+by applying the nonlinear operator b you
+get closer to your optimum v star
+it's important to note here that the
+norm under which
+the operator b is a contraction is the
+infinity norm
+so the infinity norm is basically the
+difference for the
+for the largest entry so the infinity
+number of vector
+is the value of the largest uh entry in
+that vector so the
+this the state at which
+v and v star disagree the most will be
+they'll disagree less after you apply b
+okay
+so infinity norm and this is important
+so look up sure
+all right so regular value iteration can
+be written extremely concisely
+as just repeatedly applying this one
+step v
+goes to b v
+now let's go to the fitted value
+iteration algorithm the fitted value
+iteration algorithm
+has another operation it has a step two
+where you actually perform the arg min
+with respect to phi
+how can you mathematically understand
+that second step
+so the first step is basically
+development backup the second step
+trains a neural network what does a step
+actually do
+abstractly well one of the ways you can
+think of
+supervised learning is that you have
+some set
+of value functions that you can
+represent that's set
+if you if your value functions are
+neural network it's actually a
+continuous set that consists of
+all possible neural nets with your
+particular architecture
+but with different weight values so
+we'll denote that set as a set omega
+in supervised learning we sometimes
+refer to this as the hypothesis set
+or the hypothesis space supervised
+learning
+consists of finding an element in your
+hypothesis space
+that optimizes your objective and our
+objective
+is the square difference between v5s
+and the target value now what is our
+target value
+our target value is basically bv right
+that's what we did in step one step one
+is basically doing vv
+it's that's literally the equation for
+bb so
+you can think of the entire fitted value
+iteration algorithm
+as repeatedly finding a new value
+function v prime which is the argument
+inside the set omega of the squared
+difference
+between v prime and vv
+where bb is your previous value function
+now this procedure unfor
+is itself actually also a contraction
+right so when you perform
+this supervised learning you can think
+of it as a as a projection
+in the l2 norm so you have your old v
+uh you have your set of possible neural
+nets represented by this line
+so omega is basically all the points on
+that line the whole space is all
+possible
+value functions omega doesn't contain
+all possible value functions
+so omega restricts us to this line when
+we construct bv
+we might step off this line so the point
+dv
+doesn't line the set omega when we
+perform supervised learning when we
+perform step two of fitted value
+iteration
+what we're really doing is we're finding
+a point
+in the set omega that is as close as
+possible to bv
+and as close as possible it means that
+it's going to be at a right angle so
+we'll project
+down onto the set omega and it'll be a
+right angle projection
+so that'll get us v prime
+so we can define this as a new operator
+we can call this operator
+pi for projection and we're going to say
+that pi
+v is just the argument within the set
+omega
+of this objective and the subjective
+is just the l2 norm
+now pi is a projection onto omega in
+terms of the l2 norm
+and pi is also a contraction because if
+you project something under a two norm
+it gets closer
+so the complete fitted value iteration
+can be written
+also in one line as just v becomes pi
+b v so first you take a building back up
+on v
+then you project it and then you get
+your new v
+so that's our fitted value iteration
+algorithm
+b is a contraction with respect to the
+infinity norm the so-called max norm
+so that's what we saw before pi is a
+contraction with respect to the l2 norm
+with respect to euclidean distance
+so pi v minus pi v bar squared is less
+than or equal to v minus v bar squared
+so so far so good both of these
+operators are contractions
+uh the reason by the way the intuition
+behind why pi as a contraction is if you
+have
+any two points in euclidean space and
+project them on a line they can only get
+closer to each other they can never get
+further
+so that's why pi is a contraction
+unfortunately pi times b is not actually
+contraction of any kind
+this might at first seem surprising
+because they're both contractions
+individually
+but remember that there are contractions
+for different norms
+b is a contraction in the infinity norm
+pi is a contraction in the l2 norm
+it turns out if you put those two
+together you might actually end up with
+something that is not a contraction
+under any norm
+and this is not just a theoretical
+idiosyncrasy this actually happens in
+practice
+so if you imagine that this is your
+starting point the yellow star is the
+optimal value function
+and you take a step
+so your regular uh value iteration will
+gradually get closer and closer to the
+star
+if you have a projected uh value
+iteration argument fitted value
+iteration algorithm
+then you're going to restrict your value
+function this line each step of the way
+so your bellman backup
+bv will get you closer to the star in
+terms of infinity norm
+and then your projection will move you
+back onto the line
+and while both of those operations are
+contractions notice that v
+prime is now actually further from the
+star than v
+is and you can get these situations
+where each step of the way
+actually gets you further and further
+from the star
+and this is not just a theoretical
+idiosyncrasy this can actually happen in
+practice
+so the sad conclusions from all this are
+that value iteration
+does converge in the tabular case fitted
+value iteration does not converge in
+general
+and it doesn't converge in general and
+it often doesn't converge in practice
+now what about fitted q iteration so far
+all of our
+talk has been about value iteration what
+about fitted q iteration
+it's actually exactly the same thing so
+infinite q iteration you can also define
+operator b it looks a little bit
+different now it's r
+plus gamma t times max q so the max is
+now
+you know at the target value but same
+basic principle
+so now the max after the transition
+operator that's the only difference
+b is still a contraction in the infinity
+norm you can define an operator pi
+exactly the same way as the operator
+that finds
+the arg min in your hypothesis class
+that minimizes square difference
+you can define fitted q iteration as q
+becomes pi b
+q just like with value iteration and
+just like before
+b is a contraction in the infinity norm
+pi is a contraction in the l2 norm
+and pi v is not a contraction of any
+kind
+this also applies to online queue
+learning and basically any algorithm
+of this sort
+now at this point uh some of you might
+be looking at this thing
+and thinking something is very
+contradictory here like we just
+we just talked about how this algorithm
+doesn't converge but at the core of this
+algorithm
+is something that looks suspicious like
+radiant descent like isn't
+isn't this whole process just doing
+regression on the target values don't we
+know that
+regression converges isn't this just
+grading descent
+well the subtlety here is that q
+learning is not actually grading descent
+so q learning is not taking gradient
+steps on a well-defined
+objective it's because the target values
+in q-learning
+themselves depend on the q values and
+this is also true for
+the acute erration but you're not
+considering the gradient
+through those target values so the
+gradient that you're actually using is
+not
+the true gradient of a well-defined
+function
+and that's why it might not converge
+now it's probably worth mentioning that
+you could turn this algorithm
+into a gradient descent algorithm by
+actually computing the gradient through
+those target values
+they're non-differential because of the
+max but there are some technical ways to
+deal with that
+the bigger problem is that the resulting
+algorithm is called the residual
+algorithm
+has very very poor numerical properties
+and doesn't work very well
+uh in practice in fact even though
+this kind of q learning procedure that i
+described is not guaranteed to converge
+in practice it actually tends to work
+much much better than residual gradient
+which although guaranteed to converge
+has extremely important numerical
+properties
+okay so short version q learning and
+physical iteration
+are not actually doing gradient descent
+and the update is not the gradient
+of any well-defined function
+there's also unfortunately another sad
+corollary to all this
+which is that our actor critic album
+that we discussed before
+also is not guaranteed to converge on
+the function approximation
+for the same reason so there we also do
+a bell on backup when you we use a
+bootstrap update
+and we do a projection when we update
+our value function and
+the concatenation of those is not a
+convergent operator
+so fitted bootstrap policy evaluation
+also doesn't converge
+and by the way one aside about
+terminology uh
+most of you probably already noticed
+this but when i use the term v
+pi i'm referring to the value function
+for some policy pi
+this is what the critic does when i use
+v star this is the value function for
+the optimal policy pi star
+and this is what we're trying to find in
+value iteration
+okay so to review we talked about some
+value iteration theory
+we discussed the operator for the backup
+the operator for the projection uh this
+is a type on the slide they're not
+actually linear operators but they are
+operators
+we talked about how the backup is a
+contraction
+and our tabular value iteration
+converges
+we talked about some convergence
+properties of function approximation
+where
+the projection is also a contraction but
+because it's a contraction in a
+different norm
+backup followed by projection is not
+actually a contraction
+and therefore fitted value iteration
+does not in general converge
+and its implications for q learning are
+the q learning fit of the q iteration
+etc
+also do not converge when we use neural
+nets when we have a projection operator
+this is this might seem somewhat somber
+and depressing we will find out in the
+next lecture that in practice
+we can actually make all these
+algorithms work very well but their
+theoretical properties
+leave us with a lot to be desired

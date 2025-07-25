@@ -1,0 +1,739 @@
+in the next section of today's lecture
+i'm going to
+discuss some uh practical considerations
+that we need to take into account when
+actually implementing
+q learning algorithms and then some
+improvements that can make them work a
+bit better
+so one question that we can start with
+are our q values actually accurate
+we can think of q values as this kind of
+abstract object
+that we use inside reinforcement
+learning to help us improve our policy
+and get that arcmax
+but a q function is also a prediction
+it's a prediction about the total reward
+that you will get in the future if you
+start in a particular state in action
+and then follow your policy so it makes
+sense to ask whether these predictions
+are actually accurate predictions do
+they match up with the reality do they
+match up with what you actually get
+when you run the policy
+so if we look at the
+kind of a basic learning curve where the
+x-axis is the
+number of iterations of q-learning that
+we've taken
+and the y-axis is the average reward per
+episode
+and we look at it on a bunch of let's
+say atari games
+we'll see that for all of these atari
+games
+our average or per episode is going up
+so
+things are getting better if we look at
+the average
+q values that are being predicted and
+that's the two plots on the right
+we'll see that the q function is
+predicting larger and larger q values
+as training progresses and that
+intuitively makes sense
+as training progresses our policy gets
+better it's getting higher rewards
+so our q function should also predict
+that it's getting
+higher q values so as predicted
+q increases and so does the return
+we can also look at whether the actual q
+values or value function values occur in
+places that
+essentially anticipate future rewards
+so this is the game of breakout for
+those of you that are not familiar with
+breakout
+the goal is to use the little orange
+paddle at the bottom
+to hit a ball and the ball is reflected
+by the paddle bounces up
+and hits these colored rainbow colored
+blocks and every block you break
+gets you a point a particularly cool
+thing you can do in breakout
+is if you break through all of the
+blocks on one side
+which is happening there in panel number
+three then you can get the ball to
+bounce all the way up and will actually
+bounce off the ceiling
+and ricochet off the top blocks and
+they'll get you
+lots of points because it's just
+bouncing back and forth there
+breaking all the blocks from the top so
+it's quite a
+cool strategy if you can break through
+to the top like that and have it bounce
+around
+and the graph at the bottom shows
+the value function value which is
+essentially the q value for the best
+action
+at different points in time with the
+particular frames
+one two three and four labeled on the
+graph
+and what you can see here is that some
+of these values actually make a lot of
+sense so
+number one you're about to break a block
+and you have the highest value
+after you break that block you bounce
+back down and your value dips because
+you know that you're not going to get
+any points for a little while while your
+ball flies down needs to get
+bounced from the paddle in step three
+you're about to break through the top so
+your value becomes quite large
+but in step three you actually don't
+quite make it so that last red block
+that you break you break it but then you
+bounce back down
+so your valley goes down for a while and
+then it rises right back up
+and in step four your value is actually
+at its largest
+even though you actually haven't broken
+any blocks for a while so step four
+you just bounced off the paddle you
+haven't broken any blocks but you're
+about to ricochet off the ceiling and
+you're about to get those mad points
+so that's why your value function is
+actually the largest value
+it actually goes down from there because
+once you actually get the points
+uh the value function is going to drop
+because it knows you've received your
+points you're going to get fewer points
+left over so that will make sense that
+all seems
+reasonable and we can also look at the
+relative value the q values for
+different actions
+so these are frames from the game uh
+pong
+so in pong you need to use your paddle
+which is green on the right side
+to hit the ball so that it ricochets and
+goes to the other side
+and your opponent with the orange paddle
+needs to hit it back and your goal
+kind of like in tennis is to hit the
+ball back so your opponent can return it
+if your opponent can't return it then
+you get a point if your opponent can
+return it
+then they might get a point on you
+because you might fail to hit it back
+so what we're seeing in frame one is
+that all actions have about the same q
+value
+take a moment to think about why this
+might be why does this uh
+this make sense
+well the reason it makes sense is
+because when the ball is quite far away
+many different actions will still allow
+you to catch the ball later
+so even though it might seem like moving
+the paddle up is the right thing to do
+in reality the q function here is very
+good and it understands
+that even if it fails to move the paddle
+up it'll be able to move it up at the
+next time step
+which actually means that the q values
+of different actions at this time step
+are about equal it's a little
+counter-intuitive at first but it really
+makes sense
+at time step two now the ball is getting
+pretty close to the uh to the zone where
+you have to return it
+and here now the up action has a much
+larger q value
+so the q function understands that it
+still has
+a split second chance to return the ball
+but only if it moves up right now
+so now the q value for moving up is very
+large the q
+value for moving down or staying still
+is very very negative
+and of course in step four once you've
+actually returned the ball
+again it's saying that the values for
+different actions don't really matter
+so again this basically agrees with with
+our intuition
+in terms of their relative values the q
+values make sense with respect to
+actions
+and they make sense with respect to
+states
+but there's a little bit of a problem
+while the relative q values of different
+states and actions
+seem to make sense on a successful
+training run
+their actual absolute values will in
+practice actually not be very predictive
+of real values
+and you can verify this yourself in
+homework 3 when you implement q
+learning you can measure the numerical
+value of the q value that you're getting
+and then measure the actual return that
+you get and compare those two numbers
+you'll find they don't agree very well
+there are a few details that you have to
+get right one thing that you have to get
+right is that
+you have to make sure that when you
+calculate the true value you use a
+discounted estimator
+so you calculate the true value by
+taking the trajectories that you
+actually executed
+and taking the reward times step one
+plus gamma times the reward at 2
+plus gamma squared times the reward of 3
+etc etc etc
+and then compare that to the q value at
+step one
+because the q value at step 1 is trying
+to predict the expected sum
+of discounted rewards so if you compare
+that to the discount of some of
+uh of rewards that you actually got if
+your q value is a good predictor you
+should see that those are similar
+and what you'll actually see is that
+they're not very similar
+so what these graphs are showing is
+basically exactly this what you should
+look at
+is the red lines the the blue lines
+don't worry about those we'll talk about
+those later
+but the red lines represent the
+following the
+kind of spiky red line the one that's
+usually higher represents the estimate
+of your hue function so this is
+basically how uh so this is what your q
+function thinks
+the total discount reward that you'll
+get will be the solid flat line
+represents the actual uh sum of discount
+rewards that you're actually getting
+when you're on that policy
+and what you're seeing here is that the
+q function estimates
+are always much much larger than the
+actual
+sums of discounted rewards that you're
+getting and that seems
+kind of strange like why is it that the
+q
+function seems to systematically think
+it's going to get larger rewards
+than it actually gets this is not a
+fluke
+it's not just that the q function is
+wrong and it can be above or below
+the true reward it's actually
+systematically larger
+and this is a very consistent pattern
+and you try this in homework 3 you'll
+also see this pattern
+so why is that
+this problem is sometimes referred to as
+overestimation in queue learning
+and it has actually a fairly
+straightforward and intuitive reason
+let's look at how we're computing our
+target values when you compute
+your target value you take your current
+target q function q5 prime
+and you take the max of that q function
+with respect to the action
+aj prime and it's really this max that's
+the problem
+so here's how we can think about why a
+max would cause overestimation
+let's forget about q values for a minute
+and let's just imagine
+that you have two random variables x1
+and x2
+you could think that maybe x1 and x2 are
+normally distributed random variables so
+they maybe they have some true value
+plus some norms
+you can prove that the expected value of
+the max
+of x1 and x2 is always greater than or
+equal to
+the max of the expected value of x1 and
+the expected value of x2
+the intuition for why this is true is
+that when you take the max
+of x1 and x2 you're essentially picking
+the value that has the larger noise
+and even though the noise for x1 and x2
+might be zero mean maybe they're both
+univariate gaussians
+the max of two zero mean noises is not
+in general zero mean so you can imagine
+that
+one noise is positive or negative fifty
+percent the other is positive and
+negative fifty percent
+when you take the max of the two if
+either of them is positive
+you'll get a positive answer so of
+course
+the probability that one of the two
+noises is positive
+is going to be pretty high right so in
+order for them to both be negative
+that has only 25 percent probability so
+the one of them being positive that's 75
+probability
+so 75 percent probability when you take
+the expected value of their max you'll
+get a positive number
+when you take the max of their expected
+values you'll get
+uh you'll get zero because their
+expected values are zero when you take
+the expected value the max you'll get a
+positive value
+now what does this have to do with q
+learning well
+if you imagine that your q function is
+not perfect
+if you imagine that your q function kind
+of looks like the true q function
+plus some noise then when you take this
+max in the target value
+you're doing exactly this so imagine
+that your
+q phi prime for different actions
+represents the true
+q value of that action plus some noise
+so it might be up and down
+and those errors are not biased so
+those errors are just as likely to be
+positive as negative but when you take
+the max
+in the target value then you're actually
+selecting the positive errors
+and for the same reason that the
+expected value of the max of x1 and x2
+is greater than or equal to the max of
+their expected values
+the max over the actions will
+systematically select
+the errors in the positive direction
+which means that will systematically
+overestimate the true q values even if
+your q function initially does not
+systematically have errors that are
+positive or negative
+so for this reason the max over a prime
+of
+q phi prime s prime f a prime
+systematically overestimates the next
+value
+it basically preferentially selects
+errors in the positive direction
+so how can we fix this well one way that
+we can think about fixing this
+is to note if we think back to the queue
+iteration the way that we got this max
+was by basically modifying the policy
+iteration procedure
+so we had our greedy policy which is the
+arg max over a prime
+and then we we then send that r
+max back into our q function to get its
+value
+so this is just another way of saying
+the max over a prime of q phi prime
+is just q5 prime evaluated at the arc
+max
+and this is actually the observation
+that we're going to use to try to
+mitigate this problem
+see the trouble is that we select our
+action according to q5 prime
+so if q5 prime erroneously thinks that
+some action is a little bit better
+because of some noise then that's the
+action we'll select and then the value
+that we'll use for our target value
+is the value for that same action which
+has that same noise
+but if we can somehow decorate the noise
+in the action selection mechanism
+from the noise in the value evaluation
+mechanism
+then maybe this problem can go away
+so the problem is that the value also
+comes from the same q5
+prime which has the same noise as the
+rule that we used
+to select our action
+all right so this so one way to mitigate
+this problem
+is to use something called double q
+learning
+if the function that gives us the value
+is d correlated from the function that
+selects the action then in principle
+this problem should go away
+so the idea is to just not use the same
+network to choose the action
+as the network that we use to evaluate
+the value
+so double q learning uses two networks
+one network which we're going to call
+phi a and another network which we're
+going to call
+phi b and phi a
+uses the values from phi b to evaluate
+the target values
+but selects the action according to phi
+a so if you assume that phi b and phi a
+are decorated
+then the action that phi a selects for
+the r max will be corrupted by some
+noise
+but that noise will be different from
+the noise that phi b has
+which means that when phi b evaluates
+that action if the action was selected
+because it had a positive
+noise then phi b will actually give it a
+lower value
+so the system will be kind of
+self-correcting and then analogously phi
+b
+is updated by using phi a as its target
+network by using phi b
+as the actual selection rule
+so this is the essence of double q
+learning and its purpose
+is to decorate the way that you select
+the action from the way
+that you evaluate the value of that
+action
+so if the two q networks are noisy in
+different ways
+then in principle the problem should go
+away
+now in practice the way that we can
+implement double q learning
+is uh without actually adding another q
+function
+but actually using the two q functions
+we already have so we already have a
+fine of phi
+prime and they are different networks so
+we'll just use those in place of phi
+and phi b so in standard q learning
+if we write it out in this r max way
+which is exactly equivalent
+our target value is q5 prime evaluated
+at the rmax
+from q5 prime in double queue learning
+we select the action using q5 but
+evaluate it
+using q5 prime
+so now as long as phi prime and phi are
+not too similar
+then these will be decorated so this is
+the only difference we're using phi
+to select the action instead of phi
+prime
+and we still use the target network to
+evaluate our value to avoid this kind of
+moving targets problem
+now you could say that we do still have
+a little bit of the moving targets
+problem
+because as our phi changes so does our
+action
+but presumably the change in the arc max
+is a very
+sudden discrete change and it doesn't
+happen all the time so if you have you
+know three different actions
+the arc max isn't going to change as
+often
+now something i might mention here is
+that and many of you might already be
+thinking about this
+phi prime and phi are of course not
+totally separate from each other because
+periodically you do set phi prime to be
+equal to fine
+so this solution is far from perfect it
+doesn't totally decorate phi
+prime and phi but in practice it
+actually tends to work pretty well
+and it actually mitigates a large
+fraction of the problems with
+overestimation
+but of course not all of them
+all right there's another trick that i
+should mention that we can use to
+improve q-learning algorithms
+and it's similar to something that we
+saw in the after critical lecture
+and that's the use of multi-step returns
+so uh our q learning target is
+and here i intentionally am writing it
+out with time steps is rjt
+plus the max at t plus one
+and where does the signal in this
+learning process come from
+well if your initial q function is very
+bad
+is essentially random then almost all
+almost all of your
+uh learning has to come from the r so
+if uh your q5 prime is good then the
+target values do mostly heavy lifting
+if your q5 primes are bad then the only
+thing that really matters is the reward
+and that second term is essentially just
+contributing noise
+and early on in training your q function
+is pretty bad so almost all of your
+learning signal
+really comes from the reward later on in
+training your reward get
+uh you know your q function becomes
+better and the q
+values are much larger in magnitude than
+the rewards so later on in training the
+q values dominate
+but your takeoff your initial learning
+period can be very slow
+uh if your q function is bad because
+this
+target value is mostly dominated by the
+q value
+so this is quite similar to what we saw
+in octocritic when we talked about how
+the actor critic style update that uses
+the reward plus the next value
+has lower variance but it's not unbiased
+because if the value function is wrong
+then your advantage values are
+completely messed up and q learning is
+the same way if the q function is wrong
+then your target values are really
+messed up and you're not going to be
+making much learning progress
+the alternative that we had in the
+ectocritic lecture is to use a monte
+carlo sum of rewards
+because the rewards are always the truth
+they're just higher variance
+because they represent a single sample
+estimate
+we can use the same basic idea in queue
+learning
+so q learning by default does this kind
+of
+one step back up which has maximum bias
+and minimum variance
+but you could construct a multi-step
+target just like an actor critic
+take a moment to imagine what this
+multi-step target would look like
+if you have a piece of paper in front of
+you consider writing it down
+and then you can check what you wrote
+down against what i'm going to tell you
+on the next slide
+sorry actually it's actually on this
+side so um
+the way that you can construct a
+multi-step target
+is basically exactly analogous to what
+we saw in the after critic lecture
+so the way you construct your multi-step
+target is
+by not just using one reward but making
+a little sum
+from t prime equals t to t plus n minus
+one
+and for each of those you take r j t
+prime multiplied by gamma the t minus t
+prime and you can verify that if n
+equals one
+then you recover exactly the standard
+rule
+that we had for q learning but for n
+larger than one you sum together
+multiple reward values
+and then you use your your target
+network
+for the t plus n step multiplied by
+gamma to the n
+so this is sometimes called an n step
+return estimator
+because instead of summing the reward
+for one step
+you sum it for n steps so this is the
+n-step return estimator
+and just like with actual critic the
+trade-off the n-step return estimator
+is that it gives you a higher variance
+because of that single sample estimate
+for r
+but lower bias because even if your q
+function is incorrect
+now it's being multiplied by gamma to
+the n and for large values of
+n gamma to the n might be a very small
+number
+okay so let's talk about q learning with
+these n n-step returns
+it's less biased because the target
+because the q values
+are multiplied by a small number and
+it's typically faster early on
+because when the target values are bad
+those sums of rewards really give you a
+lot of
+useful learning signal unfortunately
+once you use n step returns
+this is actually only a correct estimate
+of the q value when you have an on
+policy sample
+so the reason for this is that if you
+have a sample collected with a different
+policy
+then that second step t plus one
+might actually be different for your new
+policy right because if
+on the second step you take a different
+action that will match what you're
+getting from your instant return
+so n step returns technically are not
+correct without policy data anymore
+with off policy data technically you're
+only allowed to use n equals one
+with n equals one everything is pretty
+straightforward because you're not
+actually
+assuming anywhere that your transition
+came from your policy your q functions
+condition on action so that'll be valid
+for any policy
+and your second time step where this
+would matter in the second times if you
+actually take the max with respect to
+action
+you don't use the action that was
+actually sampled so for n equals one
+it's valid to do off policy
+but for n greater than one it's no
+longer valid
+basically your new policy might never
+have landed in the state
+s j t plus n
+so why because you actually end up using
+the action from the sample for those
+intermediate steps
+which is not the action that your new
+policy would have taken
+as an interesting thought exercise and
+this is something you can think about at
+home after the lecture
+you could imagine how to utilize the
+same trick that we used
+to make q-learning off policy to try to
+make this n-step version off policy
+as a hint to make the n-step version off
+policy
+you can't learn a q function anymore you
+have to learn some other object
+condition on some other information
+and if you think a little bit about how
+you could do this that might shed some
+light on
+kind of giving you a better intuitive
+understanding for how it is
+that q-learning can be off policy so as
+a homework exercise after the lecture
+maybe take a moment to think about how
+to make n-steps returns
+off policy and what kind of object you
+would need to learn
+to make that possible
+so the estimate that we get from regular
+instep returns is an estimate of q
+pi for pi but for that you need
+transitions from
+pi for all the intermediate steps
+and this is not an issue when n equals
+1.
+so how can we fix it well we can ignore
+the problem which often works very well
+uh the other thing we can do is we can
+dynamically cut the trace
+so we can dynamically choose n to only
+get on policy data
+essentially we can look at what our
+deterministic greedy policy would do
+we could look at what we actually did in
+the sample and we can choose n to be the
+largest value such that all of the
+actions
+exactly match what our policy would have
+done and that will also remove the binds
+so this works well when data is mostly
+on policy
+and the action space is pretty small
+another thing we can do is important
+sampling so we can construct a
+stochastic policy
+and importance weight these n-stop
+return estimators i won't talk about
+this in detail but
+if you want to learn more about this
+check out this paper called safe and
+efficient off policy reinforcement
+learning by munoz at all
+and then there's this mystery solution
+that i haven't told you about where you
+don't do any of this stuff
+but you condition the q function with
+some other additional information
+that allows you to make it off policy
+and that's a solution you can think
+about on your own time
+after the lecture

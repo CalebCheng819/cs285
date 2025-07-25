@@ -1,0 +1,417 @@
+all right in today's lecture we're going
+to continue our discussion of
+value-based methods from last time
+and we'll discuss some practical deep
+reinforcement learning algorithms
+that can utilize q functions so even
+though we learned
+that value-based methods in general uh
+are not guaranteed to converge
+in practice we can actually get some
+very powerful and very useful
+reinforcement learning algorithms out of
+them and that's what we'll talk about
+today
+so first to recap from last time we
+discussed
+how we could derive a general class of
+value-based methods which we called
+fitted queue duration algorithms
+which do not require knowledge of the
+transitional probabilities and do not
+require us to explicitly represent
+a policy so in this
+class of methods there are basically
+three steps step one
+we collect a data set using some policy
+and we learn that these are
+off policy algorithms which means that
+they can collect their data sets
+using a wide range of different policies
+they can aggregate data
+from previous iterations and they can
+use various exploration rules
+like epsilon greedy and boltzmann
+exploration
+then in step two for each transition in
+our data set
+and when i say transition i mean s i a i
+s i
+prime and ri tuples for each transition
+we calculate what we call the target
+which i'm denoting as y i which is equal
+to the current reward
+plus gamma times the max over the
+actions of the next time step
+and we learned that this max is what
+allows us to make this algorithm off
+policy so the max basically accounts for
+the fact
+that you are implicitly computing a
+greedy argmax policy
+using your current q function q phi and
+then evaluating the value of that argmax
+policy
+by plugging it into q5 so of course the
+value of the arcmax is simply the max
+so that gets us our targets y i and then
+in step three
+we update our function approximator
+for q which is parametrized by phi by
+finding the arg min parameters
+the parameters that minimize the
+difference between
+the output of q5 and the target's y i
+that we just computed
+step two and three can in general be
+repeated some number of times
+before we collect more data so this is
+the general recipe
+with the queue iteration algorithm which
+has a number of
+choices that we can make you can choose
+how many transitions to collect in step
+one
+we can choose how many gradient steps to
+take in step three when we optimize
+five and we can choose how many times to
+alternate between steps two and step
+three
+before we collect more data
+if we choose each of these hyper
+parameters to be one meaning
+one step of data collection one gradient
+step
+and only do step two and three once
+before collecting more data
+then we get what is called the online
+queue learning algorithm which i
+hear called online calibration this is
+really q learning so if you hear someone
+say q learning
+they really mean this method step one
+take one action ai
+and observe the resulting transition
+s-i-a-i-s-i prime
+ri step two calculate the target value
+y-i
+for that transition step three perform
+one gradient step on the difference
+between
+the output of the q function and the
+value that you just calculated
+and of course as usual this algorithm
+fits into our anatomy of our
+of a reinforcement learning method the
+orange box is step one
+the green box is where we fit our
+q function and the blue box here is
+somewhat degenerate it just
+involves choosing the action to be the
+arc max
+of the cube all right
+so what are some things that are
+problematic about this general procedure
+we learned about a few things last time
+for instance
+we learned that the update in step 3
+even though it looks like a gradient
+update it looks like it's applying the
+chain rule
+it's not actually the gradient of any
+well-defined objective
+so q learning is not gradient descent if
+you are to substitute in
+the equation for y i you would see that
+q phi
+shows up in two places but there is no
+gradient through the second
+term so this is not properly applying
+the chain rule
+we could properly apply the chain rule
+and then we get a class of methods
+called residual gradient algorithms
+unfortunately such algorithms tend to
+work poorly in practice
+because of very severe numerical ill
+conditioning problems
+there's another problem with the online
+queue learning algorithm
+which is that when you sample one
+transition at a time
+sequential transitions are highly
+correlated so the state i see at time
+step t
+is likely to be quite similar to the
+state that i see at time step t plus 1
+which means that when i take gradient
+steps on those samples in step three
+i'm taking gradient steps on highly
+correlated transitions
+this violates commonly held assumptions
+for stochastic gradient methods
+and it has a pretty intuitive reason to
+not work very well which we'll discuss
+next
+before presenting a solution
+all right so let's talk about the
+correlation problem so here i've just
+simplified the algorithm i've just
+plugged in
+the equation for the target value right
+into the grading update so
+there's only two steps instead of three
+but it's the same exact procedure
+so states that you see one right after
+the other are going to be strongly
+correlated
+meaning that the state at time t plus
+one it is probably similar to the state
+of times step t but even if it's not
+similar
+it probably has a very close
+relationship to it
+and your target values are always
+changing so even though your
+optimization procedure
+looks like supervised regression in a
+sense it's kind of chasing its own tail
+it's trying to
+catch up to itself and then changing out
+from under itself and the gradient
+doesn't account
+for this change so
+the reason this might be a problem is if
+you imagine that this is your trajectory
+and you get a few transitions you'll
+kind of locally over fit to these
+transitions because you're seeing very
+similar transitions right
+one right after the other and then you
+get some other transitions
+and then you overfit a little bit to
+those and then you see some others and
+you overfit to those and so on and so on
+and then when you start a new trajectory
+your function approximator
+will have been left off at the point
+where it overfitted to the end of the
+previous one and will again be bad
+so if it had seen all the transitions
+all at once it might have actually
+fitted all of them accurately but
+because it's seeing this very local
+highly correlated window at a time
+it has just enough time to overfit to
+each window
+and not enough broader context to
+accurately fit the whole function
+now we could borrow the same idea that
+we had in actor critic
+when we talked about actor critic
+algorithms we actually discussed a
+solution
+to the same exact problem when we
+discussed online actor critic
+and the particular solution we discussed
+was to paralyze
+it was to have multiple workers that
+each collect a different transition
+s a s prime r collect a batch
+consisting of samples from all of these
+workers update on that batch
+and repeat and this procedure can in
+principle
+address the problem with sequential
+states being highly correlated
+the sequential states are still
+correlated but now
+you get a batch of different transitions
+from different workers and across
+workers
+they are hopefully not correlated so it
+doesn't solve the problem fully
+but it can mitigate it
+and of course just like we learned about
+an actor critic you could have an
+asynchronous version of this recipe
+where the individual workers don't wait
+for a synchronization point
+for an update of parameters but instead
+query a parameter server
+for the latest parameters and then
+proceed at their own pace
+in fact with q learning this recipe
+should in theory work even better
+because in queue learning you don't even
+need the workers to use the latest
+policy
+so the fact that you might have a
+slightly older policy that is being
+executed on some of the workers
+is in theory not a major problem
+however there is another solution to the
+correlated samples problem
+that tends to be quite easy to use and
+works very well in practice
+and that's to use something called a
+replay buffer replay buffers are a
+fairly old idea in reinforcement
+learning they were introduced
+way back in the 1990s and here's the
+here's how they work
+so let's think back to the full fitted
+queue iteration algorithm in the full
+physical iteration algorithm
+we would collect the data set up
+transitions using whatever policy we
+wanted
+and then we would make multiple updates
+on that on that data set of transitions
+so we would label all the transitions
+with target values then we might make a
+large number of gradient steps
+regressing onto those target values and
+then we might even go back
+and compute new target values before we
+even collect more data so we might go
+back and forth between step two and step
+three
+k times and if k is larger than one we
+might do quite a bit of learning on the
+same set of transitions
+so the online q learning algorithm is
+simply the special case of this
+when k is set to one and we take one
+gradient step in step three
+and of course any policy for collection
+will work so long as it has broad
+support
+like in fact we could even omit step one
+altogether
+so we could just load data from the
+buffer so we can
+basically have a bunch of stored data
+loaded from buffer and step two
+and then iterate onto step three so this
+gives us this view
+of q learning or fitted q iteration
+as a kind of data driven method where we
+just have a big bucket of transitions
+we don't really care so much where these
+transitions came from so long as they
+cover the space of all possibilities
+pretty well and we're just going to
+crank away taking more and more
+updates on those transitions alternating
+between computing target values
+and regressing onto those target values
+so we could still take one gradient step
+in step three if we want
+and then we get something that looks a
+lot like online queue learning
+only without the data collection so if
+we take one gradient step
+then we're basically just alternating
+between computing target values
+for our transitions and taking gradient
+steps for our transitions
+so this gives us this modified version
+of the q-learning algorithm with a
+replay buffer
+in step one instead of actually taking
+uh steps in the real world
+we simply sample a bash multiple
+transitions
+s i a i s i prime ri from our buffer
+which i'm going to call b
+and then in step two we sum up our
+gradient
+over all of the entries in that batch so
+each time around the sloop we might
+sample a different batch
+we sample it iid independently and
+identically distributed
+from our buffer which means that our
+samples are no longer correlated
+and then the only question i have to
+answer is where do we get our buffer
+so we have multiple samples in the batch
+so we have a low variance gradient
+and our samples are no longer correlated
+which satisfy the assumptions of
+stochastic gradient methods
+we still unfortunately don't have a real
+gradient because we're not computing the
+derivative through the second term
+but at least the samples are not
+correlated
+so where will the data come from well
+what we need to do is we need to
+periodically feed the replay buffer
+because initially our policy will be
+very bad and maybe our initial very bad
+policy
+just won't visit all the interesting
+regions of the space
+so we still want to occasionally feed
+the replay buffer by using our latest
+policy
+maybe with some epsilon greedy
+exploration to collect some better data
+some data that achieves
+better coverage so then
+the diagram you could think of might
+look like this we have
+our buffer of transitions we're cranking
+away on this buffer doing our off policy
+queue learning
+and then periodically we deploy some
+policy back into the world
+for example the greedy policy with
+epsilon greedy exploration
+to collect a little bit more data and
+bring back some more transitions
+to add back to our buffer and that will
+refresh our buffer
+with behavior that hopefully gets better
+coverage
+all right so putting it all together we
+can devise a full
+kind of q learning recipe with replay
+buffers
+step one collect a data set of
+transitions
+using some policy maybe initially it's
+just a random policy
+later on it will be the art max policy
+with epsilon greedy exploration
+and add this data to your buffer b
+so that's this part step two sample a
+batch
+from b and then do some learning on that
+batch
+by summing over the batch this
+q learning pseudo gradient so we're
+going to calculate
+target values for every entry in the
+batch and then we're going to do the
+current q value minus the target value
+times the derivative and then we'll sum
+it over the whole batch
+since we sell over the whole batch we
+get a lower variance gradient has more
+than one sample
+and since we sample the batch iid from
+our buffer our samples are going to be
+decorated
+so long as our buffer is big enough
+and we can repeat this process k times k
+equals one is very common
+but larger k can be more efficient so if
+you repeat this k
+equals one times and then go out and
+collect more data
+then uh you get a fairly classic kind of
+deep q learning algorithm
+with replay buffers

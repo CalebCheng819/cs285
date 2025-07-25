@@ -1,0 +1,268 @@
+okay in the next section i want to
+briefly discuss
+kind of another view that we can take of
+these q learning algorithms
+that maybe provides a little bit more of
+a unified perspective because we covered
+lots of different variants we covered
+fitted queue iteration
+online queue learning deep queue
+learning with replay buffers
+we can unify all of these in one kind of
+conceptual framework
+and i just want to highlight this uh in
+the next portion and many of you might
+probably already suspect what that more
+general framework is but let's just make
+it really explicit
+so here is the general queue learning
+with replay buffers and target networks
+that i discussed before so here we have
+this
+outer outer loop where we save the
+target network parameters
+five prime goes to fine and we could use
+this polyjack averaging trick
+or just a standard flip every n steps
+in step two we collect some number of
+data points using some policy and add it
+to the buffer
+in step three we sample a batch and step
+four we do a gradient step
+and then we alternate steps three and
+four some number of times
+now this is written out here as a kind
+of a
+inner loop style algorithm but it's
+really not it's really a bunch of
+uh parallel processes so the
+fitted q iteration algorithm that we had
+before looks a little bit different
+um here i've written it in a way so that
+it
+better resembles the version above but
+you could also write it with supervised
+regression
+so that one we have the data collection
+in the outer outer loop
+and then the networks are updated in the
+middle loop
+but they're really kind of the same
+thing and if you view them as having
+the same basic processes running in
+parallel at different rates
+then all of these methods can be unified
+into one kind of parallel framework
+so in the fit accumulation algorithm the
+inner inner loop is just sgd
+uh the dqn method we had before is a
+special case
+where n equals one and k equals one but
+all of them are really just special
+cases of this more general view
+so we have our our data set of
+transitions our replay buffer this is
+our
+the basic object at the center of all of
+this we
+periodically interact with the world and
+when we interact with the world
+what we typically do is we take our
+latest vector phi
+we construct some policy out of phi for
+instance using epsilon
+greedy or boltzmann exploration we send
+it out into the world
+and it brings back one or more
+transitions
+and you can think of this not as a
+discrete decision that we make
+periodically
+but it's a continuous process that is
+always running so let's call it process
+one the data collection process
+the data collection process takes steps
+in the environment
+and each step it takes it sends back to
+our replay buffer
+now our replay buffer is a finite size
+we can't just keep adding stuff to it
+forever
+so we also have another process an
+eviction process
+which periodically throws things out of
+the buffer when it gets too big
+there are a lot of decisions about how
+and when you throw things out
+but a very simple and reasonable choice
+is to simply structure the replay buffer
+as a ring buffer where the oldest thing
+in the buffer
+gets thrown out when a new thing gets
+added in so if your buffer has 1 million
+transitions
+then as soon as the one million and one
+transition gets added in
+then the oldest transition gets thrown
+in the garbage and that ensures that
+your buffer doesn't grow
+unbounded then you have your target
+parameters five prime
+and your target parameters are used to
+compute those target values
+and you have your current parameters
+fine your current parameters are the
+ones that you're going to give
+to process one in order to construct
+that epsilon greedy policy
+to collect more data and you have a
+process
+two which updates the target values
+so sorry the target parameters so
+process two
+will periodically copy phi into phi
+prime or perform that polyjack averaging
+and process 2 is typically a very slow
+process so it typically runs very
+infrequently
+and then you have process 3 which is
+kind of the main learning process
+and what process 3 does is it loads a
+batch of transitions
+from the replay buffer so that's step
+three in the pseudocode above
+it loads in the target parameters phi
+prime
+it uses the target parameters to
+calculate target values
+for every transition in the batch that
+was sampled it uses that to update the
+current parameters phi that's step four
+above
+and then saves them back out uh into the
+uh
+the current parameters right there
+so this is a kind of graphical depiction
+of a general q learning recipe that
+encompasses
+all of the algorithms we've discussed
+all of them can essentially be
+instantiated as special cases of this
+general three process or four process if
+you also include eviction uh
+parallel architecture and in fact you
+could actually implement this as a
+parallel architecture you actually have
+these as separate processes in different
+threads
+or you can implement it as a serial
+sequential process
+but this mental model that there are
+really three different things that can
+all happen at different rates
+is still useful for thinking about it so
+even though it seems like there are many
+different q learning algorithms
+essentially they all just involve
+different decisions for the rates at
+which we run process one
+process 2 and process 3.
+so online q learning the basic basic
+watkins online q learning
+that we had in the previous lecture is a
+special case
+where you evict immediately meaning the
+size of your buffer is
+one it's a ring buffer of size one and
+then process one process two and process
+three
+all around at the same speed and they
+all take one step
+sequentially so process one takes one
+step which means collect one transition
+process two takes one step which means
+that your target values are always
+computed using the latest parameters
+and then process three takes one step
+which means that you make one grading
+update
+the dqn algorithm that we mentioned
+before
+is also pretty similar process 1 and
+process
+3 run at the same speed which is a
+slightly arbitrary choice when you think
+about it because process 1 and process 3
+are actually fairly decoupled but they
+run at the same speed so you to always
+take
+one step of data collection and one step
+of grading update
+and then process two is very slow and
+the replay buffer
+is quite large so you might store up to
+a million transitions
+part of why this starts looking so weird
+is that when your replay buffer is large
+process one and process three are pretty
+heavily decoupled
+because the once it's large enough the
+probability you'll sample the transition
+that you just collected
+becomes pretty low it does turn out that
+it's actually quite important
+to collect data pretty quickly so the
+performance of your q learning algorithm
+can degrade rapidly if you don't collect
+data fast enough
+but nonetheless process one and process
+three have
+you know quite a bit of buffer space
+between them literally
+and then the theta q iteration algorithm
+that i used
+for kind of illustrating these concepts
+can also be viewed as a special case of
+this and fitted q iteration
+process three is actually in the inner
+loop of process
+two which itself is in the inner loop of
+process one
+so in the theta q iteration algorithm
+you do your regression all the way to
+convergence
+then you update your target network
+parameters and you might alternate these
+a few times
+and then in the outer outer loop you pop
+all the way back out and collect more
+data
+but these are really not all that
+different they're just particular
+choices about the rates at which we run
+all these different processes
+and there's something of course a little
+bit deeper about this because
+for each of these processes they each
+create non-stationary for every other
+process
+so if process two and process one are
+completely halted
+then process 3 is just faced with a
+standard convergent
+supervised learning problem so by
+varying the rates
+of these different processes by making
+them all run at different rates
+we're essentially mitigating the effects
+of non-stationarity
+because if the rate of process 2 for
+example is very different from process 3
+then process 3 which is running a lot
+faster to it it will kind of look like
+everything is almost stationary
+so that's the kind of deeper reason why
+having these three different processes
+running at different rates
+can help q-learning algorithms converge
+more effectively

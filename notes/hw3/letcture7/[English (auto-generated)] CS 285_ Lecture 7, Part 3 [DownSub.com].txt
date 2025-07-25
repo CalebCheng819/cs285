@@ -1,0 +1,359 @@
+all right in the next portion of today's
+lecture
+we're going to discuss how this generic
+form of physical iteration
+that we covered can be instantiated as
+different kinds of practical
+deep reinforcement learning algorithms
+so first let's talk a little bit more
+about what it means
+for physical iteration to be an off
+policy algorithm
+so just to remind everybody of policy
+means that you do not need samples from
+the latest policy
+in order to keep running your rl
+algorithm
+typically what that means that you can
+take many gradient steps on the same set
+of samples
+or reuse samples from previous
+iterations so you don't have to throw
+out your
+your old samples you can keep using them
+which in practice gives you more data to
+train on
+so intuitively the main reason that
+physical iteration allows us to get away
+with using off policy data
+is that the one place where the policy
+is actually used
+is actually utilizing the q function
+rather than stepping through the
+simulator
+so as our policy changes what really
+changes
+is this max remember
+the way that we got this max was by
+taking the rmax
+which is our policy the policies in our
+max policy and then plugging it back
+into the q
+value to get the actual uh value for the
+policy
+so inside of that max you can kind of
+unpack it and pretend that it's actually
+q
+phi of s i prime comma arg max
+of q5 and that rmax is basically our
+policy
+so this is the only place where the
+policy shows up
+and conveniently enough it shows up as
+an argument to the q function which
+means that as our policy changes as our
+action ai prime changes
+we do not need to generate new rollouts
+you can almost think of this as a kind
+of model the q function allows you to
+sort of
+simulate what kind of values you would
+get if you were to take different
+actions
+and then of course you take the best
+action if you want to most improve
+your behavior
+so this max approximates the value of pi
+prime
+our greedy policy at si prime and that's
+why we don't need new samples we're
+basically using our q function to
+simulate
+the value of new actions
+so given a state in an action the
+transition is actually independent of pi
+right if s i and a i are fixed no matter
+how much we change
+pi s i prime is not going to change
+because pi only influences ai
+and here ai is fixed
+so one way that you can think of
+physical iteration
+kind of structurally is that you have
+this big bucket of different transitions
+and what you'll do is you'll back up the
+values along each of those transitions
+and each of those backups will improve
+your q value but you don't actually
+really care so much about which specific
+transitions they are
+so long as they kind of cover the space
+of all possible transitions
+quite well so you could imagine you have
+this data set of transitions
+and you're just plugging away on this
+data set running fit a queue iteration
+improving your q function each time you
+go around the loop
+now what exactly is it that fit
+accuration is optimizing
+well this step the step where you take
+the max
+improves your policy right so
+in the tabular case this would literally
+be
+your policy improvement and
+your step three is minimizing the error
+of fit so if you have a tabular
+update you would just directly write
+those yi's into your table
+but since you have a neural network you
+have to actually perform some
+optimization to minimize an error
+against those y
+eyes and you might not drive the error
+perfectly to zero
+so you could think of fit a q iteration
+as optimizing an
+error the error being the bellman er the
+difference between
+q phi s a and those target values y
+and that is kind of the closest to a
+actual optimization objective but of
+course that error itself doesn't really
+reflect the goodness of your policy
+it's just the accuracy with which you're
+able to copy your target values
+if the error is zero then you know that
+q phi s a is equal to rsa plus gamma
+max a prime q phi s prime a prime
+and this is an optimal q function
+corresponding to the optimal policy pi
+prime where the policies were covered by
+the argmax rule
+so this is this you can show maximize
+reward
+but if the error is not zero um then
+uh you can't really say much about the
+performance of this policy so
+what we know about uh theta q iteration
+is
+in the tabular case your error will be
+zero which means it'll recover q star
+if your error is not zero then most
+guarantees are lost
+when we leave the tabular case
+all right now let's discuss a few
+special cases
+of phytic iteration which correspond to
+the very popular algorithms in the
+literature
+so so far the generic form of fitted q
+learning that we talked about
+has these three steps collect a data set
+evaluate your target values
+train your neural network parameters to
+fit those target values and then
+alternate these two steps k times
+and then after k times go out and
+collect more data
+you can instantiate a special case of
+this algorithm with particular
+choices for those hybrid parameters
+which actually corresponds to an online
+algorithm
+so in the online algorithm in step one
+you take exactly one
+action ai and observe one transition
+s-i-a-i-s-i prime ri
+then in step two you compute one target
+value
+for the transition that you just took
+very much analogous to how you calculate
+the advantage value in active critic in
+online active critic
+for the one transition that you just
+took and then in step three
+you take one gradient descent step on
+the error
+between your q values and the target
+value that you just computed
+so the equation that i have here it
+looks a little complicated but i
+basically just applied
+the chain rule of probability to that
+objective inside the argument and step
+three
+so applying chain rule you get dq d5
+at siai times the error q phi
+s i a i minus y i and the error in those
+parentheses that q
+s i a i minus y i is sometimes referred
+to as the temporal difference error
+so this is the basic online queue
+q learning algorithm also sometimes
+called watkins q learning this is kind
+of the classic q learning algorithm
+that we learn about in textbooks
+and it is a non-policy algorithm so you
+do not have to take the action ai
+using your latest greedy policy
+so what policy should you use
+so your final policy will be the greedy
+policy if q learning
+converges and has error zero then we
+know the greedy policy is the optimal
+policy
+but while learning is progressing using
+the greedy policy may not be such a good
+idea
+here's a question for you to think about
+why might we not want to use
+the greedy policy the argmax policy in
+step one
+while running online queue learning or
+online queue iteration
+take a moment to think about this
+question
+so part of why we might not want to do
+this
+is that this our max policy is
+deterministic
+and if our initial q function is
+quite bad it's not going to be random
+but it's going to be arbitrary
+then it will essentially commit our
+argmax policy
+take the same action every time it
+enters a particular state
+and if that action is not a very good
+action we might be stuck taking that
+bad action essentially in perpetuity and
+we might never discover
+that better actions exist so in practice
+when we run fitted q iteration or q
+learning algorithms
+it's highly desirable to modify the
+policy that we use in step one
+to not just be the argmax policy but to
+inject some additional randomness
+to produce better exploration and there
+are a number of choices that we make in
+practice
+to facilitate this
+so one common choice is called epsilon
+greedy
+this is one of the simplest exploration
+rules that we can use
+with discrete actions and that's
+something that you will all implement in
+homework 3.
+epsilon greeting simply says that with
+probability
+1 minus epsilon you will take the greedy
+action
+and then with probability epsilon you
+will take one of the other actions
+uniformly at random so the probability
+of every action is
+one minus epsilon of this the r max and
+then epsilon divided by the number of
+actions minus one
+otherwise this is called epsilon reading
+why might this be a good idea well if we
+choose epsilon to be some small number
+it means that most of the time we take
+the action that we think is best
+and that's usually a good idea because
+if we have a if we've got if we've got
+it right
+then we'll go to some good region and
+collect some good data
+but we always have a small but non-zero
+probability of taking some other action
+which will ensure that if our q function
+is bad
+eventually we'll just randomly do
+something better it's a very simple
+exploration rule
+and it's very commonly used in practice
+a very common practical choice
+is to actually vary the value of epsilon
+over the course of training
+and that makes a lot of sense because
+you expect your q function to be pretty
+bad initially
+and at that point you might want to use
+a larger epsilon and then as learning
+progresses your q function gets better
+and then you can reduce epsilon
+another exploration rule that you could
+use is to select your actions
+in proportion to some positive
+transformation of your q values
+and a particularly popular positive
+transformation is exponentiation
+so if you take actions in proportion to
+the exponential of your q
+values what will happen is that the best
+actions
+will be the most frequent actions that
+are almost as good as the best action
+will also be taken quite frequently
+because they'll have similarly high
+probabilities
+but if some action has an extremely low
+q value then it will almost never be
+taken
+in some cases this kind of exploration
+rule can be preferred over epsilon
+greedy
+because with epsilon greedy
+the action that happens to be the max
+gets much higher probability and if
+there are two actions that are about
+equally good
+the second best one has a much lower
+probability whereas with
+this exponentiation rule if you really
+have two equally good actions you'll
+take them about an equal number of times
+the second reason it might be better is
+we have a really bad action and you've
+already learned that it's just a really
+bad action
+you probably don't want to waste your
+time exploring it whereas epsilon really
+won't uh make use of that
+so this is sometimes also called the
+boltzmann exploration rule
+also the softmax exploration rule
+we'll discuss more sophisticated ways to
+do exploration in much more detail
+in another lecture in the second half of
+the course but these simple rules
+are hopefully going to be enough to
+implement basic versions
+of q iteration and q learning algorithms
+all right so to review what we've
+covered so far
+we've discussed value-based methods
+which don't learn a policy explicitly
+but just learn a value function or q
+function
+we've discussed how if you have a value
+function you can recover a policy by
+using the arcmax
+and how we can devise this fitter queue
+iteration method
+which does not require knowing the
+transition dynamics so it's a true model
+free method
+and we can instantiate it in various
+ways as a batch mode off policy method
+or an online queue learning method uh
+depending on the choice of those hyper
+parameters the number of steps we
+we take to gather data the number of
+grading updates and so on
+you

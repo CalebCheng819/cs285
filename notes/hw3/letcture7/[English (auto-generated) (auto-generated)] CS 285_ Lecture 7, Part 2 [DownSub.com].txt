@@ -1,0 +1,456 @@
+all right so far we talked about how we
+can learn value functions
+represented in a tabular form so there's
+no neural net no d bar
+l no function approximation just a small
+discrete state space
+where we can enumerate the value in
+every possible state
+now let's talk about how we can
+introduce neural networks and function
+approximation
+so first uh how do we represent v of s
+well so far we talked about how we can
+represent it as a big table
+with one entry for each discrete state
+so
+in state 0 you say v of s is 0.2 and
+state
+s s equals 1 it's 0.3 and so on
+why is this not enough well take a
+moment to think about this
+why might we not want to represent the
+value function as a table
+let's say that you're playing a video
+game from images
+right now in this video game the number
+of possible states if you have a 200 by
+200 pixel image
+is 255 which is the number of values
+that each pixel can take on
+raised to the third power because there
+are three color channels raised to the
+power 200 times 200 so these are this is
+the number of possible images you could
+see
+maintaining a table over this many
+entries is impossible this is more than
+the number of atoms in the universe
+and that's for a discrete state space
+for continuous state space
+it's actually just infinite and this
+would never be possible
+and this is also by the way sometimes
+referred to as the curse of
+dimensionality if someone says cursive
+dimensionality
+in the context of reinforcement learning
+what that refers to
+is the simple fact that if you have a
+state space with many dimensions
+the number of entries that you need in a
+table for tabular reinforcement learning
+is exponential in the number of
+dimensions
+so we'll use a function approximator
+let's say just like in lecture 6
+we're going to have a neural net value
+function that maps from states
+to scalar valued values so we're going
+to have a neural net
+that looks like this and it has some
+parameters fine
+so what we can do is we can fit our
+neural net value function
+in much the same way as we did in
+lecture 6
+by doing least squares regression onto
+target values
+and if we use the value iteration
+procedure from the
+from the previous section then our
+target values are just the max
+over a of q pi s a
+so then our fitted value iteration
+algorithm
+would look like this we would
+take our data set of states and actions
+for every sample state we would evaluate
+every possible action you could take
+in that state and we would take a max
+over those actions of our q values
+so what i have in the parenthesis here
+is i have to substitute in the q value
+so the q value is the reward
+plus gamma times the expected value of
+the next state
+so i've substituted that into the
+parameters we don't represent the q
+function explicitly here
+we just compute it as we go to evaluate
+the max
+and that gives us our target values y
+and then
+we solve for phi by doing least squares
+regression
+uh so that v5si is close to y i
+so this is fitted value direction step
+one
+compute your target values by
+constructing
+the q function for every possible action
+at each sampled state
+so you have a finite sampling of states
+and we still assume that we have a
+discrete action space
+so we can perform this enumeration
+exactly for every action we value its
+reward
+plus gamma times the expected value of
+the value
+at the next state do the max over that
+that gives us our target value and then
+in step two regress onto those target
+values
+all right so this is a reasonable
+algorithm that we could use
+but it still requires us to know the
+transition dynamics
+where do we need to know the transition
+dynamics which part of this algorithm
+requires knowing the transition dynamics
+well it's basically this part so
+there are two ways in which this
+requires knowledge of the transition
+dynamics
+it requires being able to compute that
+expected value and
+perhaps more importantly it requires us
+to be able to try multiple different
+actions from the same state
+which we can't do in general if we can
+only run policies in the environment
+instead of
+teleporting to a state multiple times
+and trying multiple actions from the
+same exact state
+so if we don't know the transition
+dynamics generally we can't do this
+so let's go back to policy iteration in
+policy iteration
+we alternated between evaluating q pi or
+a pi but if you have a pi or if you have
+q pi you can recover a pi
+and then step two setting our policy to
+be the security arc max policy
+so that was policy direction
+and step one in policy iteration
+involved policy evaluation
+which involved repeatedly applying this
+value function
+recurrence so we saw before
+so what if instead of applying the value
+function recurrence
+to learn the value function we instead
+directly constructed
+a q function recurrence in an analogous
+way
+so if i wanted to construct the q
+function at a particular state action
+tuple
+i can write exactly the same recurrence
+except that
+now since the q function is a function
+of a state
+and an action i don't need to evaluate
+the next state given s and pi of s
+i just evaluate the next state given the
+sa tuple
+that i'm training my q function on and
+this might at first seem like a very
+subtle difference
+but it's a very very important one
+because now as my policy pi
+changes the action for which i need to
+sample s prime basically the the a
+that's on the right of the conditioning
+bar and p of s prime given s a
+doesn't actually change which means that
+if i have a bunch of samples
+s comma a comma s prime i can use those
+samples
+to fit my q function regardless of what
+policy i have
+the only place where the policy shows up
+is as an argument to the q
+function at the state s prime inside of
+the expectation
+and it turns out that this very
+seemingly very simple change
+allows us to perform policy iteration
+style algorithms
+without actually knowing the transition
+dynamics just by sampling
+some s a s prime tuples which we can get
+by running any policy we want
+so this second recurrence that i've
+written here
+doesn't require knowing the transition
+probabilities
+it just requires samples of the form s
+comma a
+comma s prime so if we do this
+for step one in policy iteration we
+would no longer require
+knowing the transition probabilities and
+this is very important this is the basis
+of most value-based model free rl
+algorithms
+all right now we we seemingly took a
+step back
+because before we derived policy
+iteration and then we simplified it to
+get value iteration
+and the way that we got value iterations
+by using this max trick in value
+iteration we saw that
+when we construct the policy we take the
+arg max but then
+we simply take the value of that rmax
+action so
+evaluating the value of the arg max is
+just like taking the max
+so we can forego policy
+construction we can fix it forego that
+step two and
+directly perform value iteration can we
+do the same max
+trick with q functions so can we
+essentially do something like value
+iteration
+but without knowing the transition
+probabilities
+so what we did before is we took policy
+iteration which alternates between
+evaluating the value function in step
+two
+and setting the policy to be the greedy
+policy in step uh
+sorry evaluating the value function step
+one and setting the policy to be the
+greedy policy in step two
+and we transform into this other
+algorithm where step one constructs
+target values
+by taking a max over the q values and
+step two
+fits a new value function to those
+target values
+so here we compute forgot the policy we
+just compute the values directly
+so can we do this with q values also but
+still retain
+this benefit of not needing to know the
+transitions
+so the way that we construct the fitted
+q iteration algorithm
+is very much analogous to fitted value
+iteration we construct our target value
+y i
+as the reward as sampled state action
+tuple s i
+ai plus gamma times the expected value
+of the value function at state s prime
+and then in step two we simply regress
+our q function
+q phi onto those target values
+the trick of course is that we have to
+evaluate step one without knowing the
+transition probabilities
+so we may so we're going to do two
+things first
+we're going to replace v of s i prime
+with the max over a at q
+phi s i prime a i prime because
+we're only approximating q phi we're not
+approximating v phi
+and second instead of taking a full
+expectation over all possible next
+states
+we're going to use the sampled state si
+prime
+that we got when we generated that
+sample and now
+all we need to run this fit accuration
+algorithm is
+samples s i a i s i prime which can be
+constructed
+by rolling out our policy so this is
+fitted q iteration
+it alternates between two steps step one
+estimate target values
+which you can do using only samples and
+your previous q function q5
+step 2 fit a new phi with regression
+onto your target values
+using the same exact samples that you
+use to compute your target values
+and this doesn't require simulation of
+different actions
+it only requires the actions that you
+actually sampled last time when you ran
+your policy
+so this works even for off policy
+samples so this algorithm does not make
+any assumptions
+that the actions were actually sampled
+from the latest policy the actions could
+have been sampled from anything
+so you can store all the data you've
+collected so far it doesn't need to come
+from your latest policy
+unlike activecritic where we had an
+on-policy algorithm
+there's only one network there's no
+policy grading at all there's no actor
+there's only
+a q function estimator which is a neural
+network that takes in a state
+and an action and outputs a scalar
+valued q value
+unfortunately it turns out this
+procedure does not have any
+convergence guarantees for non-linear
+function approximation so if you do this
+with a neural net
+it may not converge to a true solution
+and we'll discuss this a lot more later
+in the lecture
+if you use a tabular representation it
+is actually guaranteed to converge
+but for a neural network it's in general
+not guaranteed to converge
+all right so just to put this the pieces
+together here's the full
+physical iteration algorithm and for
+each step of the algorithm there are
+some free parameters that i'm going to
+mention step one collect the data set
+consisting of tuples s i ai si prime and
+ri using some policy
+the algorithm works for a wide range of
+different policies now not all policy
+choices are equally good
+but uh the principles will apply to any
+policy and it certainly doesn't have to
+be
+the latest policy and one of the
+parameters you have to choose
+is the number of such transitions you
+are to collect so typically
+you would draw your policy for some
+number of steps or some number of
+trajectories
+but you get to choose how many and of
+course you also choose
+the policy that you're going to be
+rolling out what policy do you use to
+collect this data
+a very common choice is in fact to use
+the latest policy
+but there are a few nuances about that
+choice that i'll discuss
+shortly step two
+for every transition that you sampled
+calculate a target value
+so you calculate the target value y i by
+taking the reward
+from the transition plus gamma times the
+max
+over the next action a i prime of the q
+value q phi s i prime a i prime
+using your your previous q function
+estimator q file
+step 3 train a new q function which
+means
+find a new parameter vector phi by
+minimizing the difference
+between the values of q phi s i a i and
+the corresponding target value
+y i so you have a q function
+which takes as input s and a it outputs
+a scalar value
+and it has parameters phi i should
+mention by the way that a very common
+design
+for for a neural architecture for a
+neural network architecture
+for a q function with discrete actions
+is actually to have the actions
+uh the outputs rather than inputs so an
+alternative design is to input the state
+s
+and then i'll put a different q value
+for every possible action a
+you can think of that as a special case
+of this design and
+i'll discuss in class a little bit how
+those relate but
+conceptually it's probably easiest to
+think about as a neural network that
+takes
+s and a as input and outputs a value but
+you could also think of it as a network
+that takes s as input
+and outputs a different value for every
+possible a
+so in step three one primer you have to
+choose is the number of gradient steps
+capital s that you will make in
+performing this optimization
+you could run this optimization all the
+way to convergence or you can run it for
+just a few gradient steps
+now doing step three once
+doesn't actually get you uh the
+uh the best possible q function you
+could alternate step two and step three
+some number of times
+let's say capital k times before going
+out and collecting more data
+and the number of times you alternate
+step two and step three we're going to
+refer to as k
+that's the number of iterations of the q
+iteration that you take in the inner
+loop
+and then once you've taken those k
+iterations maybe you could take your
+latest policy
+modify it with some exploration rules
+which i'll discuss shortly
+and use it to collect some more data so
+this is the general design of physical
+iteration
+many different algorithms can actually
+be interpreted as variants of fitted key
+iteration
+including algorithms like q-learning
+which i will cover
+shortly all right so to review this
+portion of the lecture
+we discussed value-based methods
+value-based methods
+do not learn a policy explicitly they
+just learn a value function or q
+function
+represented as a table or a neural
+network
+if we have a value function we can
+recover a policy
+by using the argmax policy we talked
+about how fit
+removes the need for us to need to know
+the transition probabilities
+and we discussed this kind of generic
+form of the physical iteration algorithm

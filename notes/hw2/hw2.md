@@ -655,3 +655,62 @@ baseline_loss
 Eval_AverageReturn
 
 ![](https://cdn.mathpix.com/snip/images/3GLQ7ZpzgJxdcWDyicPXURV6eS-CMuuh5aoPgLu90Hw.original.fullsize.png)
+
+### GAE的参数
+
+```python
+python cs285/scripts/run_hw2.py \
+--env_name LunarLander-v2 --ep_len 1000 \
+--discount 0.99 -n 300 -l 3 -s 128 -b 2000 -lr 0.001 \
+--use_reward_to_go --use_baseline --gae_lambda 0 \
+--exp_name lunar_lander_lambda0
+python cs285/scripts/run_hw2.py \
+--env_name LunarLander-v2 --ep_len 1000 \
+--discount 0.99 -n 300 -l 3 -s 128 -b 2000 -lr 0.001 \
+--use_reward_to_go --use_baseline --gae_lambda 0.95 \
+--exp_name lunar_lander_lambda0.95
+python cs285/scripts/run_hw2.py \
+--env_name LunarLander-v2 --ep_len 1000 \
+--discount 0.99 -n 300 -l 3 -s 128 -b 2000 -lr 0.001 \
+--use_reward_to_go --use_baseline --gae_lambda 0.98 \
+--exp_name lunar_lander_lambda0.98
+python cs285/scripts/run_hw2.py \
+--env_name LunarLander-v2 --ep_len 1000 \
+--discount 0.99 -n 300 -l 3 -s 128 -b 2000 -lr 0.001 \
+--use_reward_to_go --use_baseline --gae_lambda 0.99 \
+--exp_name lunar_lander_lambda0.99
+python cs285/scripts/run_hw2.py \
+--env_name LunarLander-v2 --ep_len 1000 \
+--discount 0.99 -n 300 -l 3 -s 128 -b 2000 -lr 0.001 \
+--use_reward_to_go --use_baseline --gae_lambda 1 \
+--exp_name lunar_lander_lambda1
+
+```
+
+![](https://cdn.mathpix.com/snip/images/R24DRp2456y6hJHqSz-3tak-17Z4O3REsqb3I6hlFNI.original.fullsize.png)
+
+### humanoid
+
+显卡配置是A6000，在安装完以下渲染的系统依赖库（mesa依赖）
+
+```python
+sudo apt update
+sudo apt install libosmesa6-dev libgl1-mesa-glx libglfw3
+```
+
+仍然无法显示，尝试了使用虚拟显示，代码能正常运行，但结束后渲染出来的image为黑屏
+
+```
+Xvfb :99 -screen 0 1024x768x24 & 
+export DISPLAY=:99
+```
+
+注意在使用虚拟显示结束后关闭其进程`pkill -f "Xvfb :99"`
+
+后尝试关闭虚拟现实，根据installation.md里面的操作`export MUJOCO_GL=egl`，仍然报错
+
+```
+ImportError: Cannot initialize a EGL device display. This likely means that your EGL driver does not support the PLATFORM_DEVICE extension, which is required for creating a headless rendering context.
+```
+
+后在run_hw2.py的前面加入`os.environ["MUJOCO_GL"] = "osmesa"`得以正常渲染

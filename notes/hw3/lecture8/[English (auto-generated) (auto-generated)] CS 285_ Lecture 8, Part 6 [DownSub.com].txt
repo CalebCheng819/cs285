@@ -1,0 +1,366 @@
+all right in the last portion of today's
+lecture
+i'll go through some tips and tricks for
+implementing q-learning algorithms
+which might be useful for homework three
+and then i'll give a few examples
+of papers that have used variants of the
+methods
+that i described in this lecture
+so first a few practical tips q
+learning methods are generally quite a
+bit more finicky to use than policy
+grading methods so they tend to require
+a little bit more care to use correctly
+it takes some care to stabilize
+q-learning algorithms
+and what i would recommend is to start
+off by testing your algorithms on some
+easy
+reliable problems where you know that
+your algorithm should work
+just to make sure your implementation is
+correct because
+essentially you have to go through
+several different phases of
+troubleshooting you first have to make
+sure that you have no bugs
+then you have to make sure that you tune
+your hyper parameters and then get it to
+work on your
+real problems so you want to do the
+debugging before the hyperparameter
+tuning which means that you want to do
+it on really easy problems
+where basically any correct
+implementation should really work
+q learning performs very differently on
+different problems uh so these are some
+plots of dqm type experiments
+on a variety of different atari games
+and something you might notice
+is that there's a huge difference in the
+stability of these methods so for pong
+your reward basically uh steadily goes
+up and then
+flat lines for breakout it kind of goes
+up and then wiggles a whole bunch and
+then for some of the harder games like
+video pinball and venture
+it's just completely all over the place
+and the different colored lines here
+simply represent different runs of the
+same exact algorithm with different
+random seeds
+you can see the different random seeds
+for pong are basically identical for
+breakout they're kind of qualitatively
+the same but have different noise
+works for something like venture some of
+the runs work and some fail completely
+large replay buffers do tend to help to
+improve stability quite a lot
+so using a replay buffer of a size about
+1 million can be a pretty good choice
+uh and at that point the algorithm
+really starts looking a lot more like
+fit a queue iteration
+which is perhaps part of the explanation
+for its improved stability
+and lastly q-learning takes a lot of
+time so be patient
+i it might be no better than random for
+a long time
+while that random exploration finds the
+good transitions and then it might take
+off once those good transitions are
+found
+and many of you will probably experience
+this at homework 3 when you train on the
+palm video
+game start with high exploration start
+with large values of epsilon
+and then gradually reduce exploration as
+you go because initially your q function
+is garbage anyway
+so it's mostly the random exploration
+that will be doing most of the heavy
+lifting
+and then later on once your q function
+gets better then you can decrease
+epsilon
+so it often helps to put on a schedule
+a few more advanced tips for q learning
+the errors of the bellman error
+i said the gradients of the development
+error can be very big
+uh so it's kind of a least squares
+regression so these squared error
+quantities can be large quantities
+which means their gradients can be very
+large and something that's a little
+troublesome
+is that if you have a really bad action
+you don't really care about the value of
+that action
+but your squared error objective really
+cares about figuring out exactly how bad
+it is
+so if you have some good actions that
+are like plus 10 plus 9 plus 8 and you
+have some bad actions that are minus 1
+million
+that minus one million will create a
+huge gradient even though you don't
+really care that's minus one million
+like if you were guessed to guess
+minus nine hundred thousand it would be
+it would result in the same policy
+but your q function objective really
+cares about that and that will result in
+big gradients
+so what you can do is you can either
+clip your gradients
+or you can use what's called a huber
+loss a huber loss you can think of as
+kind of
+interpolating between a squared error
+loss and an absolute value loss
+so far away from the from the minimum
+the huber loss looks like absolute value
+and close to the minimum
+because absolute value is a
+non-differentiable cusp the huber loss
+actually flattens it out with a
+quadratic
+so the uh the green curve here on the
+right shows a huber loss whereas the
+blue curve
+shows a quadratic loss so the huber law
+set actually mechanically
+behaves very similarly to clipping
+gradients but it can be a little easier
+to implement
+double q learning helps a lot in
+practice it's very simple to implement
+and it basically has no down signs so
+probably a good idea to use double q
+learning
+uh nstep returns can help a lot
+especially in the early stages of
+training
+but they do have some downsides because
+n-step returns will systematically bias
+your objective especially for larger
+values of n so be careful with unstep
+returns
+but do keep in mind that they can
+improve things in the early stages of
+training
+schedule exploration and schedule
+learning rates adaptive optimization
+rules like atom can also help a lot
+so some of the older work used things
+like our rms prop
+which doesn't work quite as well as the
+most recent adaptive optimizers like
+atom
+so good idea to use adam and also
+when debugging your algorithm make sure
+to run multiple random seeds because
+you'll see a lot of variation between
+random seeds
+you'll see that the algorithm is very
+inconsistent between runs so you should
+run a few different random seeds to make
+sure that things are really working the
+way you expect
+and that you didn't get a fluke and the
+fluke can either be unusually bad or
+unusually good
+so keep that in mind okay
+so in the last portion of the lecture
+what i'm going to do is i'm going to go
+through a few examples
+of previous papers that have used
+algorithms that relate to the ones that
+i covered in this lecture
+the first paper that i want to briefly
+talk about is this paper called
+autonomous reinforcement learning from
+raw visual data
+by langen reed miller or lang and reed
+miller rather
+so this is a paper from 2012 it's quite
+an old paper and
+it's one of the actually earliest papers
+that used deep learning
+with physical iteration methods the
+particular procedure this paper used
+though is a little different from the
+methods that we covered in this lecture
+it's actually
+more similar to some of the model based
+algorithms that i'll discuss later
+so in this paper what the authors did is
+they actually learn a
+kind of a latent space representation of
+images by using an auto encoder
+and then they actually run fit a queue
+iteration on the latent space of this
+auto encoder on the feature space
+but the particular physical iteration
+they use actually doesn't use neural
+networks
+it uses something called uh random trees
+so they use a non-deep but still fit
+accurate procedure
+on the representation learned by a deep
+neural network
+so it's q learning on top of a latent
+space learned with an auto encoder
+using fit a q iteration uh and something
+called extra random trees for function
+approximation
+you can think of extra random trees as
+basically very similar to random forests
+and the demonstration that they had in
+this paper which is pretty cool
+is to use an overhead camera to look at
+this little slot car race track
+and then learn to control the slot car
+to drive around the racetrack
+here is a paper that uses convolutional
+neural networks with uh
+q learning this is dq learning so this
+is a paper called human level control
+through deep
+d barrel and this paper uses q learning
+with confidence
+with replay buffers and target networks
+and this kind of
+simple one-step backup that i mentioned
+and one gradient set
+to play atari games and this can be
+improved a lot
+so it can be improved a lot with double
+q learning the original method in this
+paper can actually also be improved a
+lot just by using atom so that alone
+actually gets you
+much much better performance but
+for homework 3 you'll be implementing
+something you know fairly similar to
+this paper
+here is a paper on queue learning with
+continuous actions for robotic control
+application
+uh or kind of a simulated control
+application so this is the
+the gdpg paper called continuous control
+with deep reinforcement learning
+using continuous actions with a
+maximizer network
+and uses a replay buffer and target
+networks of poly converting
+with a one-step backup and one gradient
+step per simulation step
+and they evaluated on some kind of
+simple toy
+low dimensional uh robotics tasks
+here's a paper that actually uses a deep
+q-learning algorithm with continuous
+actions for real-world robotic control
+and this actually kind of exploits some
+of the parallelism ideas that i
+discussed before
+so here you have multiple robots
+learning in parallel to open doors
+it's a paper called robotic manipulation
+with deep reinforcement learning
+and asynchronous of policy updates and
+this uses that
+naf representation so this is a q
+function that is quadratic in the
+actions making maximization easier
+you use a replay buffer and target
+network a one-step backup and this one
+actually uses four grading steps per
+simulation step
+to improve the efficiency because uh
+collecting data from the robots i guess
+it's not even simulation it's actually
+real world
+uh collecting data from the robots is
+expensive so you'd like to do as much
+computation with as little data as
+possible
+and it's further paralyzed across
+multiple robots for better efficiency
+this method which i showed actually in
+lecture one is also
+a deep q learning algorithm that takes
+this
+paralyzed interpretation of physical
+iteration of the extreme
+so here there are multiple robots that
+are learning grasping all in parallel
+and there are actually multiple workers
+that are all computing
+target values multiple workers that are
+all performing regression
+uh and a separate worker that is
+managing the replay buffer so this is
+literally instantiating that system that
+i showed before
+with process one process two and process
+three and in this case each of those
+processes are themselves
+forked off into multiple different
+workers on a large uh
+server farm all right
+if you want to learn more about q
+learning some suggested readings
+classical papers this is the watkins q
+learning paper that introduced the q
+learning algorithm in 1989 this paper
+called neural physical iteration
+introduces batch molecular with neural
+networks some deep rl papers for q
+learning
+the lang and read miller paper that i
+mentioned before
+the dqn paper this is the paper that
+introduced double q learning
+this is the paper that introduced that
+approximate maximization with mu theta
+this is the paper that introduced naf
+this is a paper that introduces
+something called dueling network
+architectures
+which is very very similar to the naf
+architecture
+but adapted for discrete action spaces i
+didn't cover this in the lecture but
+it's also a pretty useful trick
+for making q-learning work better all
+right so these are the suggested
+readings and you can find them in the
+slides if you want to learn more
+i highly encourage you to check it out
+and just to recap what we've covered
+in today's lecture we talked about q
+learning and practice
+how we can use replay buffers and target
+networks to stabilize it
+we talked about a generalized view of
+physical iteration
+in terms of three processes we talked
+about how double q learning
+can make q-learning algorithms work a
+lot better how can do multi-step
+q learning how we can do q learning with
+continuous actions
+including with random sampling analytic
+optimization and a second actor network
+and that's it
