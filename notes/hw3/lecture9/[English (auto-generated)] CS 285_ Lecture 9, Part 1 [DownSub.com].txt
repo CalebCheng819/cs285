@@ -1,0 +1,633 @@
+all right so today's lecture is going to
+be on advanced policy gradient
+algorithms
+and this is probably going to be one of
+the more technically uh
+nuanced lectures in the course so if
+this material goes by fast if it's a
+little difficult to follow uh you know
+please make sure to ask questions in the
+comments
+and you know don't be concerned if you
+have to go through a couple of times to
+really
+uh get the full gist of it so the goal
+in today's lecture
+is going to be to combine some of the
+policy grading ideas that we discussed
+before
+with some more recent concepts that we
+cover in the course like policy
+iteration
+to provide a new perspective on policy
+grading methods
+and a little bit of analysis about when
+and why
+we would expect policy gradients to work
+now this lecture is primarily about
+policy gradients
+but the insights that i think we get
+from this type of analysis
+can also be used for things like
+ectocritic algorithms and more generally
+to gain a deeper understanding of rl
+methods
+so if you have an interest in
+reinforcement learning theory in
+understanding
+how and why to design algorithms in a
+certain way
+and if you just want to get kind of more
+in-depth knowledge about policy
+gradients this is the lecture for you
+all right so let's just recap the policy
+gradient material that we had before
+so initially we covered the basic
+reinforce algorithm
+where the procedure is that we sample
+some trajectories
+from our current optimal uh from our
+current policy our current sub-optimal
+policy
+then for every one of those trajectories
+and every time step along each of those
+trajectories
+we calculate the reward to go and then
+multiply the grad log pies by the reward
+to go
+to get an estimate of the gradient and
+then we perform gradient ascent
+and then we saw for instance in the
+actual critical lecture
+that this reward to go could be computed
+in various ways
+using the monte carlo estimator as shown
+here or with more sophisticated methods
+that involve actually learning value
+function
+estimators so of course like all of the
+algorithms that we cover policy
+gradients follow
+the same basic recipe they generate
+samples in the orange box
+fits an estimate to the reward to go
+either with a learned value function
+or just with monte carlo estimates in
+the green box and then perform grading
+ascent
+in the blue box
+so this is kind of the most generic form
+of the policy gradient where
+you have many choices about what goes in
+for q-hat
+so that's our reward to go okay so
+that's just a recap of what we covered
+before
+um the question we're gonna ask now is
+why is it that policy gradient actually
+works
+why is it that we can count on policy
+grading to improve our policy
+now the obvious answer is that well you
+just calculated a gradient and then
+you're doing gradient descent so
+if gradient ascent works then policy
+gradient should work too
+but there's a bit more to it and if we
+do a little bit of analysis we can
+actually get some idea of
+how and why we should expect the policy
+grading procedure to work
+so one of the ways that we can think of
+policy grading more conceptually so
+there was this kind of reinforce
+method on the previous slide which is a
+particular instance of policy gradient
+but conceptually we can think of a more
+general
+way of looking at policy gradient where
+we have one step
+which is to estimate the approximate
+advantage
+for state action tuples for our current
+policy
+pi and there are many ways to perform
+that estimate using monte carlo returns
+or using learned value functions
+and then use this advantage estimate a
+hat
+to somehow improve the policy and get a
+new and improved policy pi prime
+and then repeat this process now
+this way of looking at policy gradient
+is basically equivalent to what i had on
+the previous slide so
+on the previous slide we were estimating
+a hat by generating samples
+and summing up the rewards to go and
+then we were
+using a hat to improve the policy by
+calculating the policy gradient
+and doing a step of grading ascent but
+it's important to recognize that
+what we're really doing is in some sense
+alternating these two steps alternating
+the estimation of a hat
+and using the a-hat estimate to improve
+the policy
+and when it when i write it out in this
+way then it perhaps becomes a little bit
+more apparent
+that policy gradients are themselves
+very related to another algorithm that
+we learned about
+when we discussed value-based methods
+last week
+take a moment to think back to the
+discussion from last week and what kinds
+of algorithms we covered
+what algorithm do you remember that had
+this type of structure
+where we alternate between estimating
+the value of the current policy
+and then using that estimated value to
+improve that policy
+so that was basically the idea behind
+the policy iteration algorithm
+and we covered the policy iteration
+algorithm when we discussed value-based
+methods
+primarily as a way to set the stage for
+what will come next which was
+q learning but if we think back to
+policy iteration we might recognize
+that policy gradients and policy
+iteration actually look very similar
+one of the main differences is that in
+policy iteration when we calculated the
+new policy pi
+prime we use this arcmax rule
+remember that we would always pick the
+policy pi prime
+that assigns a probability of 1 to the
+action that is the arg max of the
+current advantage
+in some sense policy gradients makes a
+much
+gentler update it doesn't immediately
+jump to the rmax
+but it improves a little bit in the
+direction
+where the advantages are large right
+because if you
+look at the policy gradient expression
+at the top of the slide
+we take grad log pi times a hat which
+means that actions with a large a hat
+will get larger probabilities and
+actions with a lower
+a hat will get lower probabilities
+so you could almost think of policy
+gradients as a kind of
+softened version of the policy iteration
+procedure we discussed before
+where the policy iteration procedure
+from last week would simply
+immediately assign a probability of one
+to the highest advantage action whereas
+policy gradients
+changes the policy parameters to move
+towards parameters
+that give higher probabilities to the
+arc max and lower probabilities
+to actions with worse advantages but it
+doesn't immediately jump all the way to
+one and zero
+and that might be desirable if you think
+that your advantage estimator
+is not perfect if your advantage
+estimator is not perfect
+perhaps what you would like to do is
+just slightly change your policy
+in the direction suggested by your
+advantage estimator and then collect
+some more
+transitions some more samples and
+improve your advantage estimator
+so in a sense what we're going to
+discuss today
+is how to formalize this notion and
+explain why we should expect
+this kind of softened policy iteration
+procedure
+which is policy gradients to work well
+okay so let's try to reinterpret the
+policy gradient
+as policy iteration to get started on
+this
+i'm going to show you a little
+calculation
+i'm going to show you how we can write
+this expression
+the difference between the rl objective
+for some new parameter theta prime
+minus the objective for some old
+parameter as an expression that
+describes
+the expected advantage under the new
+policy
+or the advantage is taken from the old
+policy
+so j theta here
+represents the reinforcement learning
+objective which is the expected value
+under the trajectory distribution
+induced by parameter
+vector theta of the total reward under
+that distribution
+and we'll just go with discount rewards
+for now just to keep everything
+uh complete and this is the version
+where the discount
+starts from step one i know that's not
+the version that we actually use in
+practice but this will make the
+calculations
+much more accessible and the claim that
+i'm going to try to show
+is that the difference between j theta
+prime and j
+theta is the expected value
+under the trajectory distribution of the
+previous
+uh uh sorry under the distribution of
+the new policy
+of the advantage of the previous policy
+okay let's unpack this statement a
+little bit uh to try to get some
+intuition for why we even want to care
+about this
+so j theta prime minus j theta
+represents the improvement in the rl
+objective that we get from going from
+some old parameter theta
+to some new parameter theta prime so you
+could think of this as
+maybe we're doing policy iteration theta
+prime represents the parameters of the
+new
+improved policy and theta represents the
+parameters of the old policy
+so if we can make j theta prime minus j
+theta large
+with respect to theta prime then we're
+improving the policy a lot
+now those of you that are paying close
+attention might realize that there's
+something a little
+strange with that statement because if
+we're maximizing j theta prime minus j
+theta with respect to theta prime the j
+theta is actually irrelevant and that's
+absolutely true so maximizing j
+theta prime with respect to theta prime
+is exactly the same as maximizing j
+theta prime minus j
+theta with respect to theta prime
+so of course the real goal of this
+derivation
+is to show that if we maximize the right
+hand side of this equation
+the expectation under pi theta prime of
+the advantage of pi
+theta then we're actually maximizing j
+theta prime minus j
+theta which means that we're actually
+maximizing j theta prime
+which is actually what we want
+okay so the left hand side is the
+improvement
+in the return of the policy in going
+from theta to theta prime
+which is what we'll want to optimize
+with respect to theta prime
+the right hand side of this equation is
+expressing the expected value
+under the trajectory distribution
+induced by the new policy the one that
+you're optimizing
+of the advantage of the old policy and
+why do we care about this quantity well
+because that's essentially what policy
+iteration does
+policy iteration computes the advantage
+of the old policy
+a pi theta and then uses that advantage
+to find a new improved policy by theta
+prime
+so if we can show that maximizing the
+expected value of the advantage of the
+old policy
+with respect to a new policy in fact
+actually optimizes
+the improvement in the rl objective then
+we will have proven
+that using the advantage of the old
+policy and maximizing it under the new
+policy
+is a correct way to optimize your new
+policy
+so that's why we would like to show this
+claim
+okay take a moment to think about this
+make sure that
+it makes sense to you why this claim is
+important why we want to show this
+if it's not clear why this is uh an
+important claim to prove
+please write a question about it in the
+comments
+okay so let's get started with our proof
+so
+our goal is to prove this claim and
+to start on the path there i'm going to
+substitute in
+the equations for the rl objectives
+so remember that one way that we can
+express the rl objective
+is as the expected value of the value
+function
+under the initial state distribution
+because the value function captures
+the expected reward that pi theta would
+get if it starts in some state as zero
+so if we average over all the s zeros
+then we'll get the rl objective
+and the reason that i want to write it
+this way is because now
+ps0 doesn't depend on theta so
+everything that depends on theta is
+inside the expectation the distribution
+with respect to which the expectation is
+taken
+does not depend on theta
+so what that means is i can change the
+distribution under which the expectation
+is taken
+to be any distribution whose marginal
+over the initial state
+is ps0 and this includes p
+theta tau p theta prime tau and
+p any theta tau basically the trajectory
+distribution for any policy
+must have the same initial state
+marginal so what i can do going from the
+first line to the second line
+is i can explain i can replace p of s0
+with any trajectory distribution that
+has the same initial state marginal
+and the one that i'm going to pick is p
+theta prime of tau
+why am i putting in p theta prime of tau
+well because my goal
+ultimately is to turn this into an
+expectation under p
+theta prime of tau that's the right hand
+side of our claim and i can put in d
+theta prime
+of tau here because it has the same
+initial state marginal
+and the quantity inside the expectation
+only depends on s0
+so in a sense that value doesn't change
+if i
+take the expectation with respect to
+different policies
+and now what i'm going to do is i'm
+going to use a little
+telescoping sums trick so
+i'm going to replace v pi theta of s0
+with this funny quantity so let's look
+at this quantity this is
+a difference of two sums the first sum
+is a is a sum from zero to infinity and
+the second sum
+is a sum from one to infinity and what
+i'm summing in both cases
+is gamma to the power t times v pi
+theta evaluated at s t
+so i'm summing the same thing in both
+cases just that one sum runs from zero
+to infinity
+and the other runs from one to infinity
+so that means when i take the difference
+of these two sums
+all the elements in the first sum from 1
+to infinity get cancelled out by the
+second sum
+so that means that the difference of
+these two infinite sums
+is just v pi theta evaluated at s0
+okay so take a moment to think about
+this make sure that
+it's clear to you why v pi theta
+at s0 is equal to the difference between
+these two infinite sums
+okay so let's proceed
+so next what i'm going to do is i'm
+going to rearrange the term in these
+sums a little bit
+so what i would like to do is i would
+like to
+write this sum essentially as a bunch of
+terms that look a little bit like
+advantages
+so i'm going to take
+all of the terms that are getting
+subtracted off
+on the right hand side so first notice
+that the sign is switched so i switch
+the minus to a plus
+so when i switch the minus to a plus
+then
+that becomes the sum from 1 to infinity
+minus the sum from 0 to infinity
+and then i'm going to group the terms so
+for every one of those steps step one
+step two step three step four
+the term from the second sum the one
+from one to infinity
+uh has an extra factor of gamma the term
+from the first sum lacks that factor
+and the term from the second sum is
+evaluated at time sub t plus one
+the term from the first sum is evaluated
+at time step t
+so if i switch the sign notice that it's
+plus expectation under p theta prime now
+that means that
+the the terms inside the parentheses now
+become
+a sum from 1 to infinity minus the sum
+from 0 to infinity
+and then i'm going to pair off these
+terms so for the
+for the first term in the first sum
+that's evaluating s1
+for the first term and the second sum
+it's evaluating at 0 and they're off by
+one factor of gamma
+so the first term becomes gamma v s1
+minus vs zero the second term becomes
+gamma squared vs2 minus gamma vs zero
+and i'll take the gamma to the t term
+out so that i get an expression
+that looks like this okay so it's just a
+little bit of algebra and rearrangement
+but if this rearrangement is unclear to
+you please take a moment to think about
+it
+and write about it in the comments
+okay and what i'm going to do next is
+i'm going to substitute in
+the definition for j theta prime and
+this definition is taken from the thing
+in the top right
+corner of the slide so all i've done on
+this line is i simply replace j
+theta prime with the definition of j
+theta prime
+so now at this point if you look at
+these two equations it might be
+apparently what i'm what i'm about to do
+right i have two expectations both under
+p
+theta prime of tau both from zero to
+infinity
+both have a gamma to the t power in
+front of them and one of them has an
+r and the other one is gamma v st plus
+one minus v st
+so i can group these two expectations
+together i can i can distribute
+the expectation out and i get a sum from
+0 to infinity
+gamma to the power t and a quantity
+inside the parenthesis
+which is exactly the advantage function
+and crucially because the value function
+here is the value
+for pi theta the advantage
+is the advantage for pi theta as well so
+that means that this is equal to the
+expected value
+under p theta prime of tau of the sum
+from zero to infinity
+of gamma to the t of the advantage of pi
+theta
+s-t-a-t so this proves the claim that we
+want to prove
+and just to make sure everyone's on the
+same page concretely what this proves
+is that if we maximize the expected
+value of the advantage of an old policy
+with respect to an expectation
+for the new policy then we will optimize
+j theta prime will actually optimize the
+reinforcement learning objective
+so essentially this proof shows that
+pulse iteration does the right thing
+okay so what does this all have to do
+with policy gradients
+well so what we've shown is that the rl
+objective maximizing the error objective
+is the same as maximizing this equation
+where the advantage is taken under pi
+theta and the expectation is taken under
+pi
+theta prime
+so this is our equation and this
+equation can be written out
+as a sum over all of our time steps of
+the expectation under the state action
+marginal
+of the advantage of theta prime and the
+state action marginal itself can be
+written as an expectation
+with respect to states distributed
+according to pi theta prime of st
+and actions distributed according to pi
+theta prime of a t given st
+now at this point if we wanted to
+actually
+write down a policy grading procedure
+for optimizing this objective
+we could recall the important sampling
+derivation that we had before
+in the policy gradient lecture and write
+the inner expectation as an expectation
+under pi theta under our old policy
+but with the addition of these
+importance weights
+and now we're getting to something
+that's very close to the policy gradient
+expressions that we had before because
+remember
+we could get policy grading just by
+differentiating
+an equation very similar to this with
+respect to theta prime
+at the value theta equals theta prime
+the only difference is that our states
+are still distributed according to theta
+prime not according to p
+theta see we have access to b theta we
+can sample from b
+theta we can't sample from b theta prime
+because we don't yet know what the theta
+prime will be
+so it's a big problem here that the
+expectation over states
+is with respect to theta prime and not
+theta if we could just use theta instead
+of theta prime
+then we would recover the policy
+gradient expression that we had before
+so that's the problem that we're left
+with essentially we need to
+somehow ignore the fact that we need to
+use
+state sample from b theta prime of st
+and instead get away with using state
+sample from b
+theta of st so this is our problem
+uh if we could only get rid of that
+theta then the only
+remaining theta prime would be in the
+importance weight and then if we
+differentiate it we would recover the
+policy gradient
+and show that policy gradient and policy
+iteration are in fact equivalent
+so why do we want this to be true well
+we want this to be true because
+if we take this quantity and we call it
+a bar theta prime
+and we can show that j theta prime minus
+j theta is approximately equal
+to a bar theta prime that means that we
+can find theta prime by taking
+the r max of a bar
+and that means that we can use a hat to
+get an improved policy pi
+prime so is this true
+and when is this true the claim
+which i'm going to show in the next part
+of this lecture is that p
+theta s t is close to b theta prime of s
+t
+when pi theta is close to pi theta prime
+now that might seem like a kind of
+obvious statement but it's actually not
+quite obvious to prove this statement
+in a non-vacuous way

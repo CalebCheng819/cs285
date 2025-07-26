@@ -31,7 +31,7 @@
 
 **方法 2：回放缓冲区（Replay Buffers）**：
 
-![image-20250725112706272](C:/Users/21934/AppData/Roaming/Typora/typora-user-images/image-20250725112706272.png)
+![](https://cdn.mathpix.com/snip/images/mbUX-irHXP2cqI9xUcR01zJex2D3MafJ4njJolaGALw.original.fullsize.png)
 
 - **核心思想**：回放缓冲区是一种在强化学习中相当古老且非常有效的技术（起源于 1990 年代）。 
 - **工作原理**：

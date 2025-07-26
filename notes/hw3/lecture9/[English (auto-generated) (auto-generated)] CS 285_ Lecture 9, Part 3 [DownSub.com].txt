@@ -1,0 +1,177 @@
+all right let's talk about how we can
+actually implement policy gradients
+with constraints to instantiate the
+algorithm that we derived in the
+previous section
+so the claim that we had was that
+p theta of st is close to b theta prime
+of st when pi theta is close to pi theta
+prime
+and close here was defined in terms of
+total variation divergence
+now it would help us to get a slightly
+more convenient bound because
+for some policy classes imposing total
+variation divergence constraints is
+actually pretty difficult
+so a more convenient bound that we could
+derive
+you can use the fact that total aversion
+divergence is actually related
+to kl diversions by an inequality so if
+you bound the kl divergence
+between pi theta prime and pi theta that
+also bounds the total variation
+divergence
+as per this equation so
+that means that the kl divergence
+between pi theta prime and pi
+theta bounds the state marginal
+difference
+but for those of you that aren't
+familiar with the kl divergence it's a
+basically the most widely used type of
+divergence measure between distributions
+and it can be very convenient because it
+has tractable expressions
+expressed as basically expected values
+of log probabilities
+and many continuous value distributions
+have tractable closed form solutions for
+the kale diversions
+so this makes the kale divergence very
+convenient to use
+so the expression for kale divergence is
+the expected value
+of the log of the ratio between the
+distributions
+and one way to get some intuition for
+why this cost of divergences
+is a little bit more manageable is that
+the total variation diverges expressed
+in terms of absolute value
+which means that it's in general not
+differentiable everywhere whereas the kl
+divergence is differentiable
+so long as the two distributions have
+the same support
+so the kl divergence has some very
+convenient properties that make it much
+easier to approximate
+and much easier to use in an actual
+reinforcement learning algorithm
+as we'll see in the remainder of this
+lecture so in practice if we actually
+want to have a constrained
+policy gradient method we're going to
+express our constraint
+as a kl divergence rather than as a
+total variation divergence
+but since the kl divergence bounds the
+total variation divergence
+this is a legitimate thing to do and it
+preserves our bound
+okay so then the objective that we're
+going to want to optimize
+is our usual important sampled objective
+with the constraint that the kl
+divergence between pi theta prime and pi
+theta
+is bounded by epsilon and if epsilon is
+small enough
+this is guaranteed to improve j theta
+prime minus j theta
+because the error term will be bounded
+so how can we enforce this constraint
+well there are a number of different
+methods to do this
+and you know one very simple one is to
+actually write out an objective
+in terms of the lagrangian of this
+constrained optimization problem
+so the lagrangian for those of you that
+don't remember
+your complex optimization is formed by
+simply taking the constraint
+taking the left-hand side of the
+constraint minus the right-hand side and
+multiplying it by lagrange multiplier
+and we have one constraint and one
+lagrange multiplier which i'm calling
+lambda
+if you want to solve a constrained
+optimization problem
+one of the things you can do is you can
+alternate between maximizing
+the lagrangian with respect to the
+primal variables which are theta
+and then taking a step on the dual
+variables a grading descent step
+so the intuition is that you raise
+lambda if the constraint is violated too
+much
+otherwise you lower it right because if
+the kl diverges much larger than epsilon
+then you're going to add dkl minus
+epsilon which is a positive number
+2 lambda so lambda will get bigger if
+the constraint is much lower than
+epsilon you'll add a negative number
+and lambda will get smaller so you
+essentially alternate between
+solving an unconstrained problem and
+adjusting your lagrange multiplier
+to enforce the constraint more or less
+strictly depending on whether it's being
+violated or not
+this procedure is called dual gradient
+descent
+and we'll actually talk about dual
+gradient descent in much more detail
+in a subsequent lecture but for now you
+can just sort of take my word for it
+that this procedure
+will asymptotically find the right
+lagrange multiplier
+which means that it will actually solve
+your constrained optimization problem
+now this is sort of the theoretically
+principled solution you could imagine an
+even more heuristic solution
+maybe you could just select a value of
+lambda manually
+and just treat that kl divergence as a
+kind of regularizer
+and intuitively that also makes a lot of
+sense you're basically penalizing your
+policy
+for deviating too much from the old
+policy
+and you can do this maximization
+incompletely for a few gradient steps
+because
+of course in practice running the
+optimization convergence
+might be very expensive or impractical
+so
+this is a complete algorithm for doing
+constrained
+optimization with your policy you can
+calculate the gradient
+of the objective and you get something
+that looks basically like an important
+sample
+policy gradient and you can calculate
+the gradient of the kl divergence that's
+also very straightforward to do
+and you will get a derivative and you
+can use it to maximize this
+and this will allow you to have a
+reinforcement learning algorithm
+that actually enforces a constraint
+and there are a number of algorithms
+that use some variant on this idea
+including actually the original guided
+policy search method and ppo
+and these methods tend to work quite
+well

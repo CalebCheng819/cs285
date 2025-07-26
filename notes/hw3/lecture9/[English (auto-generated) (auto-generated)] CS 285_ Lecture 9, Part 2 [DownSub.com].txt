@@ -1,0 +1,565 @@
+okay so let's talk about the conditions
+under which we can use p
+theta s t in place of p theta prime of
+st
+and still have a reasonable objective
+that accurately approximates
+the return of the new policy
+so to recap what we want to do
+is we want to ignore the distribution
+mismatch we want to
+use p theta of st instead of p theta
+prime of st
+such that the only dependence on theta
+prime in this whole equation
+is in the importance weight because we
+know from our previous policy gradient
+lecture
+that if we differentiate the thing on
+the right hand side we get exactly the
+policy gradient
+so we want this to be true so that j
+theta prime minus j
+theta is well approximated by a bar
+theta prime this thing on the right hand
+side
+so that we could just maximize a bar and
+get a better new policy and what we're
+going to try to show
+is that p theta of st is close to p
+theta prime of st when pi theta is close
+to pi
+theta prime and when that's the case
+then the right hand side approximates
+the left-hand side
+meaning the difference between them can
+be bounded by some quantity
+which is small if the difference between
+pi theta and pi theta prime is small
+okay so this is what we're interested in
+we want to show that pi
+theta as t is close to pi theta prime s
+t
+sorry p p theta s t is close to p theta
+prime of t when pi theta
+is close to pi theta prime
+so let's start with a simple case let's
+first assume
+that pi theta is a deterministic policy
+which means that we can express it as a
+t equals pi theta of st
+we'll generalize the stochastic policies
+later but i think the deterministic
+derivation
+provides a little bit of intuition which
+then makes the stochastic case
+easier to understand
+so in this case what we're going to try
+to show is
+that the stake marginals for theta and
+theta
+prime are close if
+pi theta prime is close to pi theta now
+pi theta prime is not necessarily
+deterministic
+and the way that we define close is that
+the probability
+that pi theta prime assigns to
+any action that is not the action that
+pi theta would have taken
+is less than or equal to epsilon
+essentially there's a bounded
+probability
+that pi theta prime does something
+different
+so if this is the case then we can write
+the state marginal at time step t
+for theta prime as the sum of two terms
+the first term describes the case where
+every single time
+step up to t the new policy pi theta
+prime did exactly the same thing as pi
+theta and since the probability of doing
+exactly the same thing as 1 minus
+epsilon
+this term has a multiplier of one minus
+epsilon to the power of t in front of it
+and the state marginal is exactly p
+theta s t
+because if you did all the same things
+as pi theta you have the same state
+distribution
+the other term is simply everything else
+it's 1 minus
+1 minus epsilon to the t and it
+multiplies some other state distribution
+which we're going to assume that we
+don't know anything about so we're going
+to call it p mistake
+this is the distribution of our states
+you get if you made at least one mistake
+and we're going to assume that we don't
+know anything about it so it could be
+like that tightrope walker
+from the imitation learning lecture at
+the beginning of class where
+if you fall off the tightrope you can
+never recover and you're in a completely
+different
+place so of course most of you hopefully
+recognize this equation
+as being exactly the same as the
+equation we had before
+when we analyzed behavioral cloning and
+in fact our assumption is very similar
+to the assumption we had before
+which is that the new policy has a
+bounded probability
+of deviating from the old policy
+so this is the probability we made no
+mistake and this is some other
+distribution
+on which we're going to make no
+assumption whatsoever
+so hopefully this seems familiar to all
+of you
+and just like before this equation
+implies
+that we can write the total variation
+divergence
+between p theta prime and p theta
+as uh essentially just the part that's
+different right so that that one minus
+epsilon to the t
+times p theta st part has zero total
+variation divergence
+against b theta of st so it's only that
+second part
+and uh that second part has a multiplier
+of one minus
+one minus epsilon the t in front of it
+and
+that multiplies the tv divergence
+between p mistake and p theta
+now we can't bound this tv divergence
+the p mistake minus p theta because
+we're making no assumption on p mistake
+so the only boundary we have is the
+trivial bound which is that
+any total variation divergence always
+has to be less than or equal to two
+so that means that the total variation
+divergence between
+the state marginals is bounded by two
+times
+one minus one minus epsilon to the t
+this is all exactly the same
+as the as in the imitation learning
+analysis that we had
+in the second lecture
+and we use the same useful identity
+which is that one minus epsilon to the t
+is greater than or equal to one minus
+epsilon times t
+for any epsilon between zero and one and
+that allows us to express this bound
+as a quantity that is linear in epsilon
+and linear and t
+so the difference between the state
+marginals is less than or equal to two
+times epsilon times
+t okay so
+it's not a great bound but it is a bound
+because it shows that as epsilon
+decreases
+the state marginals become similar to
+one another
+but of course this was all for the case
+of the deterministic
+policy pi theta in general pi theta will
+not be deterministic
+so what we're going to do next is we're
+going to
+analyze the general case where pi theta
+is an arbitrary distribution
+and this proof follows the proof and the
+trust region policy optimization
+paper which is referenced at the bottom
+of the slide
+okay so here we're going to say that pi
+theta prime is close to pi
+theta if their total variation diverges
+is bounded by epsilon for all states st
+now it turns out that we actually don't
+need the bound to be point wise it turns
+out we can actually use a bound that's
+an expectation
+but it's a let's go with a point wise
+bound for now because it's a little
+easier to
+explain but keep in mind this will also
+hold true if the boundless
+point is in expectation meaning
+the expected value of the total
+variation divergence is less than or
+equal to epsilon
+okay so a useful lemma that we're going
+to use for this analysis
+is this one uh this lemma
+will take a little bit of unpacking uh
+and i'm not going to prove it this is
+in prior work but it's referenced in the
+transfusion policy optimization
+paper at the bottom so this limit says
+that if you have two distributions which
+i'm going to call p
+x and p y and the total variation
+divergence between these two
+distributions meaning the sum over all
+values of x
+of the absolute value of the difference
+between p x of x and p
+y of x is equal to epsilon
+so the total variation difference
+between them is epsilon
+then there exists a joint distribution
+p x comma y so that
+its marginal p of x is p x of x and its
+marginal p of y is p
+y of y and the probability of x equals y
+is one minus epsilon so to unpack the
+slum a little bit
+what this says is that if you have two
+distributions over the same variable
+p x of x and p y of x and their total
+variation diverges epsilon
+then you can construct a joint
+distribution over two variables
+such that the marginals of that joint
+distribution with respect to its first
+and second argument
+are the two distributions you started
+with
+and the probability of its two arguments
+being equal is one minus epsilon
+and intuitively the reason that this
+lemma is useful to us
+is that we essentially want a
+generalization of the assumption from
+the previous slide so in the previous
+slide
+our assumption was that there's a one
+minus epsilon probability
+that pi theta prime takes the same
+action as pi theta
+so if we could express a probability
+that pi theta prime and pi theta will
+take the same action
+when both of them are stochastic then we
+can use that to generalize the result
+from the previous slide
+to the case where the policies are
+stochastic
+so essentially this says that p x of x
+agrees with p y of y
+with probability epsilon
+and that means that pi theta prime takes
+a different action from pi
+theta with probability at most epsilon
+in retrospect this is actually kind of
+obvious because if their total variation
+diverges as epsilon
+and total variation diverges is the
+difference in probabilities it kind of
+makes sense
+that the sliver of probability mass that
+is different between them would have a
+volume of epsilon so
+if you're if you kind of have a more
+geometric way of thinking about it just
+imagine the two distributions
+as bar graphs overlay them on top of
+each other and look at the differences
+in the bars
+the volume of those differences will be
+equal to epsilon which means that your
+probability of doing something different
+is epsilon
+so that's kind of the geometric
+intuition but if you prefer to think
+about things symbolically
+then hopefully this lemma kind of puts
+your mind at ease
+that in fact if the total variation
+divergence is
+epsilon then the probability of a
+mistake is at most epsilon
+so what this allows us to do is it
+allows us to state the same result
+that we had on the previous slide which
+is the total variation divergence
+between the state marginals is 1
+minus 1 minus epsilon to the t times p
+mistake minus p
+theta only now we can say this even when
+pi theta
+is stochastic provided the total
+variation divergence
+between pi theta prime and pi theta is
+bounded by epsilon
+so from here everything is exactly the
+same we can write the same bound
+and we can say that the state marginals
+differ by at most
+two times epsilon t
+okay so essentially the trick that we
+used on this slide was to use this
+lemma to express a probability that two
+policies will take different actions
+in terms of their total variation
+divergence
+okay so this is the result that we have
+on the state marginals
+so what does this tell us about the
+actual objective value right
+what we want is we actually want to
+relate the two objectives expressed in
+terms of advantage values
+well so for this i'm going to derive
+another little calculation which
+describes
+the expected values of functions under
+distributions
+when the total variation divergence
+between those distributions is bounded
+so we're going to have some function at
+f of st which in our case is this
+complicated thing that involves
+expectations over actions and advantage
+values but it doesn't really matter what
+it is whatever it is that's called
+f of st we can bound its expected value
+between the two distributions so we can
+write
+the expected value under p theta prime
+of s t of
+f of st as the sum over all possible
+states of p theta prime times f
+and we know that this quantity is
+greater than or equal to the sum
+over all the states of p theta times f
+minus
+the total ration divergence uh between p
+theta and p theta prime
+times the maximum value that f could
+possibly take on
+so the way that i arrive at this
+calculation is i
+write p theta prime as being equal to p
+theta
+prime plus b theta minus b theta
+i group the terms to get a p theta times
+f
+minus a p theta minus p theta prime
+times f and
+while i don't know the absolute value of
+the difference in the probabilities i
+only bound the total variation
+divergence
+if i multiply them by the largest value
+that f takes i'm being as pessimistic as
+possible
+so that's what allows me to write this
+inequality
+if this is not clear to you then i would
+recommend pausing the lecture now
+getting out a piece of paper and
+actually deriving this inequality
+yourself it's a good exercise to do to
+make sure that you understand
+how to manipulate total operation
+divergences so if this inequality
+doesn't make sense
+please get out a piece of paper try to
+work through it now
+so pause the lecture and do that
+and if you're having trouble doing that
+then please ask a question in the
+comments
+and we'll go over this in more detail in
+class
+okay so then all we do is we take that
+first term and we notice that it's just
+the definition of the expected value
+under p
+theta and we take the second term and we
+replace it by our bound
+on the total ratio divergence which
+means that
+the expected value under p theta prime
+of
+f is just it's a is bounded below by its
+expected value under p
+theta minus an error term which is two
+times epsilon times t
+times the largest value that f can take
+on
+now this error term might seem pretty
+big because you know the largest value
+of f might be huge
+but remember that everything is
+multiplied by epsilon so as the two
+policies get closer together as epsilon
+gets small
+that second term can always be made
+arbitrarily small so long as f
+is bounded basically so long as f
+doesn't go off to infinity for any state
+so this was the equation that we were
+originally concerned about we were
+concerned about the expected value
+under p theta prime of st of the
+expected value over the actions
+of the important sampled estimator for
+the advantage
+so by taking everything inside the
+brackets to be
+f then we can bound this quantity below
+by the expected value under p theta of
+st
+of the same quantity and this this thing
+now just looks exactly like
+the thing that we differentiate to get
+the policy gradient
+minus an error term and the error term
+is 2 times
+epsilon times t times a constant c
+and the constant c is the largest value
+that the thing inside the brackets the
+thing inside the state expectation
+can take on take a moment to think about
+what
+the largest possible value for that
+quantity inside the brackets could be
+basically what should we use for c
+the thing inside the brackets is a
+really complicated equation but notice
+that
+most of the terms in that equation are
+probabilities and we know that
+probabilities have to sump up one
+so in fact what we can notice is that
+the quantity inside the
+bracket is basically it's it's some
+expected value
+of an advantage and what is an advantage
+well an advantage is the sum of rewards
+over time
+so that means that the largest value
+that c could take on is the largest
+possible reward
+times the number of time steps because
+all those importance weights and all
+those expectations
+they have to sum up to one so that means
+that
+the basically the expected value of any
+function can't possibly be larger
+than the largest value that function
+takes takes on and the largest value
+that an advantage can take on
+is the number of time steps times the
+largest reward
+because ultimately an advantage is the
+sum of rewards over time
+so that means that the c is on the order
+of the number of time steps times r max
+and if you have infinite time steps but
+use a discount
+then you know that the discount values
+they form a geometric series so they
+have a sum to 1 over 1 minus gamma
+so in a finite horizon case c is capital
+t
+times r max in an infinite horizon case
+it's r max over one minus gamma
+by the way as an aside here if you're
+doing reinforcement theory
+and you ever see a term that looks like
+one over one minus gamma
+just mentally substitute the time
+horizon for that because one over one
+minus gamma
+is essentially the equivalent of a
+horizon uh in the infinite horizon case
+it's basically the number of time steps
+uh
+the the effective number of times since
+you're summing rewards over
+okay so essentially all this
+says is that maximizing this uh equation
+at the bottom
+maximizes a bound on the thing that we
+really want which is
+the expectation under p theta prime
+which we've proven
+to be the same as maximizing the rl
+objective
+and the thing that we have to watch out
+for is that we get this error term that
+scales us to epsilon t
+times a constant everything in that
+error term is a constant except for
+epsilon
+and epsilon is the total variation
+divergence between your new policy and
+your old policy
+so take a moment at this point to think
+about what kind of rl algorithm
+we should use uh informed by this
+derivation basically this derivation
+suggests
+that a certain very tractable objective
+is a good approximation to the true rl
+objective
+under certain circumstances and this
+implies something about the sort of
+reinforcement learning algorithm that we
+should be using
+if we want to get good performance
+all right so what we have so far is that
+maximizing the uh this objective
+basically the expected value under p
+theta the expected value
+of pi theta of the importance weighted
+advantage
+is a good way to maximize the rl
+objective
+so long as pi theta prime is close to pi
+theta in terms of total variation
+divergence
+essentially if you restrict theta prime
+to not go too far from theta
+so this constraint is satisfied then
+maximizing this tractable objective
+is the same as maximizing the true rl
+objective
+how do we maximize the subjective well
+we take its derivative with respect to
+theta prime
+uh and theta prime only appears in the
+importance weight so when we take its
+derivative
+we get exactly the policy gradient
+so what our derivation what it has shown
+so far is that this is
+a good thing to do if theta prime stays
+close to theta
+so for small enough epsilon this is
+guaranteed to improve j
+theta prime minus j theta which means
+that it's guaranteed to improve the rl
+objective
+okay so the next part of the lecture
+we'll talk about how to actually do this
+in practice

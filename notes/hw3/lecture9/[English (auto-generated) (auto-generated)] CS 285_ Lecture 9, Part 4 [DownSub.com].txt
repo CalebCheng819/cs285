@@ -1,0 +1,654 @@
+all right in the last portion of today's
+lecture
+we're going to go over another way to
+impose the constraint
+which is a little more approximate but
+leads to a pretty simple
+algorithmic framework called natural
+gradient
+okay so so far we discussed this
+optimization problem
+maximize the expected value under the
+old policy state distribution of the
+expected value under the old policy's
+action distribution of the important
+sampled
+estimator subject to the constraint that
+the kl divergence between pi theta prime
+and pi theta
+is bounded by epsilon and we saw how if
+you can enforce this for a small enough
+epsilon then this is guaranteed to
+improve
+j theta prime minus j theta in the
+previous section we saw how we could
+impose this constraint
+by using something like a dual grading
+descent method
+typical lagrange multiplier and then
+essentially
+optimize the lagrangian as a kind of
+penalized objective
+to find the new policy parameters
+now we're going to talk about a more
+approximate way of doing this
+which at first will seem a little bit
+worse because we're going to make a lot
+of approximations
+but in fact is actually highly desirable
+because it allows us to recover
+a very simple method that doesn't
+require any additional penalties
+and simply applies a linear
+transformation to the standard policy
+gradient
+that we saw back in lecture three
+okay so as before i'm going to
+use a bar theta prime to denote this
+whole objective
+when we calculate the gradient of some
+objective and we use gradient ascent or
+gradient descent
+that can be interpreted as optimizing
+a first order taylor expansion of that
+objective
+this might seem like a slightly silly
+statement because a first order taylor
+expansion
+is just a gradient uh but when there's a
+constraint present
+it actually has some meaning so
+essentially if we want to optimize some
+complicated function
+like this blue curve here one way we
+could do it is we could
+pick a region compute a very simple
+approximation a linear approximation to
+that function
+shown here with this green line and
+that's obtained by taking the gradient
+and then instead of optimizing the blue
+curve which is really complicated
+we optimize the green line which is very
+very simple
+of course if we don't impose any
+constraint the green line goes to
+positive and negative infinity
+so this only makes sense if we impose a
+constraint which is essentially
+the region within which we trust the
+degree to which the green line
+approximates the blue line a truss
+region and that's what this red box
+represents
+so if you find the best value of the
+green line within the red box
+if the red box is chosen to be small
+enough you might hope
+that that point is also going to improve
+the blue curve which is what you really
+want so if we are minimizing
+then we would pick this point we would
+pick a point on the edge of the red
+region
+where the green function has the lowest
+value which will hopefully also be a
+point
+where the blue function has a lower
+value and if we were maximizing it would
+go the other way
+so what this means is that if you
+approximate your complicated nonlinear
+function
+with a first order taylor expansion
+essentially a linear function
+you could optimize that linear function
+so long as you impose a trust region
+so long as you limit your optimization
+to just the region
+where that linear approximation is a
+good approximation
+to the true nonlinear function so we
+could do that with our optimization
+problem
+and we could change it to take the r max
+of uh
+grad a transpose theta prime minus
+theta subject to this constraint and the
+constraint is what's imposing the trust
+region
+and now this is very very easy to do of
+course in terms of the objective
+because the objective is simply linear
+and theta prime which is our
+optimization variable
+the constraint is still kind of
+complicated so that makes things a
+little more complex
+okay so the basic intuition behind what
+i'm going to describe next
+is that we're going to approximate that
+constraint
+in some very tractable way which will
+actually give us a closed form solution
+for theta prime
+where we won't actually have to do any
+complicated
+non-linear optimization procedure with
+multiple gradient steps but in fact
+a single step of policy gradient will
+actually take care of this entire
+constrained optimization problem and the
+intuition for why that's possible is
+because
+once our objective is linear
+optimization becomes easy
+okay so our objective turned into a
+first order taylor approximation
+by the way just as an aside why do we
+want to do all this well the reason we
+want to do all this is because we're
+going to get a very very simple
+algorithm
+so we're going to introduce these
+additional steps of approximation but
+the payoff that we'll get
+is a simpler algorithm that still works
+quite well
+okay so there's our new simplified
+constraint problem
+and one really appealing thing
+about simplifying in this way is that
+our our gradient graph theta
+a a theta is going to essentially become
+exactly the normal policy gradient
+so here's the equation for grad theta
+prime
+a theta prime and since only the
+importance weight depends on theta prime
+we just get the important sampled policy
+gradient
+but if we evaluate it at the point theta
+prime equals theta
+then the importance weights actually
+cancel out because you get the same
+thing in the numerator and the
+denominator so here i just wrote it out
+for grad theta a bar theta and when they
+cancel out
+you're just left with the standard
+policy gradient equation
+which we saw in the previous lecture and
+this is very simple this is essentially
+exactly the policy gradient that we had
+back in the reinforce
+except that we have uh you know some
+choice of advantage estimator for a pi
+theta
+and we can use anything we want there
+okay so that's nice
+and that's just the thing that we're
+going to plug into our objective that's
+just the regular policy gradient
+um now could we just use
+gradient descent a grading ascent then
+if we're just calculating the policy
+gradient our objective is
+grad theta j theta transpose theta prime
+that's great and ascend do something
+similar to this constrained optimization
+problem
+so gradient descent would just take
+theta and set it to be
+the old theta plus alpha times grad
+theta j
+theta one problem with doing this
+is that as we change theta the
+probabilities of the new policy
+the pi theta a a given s will change by
+different amounts
+because some parameters some entries in
+theta
+affect the probabilities more than
+others so in general
+taking a step like this will usually not
+respect the kl divergence constraint
+because you might have some very very
+small change in some parameter
+but that parameter might have a very
+very large influence on the
+probabilities
+but what does gradient descent do well
+my claim is that gradient descent
+actually solves this constrained
+optimization problem
+which is very similar to our original
+one so the difference is that our
+original constrained optimization
+problem had
+grad j theta prime minus theta as its
+objective
+but the constraint was the kl divergence
+between pi
+theta prime and pi theta
+in gradient ascent the constraint is
+the square euclidean distance between
+theta prime and theta
+so the original problem asks for
+theta prime to result in a policy whose
+distribution is close to the policy by
+theta
+gradient ascent instead produces
+parameters that are close to the
+parameters theta
+geometrically you can think of it like
+this that in gradient descent
+we have our parameter space which here
+is represented by this 2d region with
+two so there's two axes corresponding to
+two policy parameters
+when we linearize our objective we can
+visualize our objective as this kind of
+gradient field as a colored gradient
+over the space
+so lower right is better values upper
+left is worse values
+and this constraint corresponds to a
+circle in this space
+so all the points that are epsilon away
+from the
+dot in the center all satisfy the
+constraint
+so because your objective is linear and
+your constraint is a circle
+then the solution will always lie on the
+surface of that circle in the direction
+of the objective so in the direction of
+grad j theta
+so that means that when you do gradient
+ascent you will take a step
+in the direction grad j theta and the
+length of that step will be determined
+by
+epsilon in fact the learning rate in
+gradient ascent
+can actually be obtained as the lagrange
+multiplier for this constraint
+and you can also derive a closed form
+equation for it
+so if you perform bringing a descent
+like this where your learning rate is
+given by the square root of epsilon
+divided by uh the squared length of
+grad j you can actually prove that you
+will exactly satisfy that constraint
+and the way that you prove this is you
+take that equation for theta prime
+substitute that into the constraint the
+thetas will cancel
+and you'll be left with the square root
+of epsilon divided by grad j
+squared and then that whole thing
+squared so then
+the square root goes away and you're
+left with grad j squared at the top
+grad j squared at the bottom those
+cancel out and you're just left with
+epsilon and epsilon is less than or
+equal to epsilon
+if this is unclear to you then what i
+would encourage you to do is to take a
+piece of paper
+take this equation that i wrote for
+theta prime plug that into the
+constraint
+and do the algebra and you'll be able to
+show that the result
+is the epsilon is less than or equal to
+epsilon
+okay so where do we get to with all this
+the conclusion from all this
+is that grading descent does actually
+solve
+a constrained optimization problem but
+it's the wrong constraint
+the constraint is in theta space instead
+of distribution space and because
+different entries in theta
+might affect the distribution to
+different degrees
+in general a constraint in theta space
+will not enforce the constraint in kl
+divergence space
+because some parameters theta might
+change a tiny bit
+but produce very big changes in the
+corresponding distribution
+so intuitively the constraint shape is a
+circle
+for gradient descent but we want it to
+be a kind of ellipse we want the ellipse
+to be squished
+along the highly sensitive direction so
+we want a tighter constraint
+in the direction of theta that results
+in big changes in probability
+and we want the ellipse to be elongated
+in the directions
+where large changes in theta result in
+small changes in probability
+so that's what we're going to try to get
+next
+so what we're going to do we're going to
+recognize that these are not the same
+and we're going to construct a tractable
+approximation to the kl divergence
+constraint
+which is the one that we actually want
+so the way that we're going to do this
+is by doing the same thing to the
+constraint that we did to the objective
+so for the objective we calculated a
+taylor expansion specifically a first
+order taylor expansion
+for the constraint we're actually going
+to use a
+second order taylor expansion around the
+point theta prime equals theta
+we don't want to use a first order
+taylor expansion because
+the kl divergence has a derivative of
+zero at theta prime equals theta it's
+actually flat
+but its second derivative is not zero
+the second order taylor expansion is a
+quadratic form
+with some matrix f and it turns out that
+the
+matrix that goes in there is something
+called the fischer information matrix
+the calculation for for this is a bit
+involved but you basically start with a
+formula for the kl divergence and if you
+take the second derivative
+you can show that the correct thing to
+use for that matrix
+is the fischer information matrix which
+is given by this equation
+so the fischer information matrix is the
+expected value
+under pi theta of the outer product of
+the gradlog pies
+and one very convenient thing about the
+fischer information matrix
+is that you can approximate it using
+samples because it's the expected value
+of some quantity
+you could simply use the same samples
+that you drew from pi
+theta to estimate your policy gradient
+to also estimate
+the fischer information matrix
+now if we're going to use this uh second
+order taylor expansion
+as an approximation for our kl
+divergence constraint
+something that we can note is that
+gradient ascend
+actually also has a quadratic constraint
+theta minus theta prime squared can also
+be interpreted as theta prime minus
+theta transpose
+times identity times theta prime minus
+theta
+and now we have the same thing only
+instead of identity we have
+f so we can estimate our fischer
+information matrix of samples
+and then we can plug that in as a
+quadratic constraint
+just using the matrix f instead of
+identity and
+visually you can think of it as turning
+that circle into some ellipse
+where the shape of the ellipse is
+determined by the matrix f
+the matrix f basically describes which
+directions in theta space
+around the point theta lead to large
+changes in probability and which ones
+lead to small changes in probability
+and you can actually show that if your
+constraint is quadratic like this
+and you write out the lagrangian if you
+know the lagrange multiplier
+then the solution will be given by this
+equation the reason for that of course
+is that the lagrangian will have a
+linear term
+grad j transpose theta prime and a
+quadratic term
+given by the quadratic kl divergence
+expansion
+and a second order polynomial function
+like this has a closed form solution
+which uses the inverse of the quadratic
+term times
+the linear term so this is the closed
+form solution
+when the constraint is given by one half
+theta prime minus theta transpose
+times f times theta prime minus theta
+and furthermore if we want to enforce
+the constraint
+that this second order expansion be less
+than or equal to epsilon
+we can use the same general idea as we
+used in gradient descent
+and figure out the step size
+that satisfies that constraint and again
+you can check
+that the step size is correct by
+plugging in this equation for alpha
+then plugging in the resulting equation
+for theta prime into our kl divergence
+approximation
+and then you will be able to show that
+you end up with the constraint being
+satisfied
+so this expression is called the natural
+gradient so you take the regular
+gradient and you
+multiply it by the inverse of the
+fischer information matrix and you get
+the natural gradient
+okay so uh take a moment to look over
+the slide if something here is unclear
+please make sure to write a question in
+the comments
+all right now here what i want to do is
+i want to back up a little bit and just
+ask well
+is this even a problem in practice like
+it kind of seemed like regular grading
+ascent
+regular vanilla policy gradient already
+enforces some kind of constraint
+maybe that constraint is just good
+enough i mean it does keep theta prime
+close to theta
+maybe not quite in the right way but
+maybe that's a reasonable approximation
+well let's think back to that example
+that we had in the policy gradient
+lecture
+where we had a one-dimensional state
+space and a one-dimensional action space
+where you get to choose to go left or
+right your reward was given by negative
+s squared minus a
+squared and you had two policy
+parameters
+k and sigma where the probability of the
+actions is normally distributed
+where the mean is k times s and sigma is
+the variance
+so here your parameters are k and sigma
+in that
+setting you're basically adding some
+gaussian noise and walking left and
+right
+in that setting we saw that the regular
+policy gradient
+actually looks very unfortunate the
+regular policy gradient
+does have to point in the right
+direction it always does but it's
+extremely ill-conditioned essentially
+as sigma decreases the gradient with
+respect to sigma
+becomes much much larger than the
+gradient with respect to k
+so even though the optimal solution is
+at k equals negative one
+you might never reach that solution
+because you'll be too busy just
+decreasing sigma
+intuitively the reason this is happening
+is that k and sigma
+affect the probabilities to different
+degrees and because
+sigma affects the probabilities so much
+more when it's small
+then the corresponding gradient
+component is much larger and simply
+staying within a fixed ball in theta
+space
+even in this very simple two-dimensional
+space is just not enough
+so it's essentially the same as a very
+ill-conditioned
+optimization problem the natural policy
+gradient
+largely resolves this issue so if you
+just multiply
+the gradient by f inverse then that
+correctly accounts for the fact that
+sigma affects the parameters a lot more
+it actually
+prioritizes k larger it actually
+increases the grading component with
+respect to k
+and gets you a point or in the right
+direction so this really is a problem in
+practice
+especially for continuous distributions
+like gaussians
+so in practice natural gradient really
+does give you a much more
+well-conditioned
+gradient direction and it makes it a lot
+easier
+to adjust learning rates
+all right a few practical notes so
+natural policy gradient
+as classically described in the
+literature is an algorithm
+where you calculate the fischer
+information matrix f approximately
+using samples and then manually select a
+step size alpha
+it's generally a good choice to
+stabilize policy gradient training and
+if you want to
+learn more about this check out this
+paper by petersen shawl
+called reinforcement learning of motor
+skills with policy gradients
+practical implementations require
+computing this
+product between f inverse and grad j
+which is a little bit non-trivial to do
+without computing the full matrix
+but if you want to implement this in
+practice check out this paper called
+trust fusion policy optimization
+there are a few tricks that are very
+useful um so
+one trick is that you can actually solve
+for the step size alpha which actually
+respects a particular value of epsilon
+so instead of picking alpha
+you want to pick up so on here's the
+formula but even more importantly
+one of the things you could do which
+makes this much more efficient to
+calculate
+is you can use the conjugate gradient
+method to calculate f inverse grad j
+and in the process of writing conjugate
+gradient you're actually going to get
+the step size
+alpha given by this equation
+automatically as a byproduct
+i'm not going to go into details about
+this and i would encourage you
+to check out the trust fusion policy
+optimization paper for details
+but it's a fairly straightforward
+application of cg of conjugate gradient
+now of course you could just use the
+important sampled objective directly
+with something like great dual grading
+descent or even a heuristic selection
+of lagrange multiplier and that works
+fairly
+well so that can be interpreted as a
+kind of regularization
+to stay close to the old policy and
+that's what i covered in the previous
+section
+if you want to learn more about this
+check out proximal policy optimization
+okay so to review we talked about how
+policy gradient
+can be interpreted as pulse iteration
+how
+you can optimize the advantage of the
+old policy under the new policy state
+distribution and that is exactly policy
+iteration
+but furthermore if you use the old
+policy state distribution
+then you're optimizing a bound if the
+policies are close enough
+and this results in a constrained
+optimization problem
+you can enforce this constraint
+explicitly
+or you can impose the constraint
+approximately
+by doing a first order approximation of
+the objective which gives you gradient
+ascent but regular gradient ascent has
+the wrong constraint so you use natural
+gradient which gives you an
+approximation to the chao divergence
+constraint
+so to summarize regular policy gradient
+is a constrained procedure
+but it has the wrong constraint natural
+policy gradient
+replaces it with an approximation to the
+kl divergence
+or you could actually optimize the
+original important sampled objective
+for many gradient steps with an
+additional regularizer to stay close to
+the policy
+the previous policy multiplied by
+lagrange multiplier
+practical algorithms that use this
+natural policy gradient
+trust region policy optimization and
+proximal policy optimization
