@@ -1,0 +1,654 @@
+all right welcome to lecture 13 of cs285
+today we're going to talk about
+exploration today's lecture is going to
+be
+a little bit on the longer side but to
+make up for it the next lecture which is
+going to be part 2
+of exploration will be quite a bit
+shorter so if this lecture feels like
+it's going on for a while
+we're going to give you a little bit of
+a break for wednesday's lecture where
+it won't be quite as long all right
+let's get started
+so what's the problem that we're going
+to talk about today well
+the problem can be illustrated with an
+example like this
+if you're working on homework 3 if
+you're finishing that up now
+you might have tried a few different
+atari games some of these attire games
+are actually pretty easy so if you want
+to play
+pong or breakout mostly your uh
+your homework 3 q learning
+implementation will probably work
+pretty well in those tasks but some
+other atari games
+are actually quite a bit harder so this
+game for example
+is almost impossible if you try to run
+this called montezuma's revenge
+if you try to run your q learning
+implementation on this game you'll
+probably find that it doesn't get very
+far
+so why is that why is the game on the
+right so much harder
+than the game on the left well it's not
+because the game itself is necessarily
+harder
+for a person playing montezuma's revenge
+you know i've played it myself i don't
+think it's a very good game
+but it's not a particularly difficult
+one in fact getting that trick shot
+in breakout where it bounces around up
+top is probably harder actually than
+playing montezuma's revenge
+but it's very hard for an rl agent to
+play this game
+so in montezuma's revenge
+if uh the goal is to traverse this
+pyramid it's made up of multiple
+different rooms
+and each room has a different challenge
+so in this first room there's a skull
+that bounces around
+that kills you if you step on it and you
+have to go fetch the ski and then open
+one of the doors at the top
+now we understand some of these things
+we understand that the key is a good
+thing that keys open doors
+we might not know what exactly the skull
+is supposed to do but we kind of know
+that skulls are probably not
+good things and touching the skull is
+probably not a good idea
+now in the game you get a reward for
+getting the key
+um you also get a reward for opening the
+door
+getting killed by the skull actually
+doesn't do anything so you lose a life
+but you don't actually get a negative
+reward for
+that if you lose all your lives then you
+start over that's also not obvious
+whether that's good or bad because
+when you start over you might get
+another opportunity to pick up the key
+and maybe that's good because then you
+get the reward for the key again
+so the reward structure of the game
+doesn't really guide you
+each step of the way and while we know
+ourselves that some of these
+things are good or bad the agent really
+doesn't and the agent might figure out
+that
+a good way to keep getting reward is to
+get keep getting killed by the skull
+so they can pick up the key again
+instead of moving on to the next room
+the trouble is that finishing the game
+only weakly correlates
+with rewarding events it's not that you
+get little pieces of reward when you're
+on the right track and negative reward
+when you're on the wrong track
+so we know what to do because we
+understand what all these little sprites
+and pictures mean but the rl algorithm
+has to figure it out
+through trial and error to try to
+understand kind of
+how the algorithm feels when trying to
+play one of these games
+let's think of a different example an
+example that's a lot less intuitive for
+humans
+so there's a card game called mao it's
+also similar in principle to a game
+called calvin ball
+the idea is that the only rule you may
+be told
+is this one so when you start playing
+the game you just don't know the rules
+of the game
+and one of the players who's the
+chairman
+can call you out for not following a
+rule but they don't explain the rule to
+you
+they just tell you that you incur a
+penalty for failing to follow a rule
+and you can only discover the rules
+through trial and error and then this
+makes the game
+very frustrating and quite demanding so
+even though the rules
+might be fairly simple because you don't
+know those rules you discover them
+through trial and error
+the game ends up being very very
+challenging
+and the rules don't always make sense to
+you so the the whole point of this game
+is for other players to make up rules
+that are
+kind of weird and counterintuitive
+so temporally extended tasks like
+montezuma's revenge
+or the game mao can become increasingly
+difficult
+based on how extended the task is and
+how little you know about the rules
+essentially even seemingly simple tasks
+where you don't know the rules and you
+have to discover them through trial and
+error
+as a result of poorly shaped rewards can
+prove to be exceptionally challenging
+and imagining this a step further
+imagine that your goal in life
+was to win 50 games of mammal so you're
+just going about your day
+you know you can go to class you can do
+your homework but if you happen to win
+50 games of now
+you're gonna get a million dollars now
+you're pretty unlikely
+to just sort of randomly go and do this
+so this is essentially the exploration
+problem
+the exploration problem relates to this
+setting where you have
+temporally delayed rewards where the
+structure of the task doesn't really
+tell you what are the things you need to
+do
+to get larger rewards in the future
+all right here's another example that
+looks very different at first but
+actually describes kind of a similar
+type of problem
+so this is a continuous control task so
+here this robotic hand is supposed to
+pick up a ball
+and move it to this location now this is
+also a difficult exploration problem
+because in order to figure out uh how to
+get reward by
+putting the object in the right place
+the hand needs to essentially wiggle the
+joints on the fingers randomly
+and again just like a priori we don't
+understand
+the rules uh of the game now here the
+hand
+doesn't understand that moving and
+picking up objects is actually a thing
+all it knows is it can wiggle its
+fingers around
+and the reward is so delayed that it
+gets very little intermediate signal
+for actually grasping objects
+all right so let's talk a little bit
+more about this exploration thing
+in rl we often refer to the exploration
+versus exploitation problem
+as one where at each trial the agent has
+to essentially choose
+whether whether they want to do a better
+job of exploring by trying something
+they don't know how to do yet
+or whether they just want to do the
+thing that gets the largest reward
+so the agent in montezuma's revenge
+that's just going after the key each
+time they die
+is essentially performing a kind of
+exploitation they know
+one thing that gives them reward which
+is the key and they know
+one way to get that reward just to die
+and get the key again
+and they're just capitalizing on that
+getting the rewards they know how to get
+instead of trying to find better rewards
+elsewhere
+so there are two potential definitions
+of the exploration problem in light of
+this
+the first is how can an agent discover
+high-reward strategies
+that require a temporary extended
+sequence of complex behaviors that
+individually
+are not rewarding and the second is how
+can a nation decide
+whether to attempt new behaviors to
+discover ones with high reward
+or continue to do the best thing it
+knows so far and these are really the
+same problem
+because if you want to discover
+temporally extended sequences of
+behaviors that lead to high reward
+you need to decide whether you should be
+exploring more or whether you've already
+found the most temporal extended
+sequence
+and you should just keep doing that or
+maybe refine how well you do that
+so they're actually the same problem
+exploitation is doing what you know will
+yield the highest reward
+exploration is doing things you haven't
+done before in the hopes of getting even
+higher reward
+and the trouble is you don't know which
+one of those you should be doing
+and of course they're not totally
+disjoint so for example in some cases
+you might want to exploit a little bit
+so that you can explore further
+if you figured out how to go to the
+second room in montezuma's revenge
+a good way to explore is to exploit a
+bit to go into that second room and then
+explore from there
+so it's not like you just have to flip a
+coin and decide between exploitation
+exploration
+it's really kind of a dynamic and
+persistent decision you have to keep
+making
+so here are a few examples which i
+borrowed from some of david silver's
+lecture notes
+imagine you have to select which
+restaurant to go to perhaps not
+something that you're doing in 2020
+but uh you know in the previous year we
+lived in back when going to restaurants
+was a thing
+exploitation would mean that you go to
+your favorite restaurant
+exploration means you try a new
+restaurant now this example makes it
+seem
+very binary and i think that binary
+sense is a little misleading because in
+reality
+it might be more complex than that like
+the example of montezuma's revenge i
+mentioned before
+where the best way to explore might
+actually be to exploit a little bit
+and then explore from the last that you
+landed
+online ad placement this is a classic
+exploration exploitation trade-off
+problem
+exploitations mean you show the most
+successful ad the one that makes you the
+most money
+exploration means you show a different
+perhaps randomly chosen advertisement
+oil drilling exploitation maybe you
+drill the best known location
+exploration find a new location to drill
+at which might not contain oil
+or it might contain even more oil
+now exploration is very hard both
+practically
+and also theoretically it's a
+theoretically hard and intractable
+problem
+so a question that we might ask when we
+go to devise exploration algorithms is
+can we derive an optimal exploration
+strategy and that's actually what we're
+going to talk about
+in today's lecture but
+in order to do that we have to
+understand what does optimal even mean
+so one of the ways that we could define
+the optimality of our exploration
+strategy
+is in terms of regret against a bayes
+optimal strategy and
+we'll make this more formal later but
+intuitively you could imagine
+a perfect bayesian agent that maintains
+the uncertainty about how the world
+works
+and therefore makes optimal exploration
+decisions maybe optimal decisions
+to optimally resolve the unknowns about
+the world and now such an
+optimal bayesian nation would be
+intractable it would require estimating
+a really complex
+posterior over your mdp's but you could
+use this as a gold standard
+and for your practical exploration
+algorithm measure its regret
+against this bayes optimal hypothetical
+agent
+we can kind of place different
+problem settings on a spectrum from
+theoretically tractable to theoretically
+intractable
+theoretically tractable means that we
+can quantify or understand
+whether your given exploration strategy
+is optimal meaning that it's close to
+the space
+optimal strategy or sub-optimal meaning
+it has much worse regret than the base
+optimal strategy
+intractable means that we cannot make
+this
+estimate exactly in that setting so the
+most theoretically tractable problems
+are what are called multi-armed bandit
+problems
+you can think of multi-armed bandit
+problems as one-time step
+stateless rl problems so in rl you have
+a state an action
+and the action leads to the next state
+in a bandit you only take one action and
+then the episode terminates and there is
+no state
+so you should have to decide on an
+action and these are the most
+theoretically tractable problems
+because in multi-armed bandits we can
+actually understand which exploration
+strategies are theoretically optimal
+and which ones are not optimal in terms
+of their regret
+versus the base optimal agent
+then the next step up are the contextual
+bandit problems
+contextual bandit problems are just like
+multi-armed bandits
+only they do have a state so they still
+only have one time step you still only
+take one action
+your action only affects your reward it
+does not affect the next state
+but you have some context which is kind
+of like your state
+so you so uh ad placement could be one
+such problem
+you observe something about the user
+maybe you have a feature vector about
+the user
+and then you have to select which ad to
+show to that user
+next step up are small finite mdps so
+these are mdps
+that can be solved exactly maybe using
+value iteration
+these are not nearly as theoretically
+tractable as bandits but there are some
+things we could say
+about exploration in small finite mdps
+and then of course the next step up the
+setting we're really concerned with in
+deep rl
+are large infinite mdps perhaps with
+continuous state spaces
+or very large state spaces like images
+and generally for these problems
+there isn't much that we can say
+theoretically but what we can do
+is we can take inspiration from the
+theoretically principled
+algorithms that we can devise in the
+banded setting
+and then kind of adapt similar
+techniques in the large
+infinite mtps and hope that they work
+well
+so what makes an exploration problem
+tractable
+well for multi-armed bandits and
+contextual bandits
+one of the things we can do is we can
+formalize the exploration problem
+as another kind of mdp or rather a
+partially observed mdp and palm dp
+so while the multi-arm band is a single
+step problem you can view the problem of
+exploring in the multi-armed bandit
+as a multi-step problem because even
+though your actions don't affect your
+state
+they do affect what you know so if you
+explicitly reason about the evolution of
+your beliefs
+that now forms a temporal process which
+is technically a partially observed mdp
+and then you could solve it using pomdp
+methods
+and because they're you know these
+multi-armed bandits are
+fairly simple even the pomdp can
+actually be solved tractably
+at least in theory and then the next
+step up are small finite mdps
+here you can frame exploration as
+bayesian model identification
+and then reason explicitly about things
+like value and information
+you're kind of extending similar ideas
+to the ones we had in abundance
+for large or infinite mdps these optimal
+methods don't work
+in the sense that we can't prove
+anything about them but we can still
+take inspiration
+from the optimal methods in the simpler
+settings and adapt them to these larger
+settings
+and find that they actually work well at
+least empirically even though we can't
+say anything about them
+theoretically and of course we use lots
+of hacks
+as we always do in deep reinforcement
+learning and that's the theme that
+you're going to find in this lecture
+that
+will have some very principled
+approaches in simpler smaller problems
+like multi-armed bandits
+we'll sort of adapt those approaches by
+analogy and larger mdps
+and then use some hacks to make them
+work well in practice
+okay so let's start with a little
+discussion of bandits
+uh what's a bandit anyway so the bandits
+that we're talking about when we talk
+about exploration
+are not these guys uh it the bandit is
+actually kind of the the drosophila of
+exploration problems so in the same way
+that biologists study fruit flies
+as their kind of simple model organism
+in reinforcement learning we study the
+bandit
+as our simple model organism and the
+bandit that we're referring to
+is this thing so the term multi-armed
+bandit is kind of one of these quaint
+american colloquialisms
+that uh uh stems from the term one arm
+banded
+so the one-armed bandit is a slot
+machine it's a machine in a casino where
+you pull the lever
+and with some random probability this
+thing will uh produce some reward
+maybe you'll get you'll lose your money
+or maybe you'll get money
+the multi-armed bandit so
+in a one-arm ban you have only one
+action just to pull the arm and you
+don't know what the reward for pulling
+that arm is and the reward in general
+will be stochastic so it's really a
+reward distribution
+you can think of a multi-arm bandit as a
+bank of different slot machines
+and the decision you have to make is
+which slot machine to play so you have n
+of these machines and different machines
+will give different payoffs they'll have
+different reward distributions
+now just because you pulled one of the
+arms doesn't mean that's a bad arm
+maybe you pulled that arm and you got
+very little money but that's just
+because you got unlucky
+maybe in general that machine gives very
+high payoff and if you pull the arm
+repeatedly on average you might make a
+lot of money
+so you don't know the reward for each
+arm you don't know the reward
+distribution for each arm
+so you could assume that the reward of
+each arm is distributed according to
+some
+probability distribution and then you
+can imagine even learning this
+probability distribution
+so there's an unknown per action
+distribution for each arm
+so how can we define the bandit well we
+assume that the reward for
+each action is distributed according to
+some distribution
+and the distribution for action ai is
+parameterized by a parameter vector
+theta i
+so for example if your rewards are 0 1
+you might be in a setting where the
+probability of getting reward 1
+is theta i which is just a number and
+the probability of getting rewards 0 is
+1 minus theta i
+if your rewards are continuous maybe you
+have some continuous distribution
+and you don't really know what the theta
+i's are but you could assume that you
+have a prior on them
+you could use an uninformative prior if
+you like but in general we'd say we have
+some prior p of theta
+okay so that's defining our bandit
+now the cool thing about this is that
+you could also view this as defining a
+palmdp for exploration
+where the state is the
+vector of thetas for all of your actions
+now you don't know the state but if you
+knew the state
+then you could figure out which what the
+right action is
+so instead of knowing the city of belief
+so you have some belief p
+hat over theta one through theta n
+and you can update your belief each time
+you pull an arm so each time you pull an
+arm you observe the reward of that arm
+and you can update your belief about the
+theta corresponding to that arm
+and you could solve this plum dp to
+basically figure out what is the right
+sequence of actions to maximize your
+reward in this pomdp
+and this will yield the optimal
+exploration strategy because if it is
+the optimal policy in the palmdp
+it is the optimal to the thing to do
+under this kind of uncertainty
+and that will be the optimal exploration
+strategy the best exploration strategy
+you could possibly have
+now this is overkill the belief state is
+huge
+even for a simple palmdp with binary
+rewards remember your belief state is
+not the vector of thetas
+it's actually a probability distribution
+over thetas so even in the simple binary
+reward
+uh bandit the thetas correspond to
+probability of getting a reward of one
+the b hat of theta now needs to be some
+parametric class maybe a bunch of beta
+distributions
+you could have covariances between the
+different thetas so it's potentially a
+really complex belief
+state and the cool thing about bandits
+is that you can probably do
+very well with much simpler strategies
+than solving this full pumpdp
+and the way that you would quantify
+doing well is by quantifying the regret
+of your strategy
+relative to how well actually solving
+the pomdp does
+so when we say that a particular
+exploration strategy is
+optimal what we really mean is that it
+is not much
+worse than actually solving the pump dp
+and not much worse is usually defined in
+a kind of an oh
+in a big o sense
+so how do we measure the goodness of an
+exploration algorithm well we do it in
+terms of regret
+and regret is the difference from the
+optimal policy at time step capital t
+so you can write the regret as uh
+capital t times the expected value of
+the reward of a
+star that's the optimal policy minus the
+sum of rewards that you actually got
+so the optional policy will always take
+a star
+and that means that if you're going for
+capital t steps it'll be capital t
+times the expected reward of a star
+so that's what the optimal policy will
+do and then your regret is the
+difference between that
+and the sum of rewards that you've
+actually gotten from running your
+strategy
+so this is the expected reward of the
+best action the best you can hope for an
+expectation
+and this is the actual reward of the
+action that was
+actually taken all right
+so in the next portion i'm going to talk
+about how we can minimize regret
+in terms of closing the gap between our
+tractable strategies
+and this plum dp that we've defined

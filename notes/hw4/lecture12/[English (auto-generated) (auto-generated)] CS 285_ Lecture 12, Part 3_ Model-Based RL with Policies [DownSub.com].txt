@@ -1,0 +1,398 @@
+all right let's talk about some
+practical model-based RL algorithms that
+we can build based on the design that I
+described before
+so again to reiterate this is the design
+that we're talking about which I dubbed
+model based RL version 3.0 but there are
+of course a number of design decisions
+we have to make to turn this method into
+into a reality
+um
+for the discussion in this portion of
+the lecture the particular off policy
+Aroma that we will use for step four
+will be based on Q learning although I
+want to emphasize that everything that
+I'm going to discuss could just as well
+be implemented with Q function actor
+critic methods and it works in basically
+exactly the same way and basically the
+way to see this is to recall how in the
+discussion of Q learning we talked about
+how for example training an actor as a
+learn maximizer basically looks more or
+less exactly like you learning and
+that's the logic that we're going to
+follow here
+so
+the classic algorithm and as far as I
+know the method that first proposed this
+basic concept was something called Dinah
+described by Richard Sutton in the uh I
+believe in the 1990s Dinah was a
+particular version of this kind of
+recipe instantiated for online Q
+learning they used very short model
+based rollouts in fact it used
+model-based rollouts that are exactly
+one time step in length but even then
+this provides significant benefit if you
+can learn a good model
+so essentially Dinah is online Q
+learning that performs model 3rl with
+the model
+here's how Dyna works it's very much
+going to follow online Q learning but
+then with a little modification so step
+one in the current state pick an action
+a using your expiration policy this is
+exactly the same as online Q learning
+step two observe the resulting next
+state S Prime and the reward to get a
+transition to pull SAS primer
+now here's where the new stuff starts
+coming in use this transition Tuple to
+update your model and your reward
+function now Dinah was proposed very
+much as an online method so in Classic
+Diner both the model and the reward
+function would be updated with one step
+uh maybe one step of gradient Descent of
+these are neural networks or if it's a
+tabular model maybe you would mix the
+old value in the table with some
+learning array times the new value but
+one one step of update on just that
+transition
+then Dinah performs a Classic Q learning
+update so this is a q learning update on
+the transition that you just observed
+but then here's the new thing at this
+point Diana is going to repeat the model
+this model based procedure K times where
+K is a hyper parameter where it'll
+sample some Old State action from the
+buffer basically from previous States
+and actions that you've seen
+and then it will re-simulate
+uh the next state for that state in
+action using the Learned model
+so the expression here is exactly the
+same as the Q function updated before
+except that S Prime and R now are going
+to come from the
+learn model P hat and R hat
+so this is the Dyna procedure
+now the Dyna procedure classically makes
+a few design choices and those design
+choices don't have to be set in stone
+for example Dinah uses the state and
+action from the buffer now a very
+reasonable alternative is to pick the
+action according to the latest policy
+for example the ARG Max policy for that
+Q function
+Dinah also makes only one step on the
+model you could make multiple steps
+now the choices made in Dinah are a
+little bit optimized for highly
+stochastic systems if you have
+deterministic systems of course then if
+you run the same state in action through
+the model you should get exactly the S
+Prime that you saw before but for
+stochastic systems this actually makes a
+difference
+so data does make a few decisions that
+are maybe a little bit peculiar and
+perhaps don't squeeze the maximum
+performance out of the model although
+these decisions are good if you expect
+your model to be very vulnerable to
+distributional shift because
+for one step and for the action that was
+in the buffer it actually avoids all
+distributional shift issues so some
+statistical sense this is actually a
+very safe algorithm
+however we can derive a generalized
+version of Dinah and that's a lot closer
+to what people actually use this is not
+actually the original Dyna method
+proposed by Sutton but we can call it
+kind of Dyna style in that it follows a
+similar philosophy
+so here's kind of the generalized
+version collect some data consisting of
+Transitions and maybe this is just one
+time step or maybe you're rolling out
+many trajectories that's a choice that
+you can make
+um learn your model and optionally your
+reward model sometimes the reward model
+is known but sometimes you have to learn
+it and maybe you learn this for many
+gradient steps or maybe just update it
+for one gradient step that's kind of up
+to you
+and then do a bunch of model based
+learning where every step of model based
+learning involves sampling some states
+that you saw in your buffer
+choosing some actions in those States
+and again you can make a choice as to
+whether that action is chosen from the
+buffer as well from your latest policy
+or even with some exploration strategy
+or even entirely around
+and then simulate the next state Premier
+model and if you don't know the reward
+then simulate the reward from your
+reward model
+and potentially do this for multiple
+steps
+right and then you can use this to train
+your our model 3rl algorithm your Q
+learning algorithm using simulated data
+okay so this is kind of a generalization
+of the Dyna procedure from before
+it only requires short rollouts for the
+model maybe as few as one step
+and it still exists of our States
+because you're sampling the starting
+States for those rollouts directly from
+your buffer so
+there's an entire class of modern
+model-based RL algorithms that are all
+essentially variants on this basic
+recipe
+now when I describe this recipe in a
+kind of textual form like this it might
+be a little hard to understand what all
+the moving parts are so what I want to
+do on the next slide is actually present
+a more diagrammatic view of this method
+so let's think back to the diagram of
+deep Q learning that we discussed a few
+lectures ago as a collection of parallel
+processes so if you recall we talked
+about how there's a process that
+collects data from the environment and
+pushes into the buffer there's a process
+that evicts old data from the buffer
+that's gotten too old there's a process
+that updates the target Network
+parameters using latest Network
+parameters and of course there is the
+process that performs Q function
+regression by loading batches from the
+replay buffer making updates on them
+using the target Network and updating
+the current parameters okay so this is
+the kind of the schematic diagram of Q
+learning that we saw in a previous
+lecture and now what we can do is we can
+take this schematic diagram and we can
+add model based acceleration into this
+so this is basically exactly the process
+on the previous slide I'm just going to
+visualize it graphically
+so we're going to have another process
+that performs model training
+and that process is going to load
+transitions from the buffer of real
+Transitions okay so you want to use real
+transitions to train your model you
+don't want to train the model on its own
+synthetic data because they'll be very
+circular
+then there's a process that collects
+data using the model
+so this process is going to sample a
+state from your buffer
+it's going to take your train model
+and it's going to run a short model
+based rollout
+from that state and there's a choice you
+can make here you can either use your
+latest policy or the policy that
+collects the data or something else the
+most common choice would be to use your
+latest policy so you would actually use
+your current parameters Phi and do the
+ARG Max or use the corresponding actor
+and then you would take these
+transitions you're collecting from the
+model and you would push them into the
+buffer of model based transitions
+and now when you're doing your Q
+function regression you would sample
+some data from your model based buffer
+and some data from your real buffer
+you want to keep them separate because
+you want to be able to modulate how much
+real data versus how much synthetic data
+you use and typically you would use a
+lot more synthetic data because the
+synthetic data is much more plentiful so
+the figure is actually a little bit
+misleading it looks like the real buffer
+is bigger but typically the model based
+buffer is actually much larger
+you would also have a different eviction
+strategy for the model based buffer
+because typically if you are mostly
+constrained by samples rather than
+compute you would actually want to evict
+your model based buffer each time you
+change your model so if you improve your
+model might as well flush your model
+baseball and collect entirely new data
+it costs your compute but it doesn't
+cost you any real world sample
+collection although if you are concerned
+about compute costs and these kinds of
+methods do tend to be very
+computationally expensive you could also
+reuse some of the model based data even
+if your model is changing but typically
+you would have a slightly different
+eviction strategy for these algorithms
+so it looks like there's a lot going on
+here but really this additional
+model-based process that we've added is
+just a way to populate an additional
+buffer that we're going to be using to
+load up our batches for the Q learning
+process
+so hopefully this diagram makes it a
+little clearer how these methods really
+work under the hood kind of at a systems
+level
+now there have been a variety of
+algorithms that have actually been
+proposed in the literature that make use
+of this idea these are just a few
+examples they differ a little bit of
+some of the design decisions especially
+in regard to which data is actually used
+for
+um the Q learning process and how it's
+used so
+so the procedure I described here this
+is probably closest to model based
+policy optimization or mbpo but you
+could also Imagine algorithms that use
+the model-based rollouts to get better
+Target value estimates but don't use
+them for training the Q function itself
+and that's uh what for example uh model
+based value expansion does so there are
+a few design choices to make here I
+won't go into great detail about what
+exactly each of those design assistants
+are if you want to learn more about them
+you can read the three papers that I
+have mentioned at the bottom but at a
+high level they all have this basic
+recipe take some action and observe a
+transition add it to your buffer sample
+and minibash from your buffer uniformly
+use that to update your model
+sample some States from the buffer for
+each of those States perform a model
+based rollout with actions coming from
+your policy and those are those branched
+rollouts and then use all the
+transitions along the rollout to update
+your Q function perhaps in combination
+with a little bit of real world
+transitions
+Okay so
+why is this a good idea well generally
+the benefit of these kinds of methods is
+that they do tend to be more sample
+efficient because they're using their
+samples to train this model which is
+then being used to amplify the data set
+so it's being used to construct even
+more data than what you collected in the
+real mdp and that additional data is
+then included in the Q learning process
+and if the model is good then it will
+make q-learning go better
+why might this be a bad idea
+well
+there are a number of additional sources
+of bias that this kind of method
+incurs of course the most obvious one is
+your model might not be correct so if
+your model is not correct then when you
+perform those model based rollouts then
+your policy will optimize the wrong
+thing
+we can mitigate these issues by using
+some of the ideas that we discussed per
+model based RL before so for example if
+you use ensembles of models the
+additional stochasticity can help
+average out errors and reduce
+exploitation
+there's another reason why this could be
+a bad idea which is that when we make
+these short rollouts starting from
+buffer States well an off policy
+algorithm can in principle handle the
+fact that it has the wrong State
+distribution but in the end you still
+need to visit states uh where you're
+going to need your Q function to be
+correct so if you've never seen some
+State before and you're going to enter
+that state when you actually run in the
+real world well then you're going to be
+in a lot of trouble potentially if that
+state is very different from anything
+you trained on and the state
+distribution that you end up training on
+when you use these kinds of methods is
+kind of weird right as I mentioned
+before the states that you see along
+these short rollouts originating from
+buffer States might come from neither
+the state distribution of the policy
+that collected the data nor the latest
+policy you're using it's kind of a mix
+of the two and you know oftentimes that
+actually works out okay but in principle
+it can get you a state distribution that
+is very strange and very far from what
+you want
+in practice what that usually means is
+that you can't go too long without
+collecting more data so you do need to
+refresh the buffer by collecting more
+real world data so that the states that
+you sample in step four are not too far
+away from the states that you would
+actually see if you were to run in the
+real world
+and of course the model bias issues that
+come from having the wrong model can
+cause these methods to be a little bit
+problematic
+in practice the trade-off that we tend
+to get with these kinds of model based
+approaches is that they tend to learn
+significantly faster because they use
+the model based acceleration but they
+will sometimes Plateau to a lower level
+of performance because the additional
+model bias basically puts a ceiling on
+how tightly they can
+fit to the real world Dynamics although
+with shorter rollouts and with careful
+design decisions this Gap has been to a
+large extent The Limited in many
+practical Benchmark tasks

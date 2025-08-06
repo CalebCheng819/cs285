@@ -1,0 +1,392 @@
+all right in the next portion of the
+lecture
+i'll go through a few other novelty
+seeking exploration methods so
+for these i won't go through them in
+quite as much detail but i just want to
+give you a sense for other techniques
+that have been put forward in the
+literature
+that also exploit the notion of optimism
+to improve exploration
+so the first one i'm going to talk about
+uh you can think of it as a
+kind of account based method with a more
+sophisticated density model
+so this book from this paper by tang at
+all called
+hash exploration and the idea here is
+counting with hashes so
+um here's the the notion instead of
+doing the pseudo count thing
+what if you still do regular counts but
+under a different representation
+so perhaps what you could do is you
+could take your states
+and you compute a kind of a hash that
+compresses the state so it's a lossy
+hash
+in such a way that states that are very
+different get get very different hashes
+but states that are very similar
+might be might map to the same hash
+so the idea is that we're going to
+compress s into a k bit
+code via some encoder 5s and if k is
+chosen to be small enough such that
+the number of states is larger than 2 to
+the k then we'll have to compress some
+states into the same code
+and then we'll do counting but we'll
+count with respect to these codes we'll
+actually count how many times we've seen
+the same code
+instead of the same state
+and the shorter your code is the more
+hash collisions you get
+which means the broader your notion of
+similar for the purpose of determining
+two states are similar
+will be so will similar states get the
+same hash
+well maybe it depends a little bit on
+the model you choose
+so the way that you can improve the odds
+is instead of using some standard hash
+function
+that typically aims to minimize hash
+collisions you could instead use
+an auto encoder that is trained so that
+it gets the maximum reconstruction
+accuracy
+and if you train the auto encoder to
+maximize your construction accuracy
+then if it's forced to have hash
+collisions it'll
+uh it'll produce hash collisions for
+those settings where the
+collision results in small
+reconstruction error so basically if it
+mistakes one state for another but they
+still look pretty similar
+then that mistake costs the autoencoder
+a lot less than if the states look very
+different
+so learning the hash basically provides
+hash collisions that are a little more
+similarity driven and then this
+algorithm will take the bottleneck from
+the solder encoder or essentially
+treating the encoder
+of the autoencoder s5s clamp it
+to b01 perform a down sampling step
+and that's the code the k-bit code that
+they're going to use and then they just
+do regular counting
+on these k-bit codes and the resulting
+algorithm actually turns out
+to work decently decently well with a
+variety of different coding schemes
+so that's kind of a nice way that you
+could adapt regular accounts if you
+don't want to deal with pseudo accounts
+another thing you could do is you could
+avoid density modeling altogether
+by actually exploiting classifiers to
+give you density scores
+so remember that p theta of s needs to
+be able to output densities
+but it doesn't necessarily need to
+produce great samples
+and we can exploit this by devising a
+class of models
+that are particularly easy to train that
+can't produce samples at all
+but can give reasonable densities so
+this is from a paper called ex2 by who
+at all
+so here's the idea we're going to try to
+explicitly compare
+the new state to past states and the
+intuition is that if
+a classifier can easily distinguish
+whether the state is looking at is the
+new state
+or a past state then the new state is
+very novel and therefore should have low
+density
+if it's very hard to distinguish that
+means that the new state looks
+indistinguishable from past states
+and therefore as high density and while
+this notion is fair is
+somewhat intuitive and informal it can
+actually be made mathematically precise
+so if the state is novel uh the state is
+novel if it is easy to distinguish
+from all previously seen states by a
+classifier
+so for each observed state s what we're
+going to do is we'll fit a separate
+classifier
+to classify that state against all past
+states in the buffer
+and then we'll use the classifier
+likelihood or the classifier
+error to obtain a density
+so it turns out that if
+the probability that your classifier
+assigns to the state is given by d
+of s and i have the subscript s because
+this is the classifier that's trying to
+classify the state s against all pass
+states so d
+subscript s of s is the probability this
+classifier assigns
+to this state being a new state
+the density of the state turns out can
+be written as
+p theta of s is equal to 1 minus d s of
+s divided by d s of s
+and the way that you obtain this
+equation is you write down the formula
+for the
+optimal classifier which can be
+expressed in terms of the density ratio
+and then do a bit of algebra
+so this is the probability that the
+classifier assigns that
+s is a positive meaning that s is a new
+state
+and the classifiers train where the only
+positive is s
+and the negatives are all the d's now
+at this point you might be wondering
+what the heck is going on here like you
+have a classifier that just tries to
+classify whether s is equal to itself
+like shouldn't that always output true
+well
+remember what counts are doing what
+counts are doing is they're they're
+counting how many times you've seen that
+exact same state multiple times
+so if you're actually in that regime
+with counts
+and s has a large count then s will also
+occur in d
+so you'll have one copy of s in the
+positives but you might have multiple
+copies of s
+in the negatives which means that the
+true answer
+the true ds of s is not one because if
+you see the state s
+it could be a positive but it could also
+be a negative
+for example if the
+the state s occurs in the set of
+negatives 50
+of the time if literally half your
+negative states are also s
+then d s of s is not 100 percent
+it's actually 75 percent because 50
+that's positive 25 that's
+you know the other half of the negatives
+so the larger the count
+the lower ds of s will be and of course
+in larger continuous spaces where the
+counts are always one
+this model will still produce
+non-trivial conclusions because the
+classifier
+is not going to overfit the classifier
+is actually going to generalize a little
+bit
+which means that if it sees very similar
+states in the negatives it will assign a
+lower probability
+to the positive so that's why you can
+use a classifier desk to make densities
+like this
+if you want to go through the algebra
+for how to derive the probability
+from the classifier uh check out the
+paper it's actually a fairly simple bit
+of algebra the intuition is that you
+first write down the equation for a
+bayes optimal classifier
+which is an expression in terms of p
+theta of s and then you solve that
+expression
+to find an equation for b theta of s
+now as i mentioned before aren't we just
+checking if s is equal to s
+well if there are copies of this present
+in the data set
+then the optimal dsms is not one as i
+mentioned before
+and in fact the optimal classifier
+is given by one over one plus p of s
+and again this is a bit of algebra that
+you can check so if you rearrange this
+to solve it for p of s you get the
+equation on the right
+now in reality of course each state is
+unique and your classifier can overfit
+so you have to regularize the classifier
+to ensure
+that it doesn't overfit and doesn't just
+assign a probability of one all the time
+so you would use something like weight
+decay to regularize your classifier
+now the other problem with this is that
+you're you know as i've described this
+procedure so far
+we're training a totally separate
+classifier for every single state we see
+now isn't that a bit much are we going
+to go kind of crazy with all those
+classifiers
+well one solution we could have is we
+could instead train an amortized model
+so instead of training one classifier
+for every single state
+we can train just a single classifier
+that is conditioned
+on the state that it's classifying
+so it's an amortized model that takes
+the exemplar as input
+that's x star and it takes the state
+that's classifying as
+input that's x and now we just train one
+network
+and we update it with every state that
+we see so this is an amortized model
+and this basic scheme actually works
+pretty well it compares very favorably
+to some other exploration methods
+including the hash based exploration
+that i described before provides maybe
+an interesting perspective on how the
+type of density model we use for
+exploration
+doesn't necessarily need to be able to
+produce samples and it could even be
+obtained
+from a classifier
+and then in the paper there are some
+experiments with using this for some
+visual navigation tasks in this doom
+where you have to traverse many
+different rooms before you find the
+treasure
+and a good exploration algorithm should
+figure out when it's in a novel room
+and then seek out more in all the rooms
+that hasn't seen too much
+all right now there are also more
+heuristic methods
+that we could use to estimate quantities
+that are not really counts
+but that kind of serve a similar role as
+counts in practice and can work pretty
+well
+so remember that p theta of s needs to
+be able to output densities
+but it doesn't necessarily need to
+produce great samples in fact
+it doesn't even necessarily need to
+produce great densities you could just
+think of it
+as a score and you just want that score
+to be
+larger for novel states and smaller for
+non-novel states or the other way around
+so basically just need some number
+that is very predictable whether a state
+is novel or not it doesn't even have to
+be a proper density
+so you just need to be able to tell if a
+state is novel or not and if that's all
+you want there are other ways to get
+this that are a little more heuristic
+but can work well
+so for example let's say that we have
+some target function
+f star of s comma a don't worry about
+what this function is for now let's just
+say some scalar valued function
+on states and actions so maybe it's this
+function
+and we take our buffer of
+states and actions that we've seen and
+we fit an estimate to f star so we fit
+some function
+f hat theta so f hat theta is trying to
+match
+uh f star on the data so maybe our data
+set contains these points
+f hat theta might look like this so it's
+going to be similar to those points
+close to the data but far from the data
+is going to make mistakes because it
+hasn't been trained in those regions
+so now we can use the error between f
+hat and f star
+as our bonus because we expect this
+error to be large
+when we're very far away from states and
+actions that we've seen
+so close to the data the two functions
+should match far from the data
+f f hat theta might make really big
+mistakes
+so then we would say the novelty is low
+and the error is low and the novelty is
+high
+when the error is high
+so then we could ask well what kind of
+function should we use
+for f star and there are a number of
+different choices that have been
+explored in the literature
+so one common choice is to set f star
+to be the dynamics so basically f star
+of sa
+is s prime that's very convenient
+because
+it's a quantity that clearly has
+something to do with the dynamics of the
+mdp
+and of course you've observed s prime in
+your data
+so you could essentially train a model
+and then measure the error of that model
+as a notion of novelty this is also
+related to information gain
+which we'll discuss uh in the next part
+of the lecture
+an even simpler way to do this is to
+just set f star
+to be a neural network with parameters
+phi
+where phi is chosen randomly so this
+network is not actually trained
+it's actually just initialized randomly
+to obtain an arbitrary but structured
+function
+the point here is that you don't
+actually need f star to be all that
+meaningful
+you just need it to be something that
+can serve as a target that varies over
+the state in action space
+in ways that are not trivial to model so
+that's why just using a random network
+actually can work pretty well and this
+is actually
+part of the material that will be on
+homework five so
+it's a good idea to kind of understand
+why this works

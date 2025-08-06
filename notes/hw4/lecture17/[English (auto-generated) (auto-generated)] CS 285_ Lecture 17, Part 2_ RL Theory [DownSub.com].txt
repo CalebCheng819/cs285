@@ -1,0 +1,652 @@
+in the second part of today's lecture
+we're going to do some theoretical
+analysis of a model free reinforcement
+learning algorithm that is kind of
+similar to one that we might actually
+want to use namely for the queue
+iteration
+now of course we know that real fitted q
+iteration in general is not guaranteed
+to converge so we're going to use a kind
+of an idealized model of fit accuration
+that is you know a little more
+simplified than the real method but is
+amenable to theoretical analysis
+okay so here is our abstract model
+of exact cue iteration
+in exact key iteration we're going to at
+every iterate
+set qk plus 1 to be equal to some
+operator t times qk
+the operator t is going to be the
+bellman optimality operator so t times q
+is equal to r
+plus gamma times p
+times the max over a of q okay so the
+the max operator here is kind of weird
+because q is an sa length matrix and
+we're going to say that max a of that
+essay length
+vector sorry results in a new vector
+that is of length s
+so
+it's max a but it's kind of this
+blockwise max where over all the actions
+correspond to the same states it
+computes one entry which is the max over
+those actions so this is not a full max
+over the whole vector q it's actually
+this block max
+so there's a little bit of notational
+convenience
+um anyway don't worry too much if my
+notation here is confusing tq is
+basically exactly what you think it is
+it's just the thing that takes a q
+function and performs a max bellman
+backup
+now this exact cue iteration here's how
+we're going to model approximate fitted
+q iteration
+we're going to say that q hat k plus 1
+is going to perform some kind of
+minimization
+over q hat to minimize
+q hat minus
+t hat
+q hat k
+so there are going to be two sources of
+error here one is the t hat is not the
+same as t i'll talk about that in a
+second and the other one is that the
+minimization will not be exact either so
+q hat k plus 1 will not actually be
+equal to t hat q hat k
+so we're going to have an approximate
+development operator
+and we're going to have an approximate
+minimization so the approximate bellman
+operator t hat q
+is going to be
+equal to r hat plus gamma p hat
+let's unpack this a little bit
+so r hat
+is in this case for the purpose of this
+analysis
+just the reward averaged over all the
+times when we've seen the state essay
+so the value in our hat for sa is just
+the sample average one over the number
+of times we've seen sa
+times the sum over all of our samples of
+ri for every ri that whose siai
+corresponds to sa so it's basically
+exactly what you think it is it's just
+the average reward we've seen for that
+state action tuple
+and p-hat
+basically the same as before is the
+number of times we've seen the
+transition sas prime divided by the
+number of times we've seen sa
+now this might look like the same kind
+of idea that we had in the model based
+analysis before but note that these are
+not models
+this is the effect of averaging together
+different transitions in the data
+so what we would do in a real physical
+iteration algorithm is we would have
+uh different losses
+for every single sample so for every
+sample we would have you know something
+like
+ri
+we would have something like qsi ai
+minus ri plus gamma uh max a prime qsi
+prime a prime squared or some other
+difference you know maybe not squared
+maybe
+absolute value
+and we would average them all together
+so we're doing this idealized model is
+we're basically saying that
+the effect of averaging together these
+different losses kind of looks like
+doing a backup under this empirical
+model so p-hat and r-hat are basically
+empirical models of the reward and
+transitions
+um
+technically this is what you would get
+if you were to average together all the
+target values for a given state action
+tuple say right so if you've seen a
+given essay five times and you average
+together the target values for those
+five instances of that same essay you
+would get exactly the same thing as if
+you were to employ this version of r hat
+and p hat
+okay
+now i'm saying all of this but this is
+just kind of justification for this
+idealized model so from here on out
+we're just going to deal with our hats
+and p hats
+so all that explanation was just to
+justify why
+viewing approximate fitter q iteration
+as doing this t-hat backup is reasonable
+it's reasonable because if you were to
+just average together the target values
+for
+that state action tuple over all the
+samples that contain that state action
+tuple this is exactly what you would get
+okay
+um now at this point i
+you know what we're actually going to
+see in our analysis is that the fact
+that r hat and p hat are not exactly the
+same as r and p is going to induce some
+error and we call that sampling error
+because the reason for the error is that
+we do is that r hat and p hat are
+inexact because we have a finite number
+of samples if we had an infinite number
+of samples that our hat would be equal
+to r and p-hat would be equal to p but
+for a finite number of samples we incur
+sampling error
+but that's not the only source of error
+this minimization will also be inexact
+so we won't actually be able to get
+q hat k plus 1 the perfectly matched t
+hat q hat
+k
+because it's physical iteration and
+there's some kind of function
+approximation or some kind of
+you know inexact
+learning going on
+so we need some model for this error
+and an important thing here is which
+normal we're going to use
+so
+we saw before in our discussion of
+q iteration back in the beginning of the
+course that if we do this with
+squared error the problem is that we
+can't even prove convergence of the
+algorithm
+now that's a significant problem but
+even though we can't prove convergence
+of the real algorithm maybe we can
+assume some kind of idealized algorithm
+and at least study how error in this
+idealized algorithm depends on the
+problem parameters so we need to
+idealize this a little bit and in order
+to idealize it we're going to assume
+that we're actually minimizing the
+infinity norm and furthermore we're
+going to assume that we can get the
+infinity norm to be
+less than or equal to some constant so
+we'll assume that every iteration we
+compute this approximate belmont backup
+t hat q hat k
+and then we fit the new q hat k plus 1
+to this t hat q hat k with an infinity
+norm that is less than or equal to some
+constant
+and i'll come back to this later so this
+is
+this assumption is kind of made out of
+convenience because
+it's difficult to do this with
+the l2 norm
+okay so which questions are we going to
+want to study
+well one question is as the number of
+theta q iteration iterations approaches
+infinity what is q hat k actually
+approach
+in particular
+how much does q hat k differ from q star
+asymptotically as we take infinitely
+many approximate physical iteration
+iterations
+well where will our errors come from
+they'll come from two sources one is
+that t is not equal to t hat so that's
+sampling error and the other one is that
+q hat k plus one is not equal to t hat q
+hat k and that's
+we call it approximation error
+basically when we approximate
+the backed up previous q function
+meaning the target values with some new
+q function we incur some approximation
+error and we can try to quantify that
+okay
+so let's first analyze just the sampling
+error
+so we'll just analyze the problems we
+get from the fact that t is not equal to
+t hat and this is going to look pretty
+similar to what we saw in the previous
+section
+so we're basically going to figure out
+how the real thing that we're doing the
+one that has t hat q hat is different
+from what we would have gotten if we
+used t times q hat
+so in particular we want to understand
+this difference
+how different will t hat
+q be from t q for some q function q
+we don't care what q is at this point we
+just want to understand the difference
+between applying t hat to it and
+applying t to it
+so if we were to write that out well
+let's just substitute in the definition
+of t hat and t in there
+and we'll collect the terms so we'll
+collect the r terms and the next value
+terms we get r hat minus r
+plus gamma times the expected value of
+the max under p hat minus the expected
+value of the max under p
+and by the triangle inequality as usual
+we can bound this the norm of this
+sum
+with the sum of their norms so we get
+r hat minus r the norm of that plus
+gamma times the norm of the difference
+of expectations
+now the first value here is exactly the
+estimation error of a continuous random
+variable
+what did we learn about that allows us
+to bound the approximation error of a
+continuous random variable
+well this is exactly hufting's
+inequality so if we just directly plug
+in the formula for huffington's
+inequality
+um we get that the difference between r
+hat and r is just going to be less than
+or equal to two times the maximum
+possible reward that's basically the
+range of rewards the b plus minus b
+minus
+times the square root of 1 over delta
+over 2n so our familiar bound
+the error will scale as 1 over root n
+for the second part
+this is just the sum over all next
+states of the difference of p hat and p
+times the maximum over
+the action of q s prime a prime
+and
+we can bound that
+by
+replacing the max over a prime with a
+max over s prime and a prime so that'll
+make this this q term independent of s
+prime
+right because if you average together
+the uh you know the values of some
+vector that's the same that's bounded by
+summing together the maximum values of
+that vector because any entry in the
+vector is less than or equal to its
+maximum
+and now looking at this equation
+hopefully you'll all recognize this as
+the total variation divergence between p
+hat and p
+times some
+quantity that depends on q some constant
+quantity
+and in particular that constant quantity
+is just the infinity norm of q
+so this is exactly equal to the total
+variation divergence between p hat and p
+times the infinity norm of q
+and we already had a bound for that
+so that's basically going to use that
+concentration inequality for estimating
+categorical distributions
+and therefore this is bounded by some
+constant times the infinite norm of q
+times the square root of the log of 1
+over delta
+divided by n so again it scales as root
+n and there's some constant that comes
+from the dimensionality and so on and
+the infinity norm of q all right so
+that's sampling error and this is you
+know more or less following the same
+logic as we had in the previous section
+so what we have is that
+the difference between applying these
+this empirical bellman backup the
+approximate backup and the true backup
+is bounded by two terms one that depends
+on the error in the reward and the other
+one that depends on the error in the
+dynamics
+so that means that the infinity norm of
+the
+difference between t hat q and t q
+is basically also going to have this
+form just with slightly different
+constants and with some
+terms that depend on the
+dimension on the number of states in
+actions and we get that by using the
+union bound remember the reason that we
+need to use the union bound is that
+these inequalities all hold with
+probability 1 minus delta so if you have
+n different events then you need to
+bound the probability of all of those
+events happening and that's what the
+union bound does
+okay but you don't really have to worry
+about this all this really changes is
+the constants
+okay so that's sampling error
+now what about approximation error
+well let's make some assumption
+let's assume that
+when you
+fit
+q hat k plus 1
+to
+the target values which we're going to
+say are t q hat k
+your fit has an infinity norm error of
+at most epsilon k
+and for now we're going to analyze the
+case where we have an exact backup
+but we'll come back to the approximate
+backup later so let's just pretend for a
+minute that our backup is exact so
+there's no difference between t and t
+hat and we're just studying the effect
+of error in the fit
+so if we had an exact fit if we had like
+an exact tabular q iteration method then
+q hat k plus 1 would be exactly equal to
+t q hat k and now we're going to assume
+that it's not exact that it incurs some
+error and that that error is bounded in
+the infinity norm
+now this is a strong assumption in
+reality if you're doing supervised
+learning your error is not bounded in
+the infinity norm it's going to be
+bounded in something like
+you know a weighted l2 norm in
+expectation under some distribution
+we're going to assume it's bound in the
+infinity norm which means that for the
+worst possible state action tuple your
+error is at most epsilon k so this is a
+strong assumption but it will make this
+very convenient
+okay so now what we're going to try to
+understand is the difference between
+uh q hat k at some iteration k and the
+real q star
+again in the infinity war
+so here's how we're going to do it
+we're going to use the same trick as
+before we're going to
+subtract and add some quantity and the
+particular quantity that we're going to
+put in is t times q hat k minus 1.
+the reason is that well
+we're fitting q hat k to
+t q hat k minus 1 so if we put that in
+that's the quantity we can bound
+so we're going to subtract it and we're
+going to add it and then we'll group
+these two terms together so we're going
+to have one term which is q hat k minus
+t q had k minus 1.
+so that that's convenient because that's
+the quantity we're going to be bounding
+by assumption and then we have this
+other term which consists of the backup
+of q hat k minus 1 minus the backup of q
+star now q star is the fixed point of t
+so you can always replace q star with t
+q star which is what i did on this line
+and then we'll apply the triangular
+quality again
+to bound the infinity number of the sum
+by the sum of their infinity norms
+and the first term here q hat k minus t
+q hat k minus 1 is is just
+bounded by epsilon k minus 1 by our
+assumption at the top
+the indexing is off by 1 that's why it's
+k minus 1.
+so that leaves us with a second term
+now for the second term we're going to
+recognize an interesting fact that we
+saw way back in the day when we first
+learned about q learning which is that
+the bellman backup is a contraction
+the fact that the bell and backup is a
+contraction the infinity norm means that
+the infinity norm of of uh what you get
+by applying t
+to two different q functions
+is less than or equal to
+gamma times the infinite norm of the
+difference between those q functions
+so using the fact that t is a
+contraction contraction and gamma we can
+bound this by gamma times q hat k minus
+1 minus q star
+and now what we've done is we've related
+q hat k minus q star recursively to q
+hat k minus 1 minus q star
+but with the addition of this little
+error term epsilon k minus 1.
+okay so now we're going to unroll this
+recursion so
+applying the same thing again to q hat k
+minus 1 minus q star we bound the whole
+thing by epsilon k minus 1 plus gamma
+epsilon k minus 2 plus gamma squared
+times the difference then we can do it
+again and we get gamma squared times
+epsilon k minus 3 plus gamma cubed and
+so on and so on if we go all the way
+back to the beginning
+then we end up bounding the whole thing
+by this gamma discounted sum from i
+equals 0 to k minus 1 gamma to the i
+times the corresponding epsilon plus
+gamma to the k
+times the difference between q hat 0
+and q star
+now this tells us something very
+interesting and also very useful which
+is that
+the f the more iterations we take the
+more we essentially forget our
+initialization because as k goes to
+infinity this gamma to the k term will
+vanish because gamma is less than 1
+which means that the effect of our
+starting point q hat 0 is going to
+vanish
+so what that means is that if we take
+the limit as k goes to infinity
+uh the second term gamma to the k
+vanishes because gamma to the k
+approaches zero
+and for the first term we're going to
+simplify it a little bit we're going to
+replace all those epsilon k minus i
+minus one terms with just the maximum
+epsilon we get over all the iterations
+and that's probably reasonable to do
+because if our fitting error is bounded
+for every iteration we'll just say that
+we can also bound it over all iterations
+and now we get our familiar geometric uh
+series the sum from i equals zero to
+infinity of gamma to the i times some
+constant
+uh and so that's equal to one over one
+minus gamma times the infinity norm of
+epsilon where epsilon is a big vector
+with
+k dimensions where every dimension has
+the error at that iteration
+so that's pretty neat now we see how
+error scales uh for just the
+approximation error so if we had if we
+incur some epsilon fit every step then
+the total error we'll get will be
+epsilon times one over one minus gamma
+so the longer our horizon essentially
+the more error we get which intuitively
+kind of uh you can think of as saying
+that every time you back up which is
+every iteration of fit a queue iteration
+you
+incur some additional error so since
+you're
+the number of backups you need to make
+is equal to your horizon that's the
+order of the approximation error that
+you'll see
+so now let's put these two things
+together
+we've got our sampling error and that
+quantifies the difference between t hat
+and t
+and we've got our approximation error
+which is how much q hat k plus 1
+will differ from uh t q hat k
+uh and they'll differ
+due to sampling error and due to the
+approximation error so essentially what
+we're going to do is we're going to
+subsume the sampling error inside the
+epsilons
+and that will let us connect these two
+parts up
+so
+put stated another way
+that bound from the previous slide can
+also be rewritten as the limit as k goes
+to infinity of q hat k minus q star is
+less than or equal to one over one minus
+gamma times the max over all of your
+iterations of the difference between q
+hat k and t
+q hat k minus one
+right so this this contains both kinds
+of errors because there's a t in there
+so if you're actually backing up using t
+hat instead of t you'll have an error
+there and it contains the approximation
+error due to imperfect fit
+so let's just examine what this quantity
+is
+q hat k minus t q hat k minus 1
+we're going to put in
+uh t hat q hat k minus 1 so we'll
+subtract and add up the same trick as
+before
+we'll again group the terms
+so we're bounding this whole thing by q
+hat k minus t hat q hat k minus 1
+plus
+t hat qk minus 1
+minus t
+q hat k minus 1. so the second term is
+basically taking care of the sampling
+error and the first term is taking care
+of the approximation error
+so we know the first term is that
+epsilon k and the second term is that uh
+big sampling error bound up above
+so we can do is we can just take these
+two terms and plug them in here
+uh and we can use that to calculate the
+difference
+between q hat k and q star and the limit
+as k goes to infinity and will be one
+over one minus gamma times a bunch of
+terms basically a sum of three terms two
+of them coming from sampling error and
+one coming from approximation error
+so
+here's what we had on the previous slide
+we can see here that error compounds
+with the horizon over iterations and due
+to sampling
+notice that in the sampling error the
+second term
+actually is also of order one over one
+minus gamma because
+q infinity
+is on the order of r max over one over
+one minus gamma we discussed this before
+we talked about how the value functions
+and q functions uh basically their
+magnitudes are the reward times the
+horizon so it's r max over one minus
+gamma
+so if you imagine what will happen if we
+substitute in epsilon k plus sampling
+error into that second equation
+you have a one over one minus gamma term
+in front and then you have a sum of
+three terms one of which itself also has
+a one over y minus gamma term in it so
+the overall order of the error will be
+quadratic in one over one minus gamma
+just like we saw in part one
+now so far we needed strong assumptions
+specifically infinity norm assumptions
+on the error that we're incurring so
+you know that is a fairly strong
+assumption that is not always going to
+hold
+more advanced results can actually be
+derived with p norms under some
+distributions so
+infinity norms are not really realistic
+for practical learning algorithms it is
+possible to do some analysis with p
+norms
+and
+you can learn more about that in the rl
+theory book referenced at the bottom of
+the slide uh basically
+this analysis studies norms of this form
+where um
+the p mu norm is just the expected value
+under mu of the difference raised to the
+power p and then the whole thing is
+raised to 1 over p so if p is equal to 2
+this is actually the quadratic belmont
+era that we're used to so there's
+something else that we can do with that
+but we need some assumptions there too
+to avoid this non-convergence session
+you

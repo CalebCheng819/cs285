@@ -1,0 +1,443 @@
+all right next let's talk about some
+actual
+exploration algorithms that we could use
+in deep reinforcement learning
+so to recap the classes of exploration
+methods that we have
+our optimistic exploration which
+basically say that visiting a new state
+is a good thing
+this requires estimating uh some kind of
+state visitation frequency or novelty
+just like we had to count the number of
+times that we took each action in the
+bandit setting
+and this is typically realized by means
+of some kind of exploration bonus
+we have thompson sampling style
+algorithms so these are algorithms that
+learn a distribution
+over something either a model a q
+function or a policy
+just like we learned this distribution
+over banded parameters before
+and then they sample and act according
+to that sample
+and then we have information gain style
+algorithms which reason about the
+information gained from visiting
+new states and then actually choose the
+transitions that lead to large
+information again
+so let's start with the optimistic
+exploration methods
+so in the banded world we saw that one
+rule that we could use
+to balance exploitation and exploration
+is to select an action based on the arg
+max
+of its average expected value empirical
+estimate based on what we've seen before
+plus the square root of 2 times log t
+divided by
+n a and the important thing here is
+really the denominator so
+you're basically assigning bonuses based
+on some function
+of the inverse of the number of times
+you've pulled that arm
+so this is a essentially a kind of
+exploration bonus
+and the intuition in reinforcement
+learning is that we're going to
+construct an exploration bonus
+uh that is not just for different
+actions but actually also for different
+states
+and the thing is lots of different
+functions will work for this exploration
+bonus as long as they decrease with n
+of a so don't worry too much about the
+fact that it's a square root
+or that it has a 2 times log t in the
+numerator the important thing
+is that it's some quantity that
+decreases rapidly
+as n of a increases
+okay so can we use this idea with mdps
+one thing we could do is uh essentially
+extend it to the mdp setting
+and create what is called count based
+exploration
+so instead of counting the number of
+times you've pulled some arm which is n
+of a
+you would count the number of times
+you've visited some state action
+tuple s comma a or even just the number
+of times you visited some state
+and of s and use it to add an
+exploration bonus
+to your reward so the ucb estimate in
+the bandit case is estimating the reward
+with an additional exploration bonus in
+the mdp case
+we will also estimate reward with an
+exploration bonus
+so what that means is that we will
+define a new reward function r plus
+which is the original reward plus this
+bonus function applied to n of s and the
+bonus function is just some function
+that decreases
+with n of s so maybe it's the square
+root of 1 over n of s
+and then we would simply use our plus
+instead of r
+as our reward function for any rl
+algorithm that would care to use
+and of course in this case r plus will
+change as our policy changes so
+maybe every episode would update r plus
+so we need to make sure that our rl
+algorithm doesn't get too confused
+by the fact that our rewards are
+constantly changing but other than that
+this is a perfectly reasonable way
+to kind of extend this ucb idea into the
+mdp setting
+so it's a simple addition to any rl
+algorithm it's very modular
+um but you do need to tune a weight on
+this bonus because
+you know if you do uh 1 million divided
+by n of s that'll work very differently
+than if you do
+you know 0.001 divided by n of s
+so you need to decide how important the
+bonus is relative to the reward
+and of course you need to figure out how
+to actually do the counting
+so let's talk about the second problem
+what's the trouble with counts
+the trouble with counts is that the
+notion of account
+while it makes sense in small discrete
+mdps doesn't necessarily make sense in
+more complex mdps
+so let's look at this frame for
+montezuma's revenge
+so clearly if i find myself seeing the
+same exact image 10 times
+then the count for that image should be
+10. but
+what if only one thing in the image
+varies so what if for example
+the the guy here just stands in the same
+spot but the skull moves around
+every location for the skull is now a
+totally different
+state now if the guy is moving and the
+skull is moving what are the chances
+that they would ever be in the same
+exact combination of locations
+twice so maybe they'll be in very
+similar states
+but they might not be in exactly the
+same spot twice
+and there in general if you have many
+different
+factors of variation you get
+combinatorially many states
+which means the probability of visiting
+the same exact state a second time
+becomes very low
+so all these moving elements will cause
+issues
+what about continuous spaces there the
+situation is even more dire so if you
+imagine that robotic hand example from
+before
+now the space is continuous so no two
+states are going to be the same
+so the trouble is in these large rl
+problems we basically never see the same
+thing twice
+which makes counting kind of useless
+so how can we extend counts to this
+complex setting where you either have a
+very large number of states
+or even continuous states
+well the notion that we want to exploit
+is that some states are more similar
+than others
+so even though we never visit the same
+exact state twice
+there's still a lot of similarity
+between those states and we can take
+advantage of that
+by using a generative model or a density
+estimator
+so here's the idea we're going to fit
+some density model
+to p theta of s or p theta of s comma a
+depending on whether we want state
+counts or state action counts
+so a density model could be something
+simple like a gaussian or it could be
+something really complicated
+we'll talk about the particular choice
+of density model later but for now we
+just need it to be something
+that produces an answer to the question
+what is the density
+or the likelihood of this state
+now if you learn a density model
+as for example some highly expressive
+model like a neural network
+then p theta of s might be high even for
+totally new states that you've never
+seen before
+if they're very similar to states that
+you have seen before
+so maybe you've never seen the guy and
+the skull and precisely this position
+but you've seen the guy in that position
+and you've seen the skull in that
+position just not together
+so that state will probably have a
+higher density than if something totally
+weird happened like
+if for example you suddenly picked up
+the key you know if in all prior states
+the key is always present now suddenly
+it's absent that'll have a very low
+density
+so the question that we could ask then
+is can we somehow use
+p theta of s as a sort of pseudo count
+now it's not a count because it's not
+literally telling you how many times
+you've visited a particular state
+but it kind of looks a little bit like a
+count in that you know if you take p of
+s and you multiply by the total number
+of
+states you've seen that will be a kind
+of a density
+for that state
+so if you have a small mdp
+where practical accounting is is doable
+then the probability of a state is just
+the count on that state
+divided by the total number of states
+you've seen so it's n of s divided by n
+so the probability it relates to the
+count and the total number of states you
+visited
+which means that after you see the state
+s your new probability
+is the old count plus one divided by the
+old
+n plus one
+so here's the question can you get
+p of theta of s and p of theta prime of
+s to obey these equations
+so instead of keeping track of counts we
+keep track of p of essence
+but we will update theta when we see s
+to get a new theta prime
+meaning we'll update our density model
+we'll change its parameters
+so can we look at how p theta of s and p
+theta prime of s have changed
+and recover something that also obeys
+these equations that essentially looks
+like a count
+it's not a count but it looks like it
+counted acts like account
+so it could be used as a count
+so this is based on a paper called
+unifying count based exploration by
+belmar at all the idea is this
+we're going to fit a model p theta of s
+to all the states that we've seen so far
+in our data set d
+then we will take a step i and observe
+the new state s
+i then will fit a new model p theta
+prime of s
+to d with the new state appended to it
+and then we'll use p theta s i and b
+theta prime of s i
+to estimate a pseudo count which i'm
+going to call
+n hat of s and then we'll set r plus to
+be r
+plus some bonus determined by n hat of s
+so this and ahead of s is a pseudo count
+and then we repeat this process so how
+do you get the pseudo count well
+we'll use the equations from the
+previous slide so the equations in the
+previous slide
+describe how counts relate to
+probabilities so we'll say that we want
+our pseudo counts
+to also relate to probabilities in the
+same way so we know b theta of s
+and we know p theta prime of s because
+that's what we get by updating our
+density model
+we don't know n hat of s and we don't
+know little n hat
+however we have two equations and two
+unknowns
+so we could actually solve the system of
+equations and recover
+n hat of s and n of n and little n hat
+so we have two equations and two
+unknowns if we do a bit of algebra
+here's what the solution looks like n
+hat of s
+is equal to little n hat times p theta
+of s
+that's kind of the obvious statement and
+if you manipulate the algebra
+you can solve for n hat and find that
+it's equal to 1 over
+p theta prime of s divided by p theta
+prime of s minus p theta of s
+and that whole thing multiply that b
+theta of s it's a little bit
+of an opaque expression but it's pretty
+easy to solve for it you basically take
+that expression from n hat of s
+substitute that in in place of n hat of
+s for the top two equations
+so you get two equations that are both
+expressed in terms of little n hat
+and then you solve them for a little n
+hat and you get the solution at the
+bottom so now
+every time step you just solve you just
+use these equations
+to figure out big n hat of s and use
+that to calculate your bonus
+and now your bonus will be aware of
+similarity between states
+uh now there is a there are a few
+technical issues left we have to resolve
+what kind of bonus to use
+and what kind of density model to use
+now there are lots of bonus functions
+that are used in the literature
+and they're all basically inspired by
+methods that are known to be optimal
+for bandits or for small mdps
+so for example the classic ucb bonus
+would be 2
+times log little n divided by big n and
+then you take the square root of that
+whole thing
+another bonus in this paper by
+australian littmann
+is to just use the square root of 1 over
+n of s that's a little simpler
+another one is to use 1 over n of s
+they're all pretty good they could all
+work this is the one used by belmar at
+all but
+you could choose whichever one you
+prefer
+does this algorithm work well here's the
+evaluation
+that's used in the pseudo-accounts paper
+so in this paper they are
+comparing different methods the
+important curves to pay attention to are
+the green curve and black curve
+so the black curve is basically q
+learning the way that you're
+implementing it
+right now and the green curve is their
+method with a 1 over square root of n
+bonus
+and you can see here that you know on
+some games it makes very little
+difference like hero
+on some games it makes a little bit of a
+difference and on some games like
+montezuma's revenge it makes an enormous
+difference where there's almost no
+progress without it
+the pictures at the bottom uh illustrate
+the rooms that you visited and so as i
+mentioned before in montezuma's revenge
+the rooms are arranged in a kind of
+pyramid
+and you start at the top of the pyramid
+and you can see that without the bonus
+uh you only visit two rooms with the
+bonus you actually visit
+more than half of the pyramid so the
+method is doing something pretty
+sensible
+what kind of model should you use for p
+theta of s
+uh well there are a few choices to be
+made about this model that are a little
+peculiar
+than the trade-offs we typically
+consider for density
+uh modeling and generative modeling
+usually when we want to train a
+generative model like a gan or vae
+what we care about is being able to
+sample from that model
+but for pseudo-accounts all you really
+want is a model that will produce a
+density score
+you don't really need to sample from it
+and you don't even really need those
+scores to be normalized so
+as long as the number goes up as the
+state has higher density you're happy
+with it
+so that means that the trade-offs for
+these density models are sometimes
+a little different than what we're used
+to from the world of generative modeling
+in fact they're often the opposite of
+the considerations for many popular
+general models in the literature like
+gans
+which can produce great samples but
+don't produce densities
+the particular model that belmont all
+uses is a little peculiar so it's a cts
+model
+it's actually a very simple model it
+just models the probability of each
+pixel
+conditioned on its upper and left
+neighbors so you can think of it as a
+directed graphical model where there are
+edges from the
+upper and left neighbors of each pixel
+pointing to that pixel
+it's a little weird but it's very simple
+and produces these scores
+it's not a good density model and there
+are much better choices
+but that's the one they use in the paper
+so
+other papers have used stochastic neural
+networks compression length
+and something called ex2 which i'll
+cover shortly
+but in general you could use any density
+model you want so long as it's
+it produces good probability scores
+without caring about whether it produces
+good samples or not

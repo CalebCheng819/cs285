@@ -1,0 +1,1450 @@
+welcome to lecture 17 of cs285
+today we're going to have a brief
+discussion of reinforcement learning
+theory and you know this is the only
+theory lecture in this course so i won't
+go into a great deal of depth my goal is
+to mainly just give you a sense for the
+kinds of theoretical analysis that we
+can do in reinforcement learning
+algorithms and the kinds of conclusions
+that we might draw from this sort of
+analysis
+so what questions do we usually ask when
+we're doing reinforcement learning
+theory well there are a lot of different
+questions but here are a few common ones
+if you have an algorithm some kind of
+reinforcement learning algorithm and
+it's provided with n samples
+and it used and it uses those n samples
+every one of k iterations how good is
+the result from this algorithm
+what does how good mean well let's say
+we're doing q learning we might ask how
+much does the learned q function q hat k
+after k iterations differ from the true
+optimal q function could we for example
+show that q hat k differs from the
+optimal q function q star in some norm
+by at most epsilon
+now typically these algorithms have some
+kind of randomness in them for example
+randomness and how we generate the
+samples so we can't really guarantee
+that we'll always have a difference less
+than or equal to epsilon so typically we
+would have a guarantee that it's less
+than or equal to epsilon with at least
+some probability one minus delta where
+delta is a small number
+so typically we would want to show that
+this is true if we have at least some
+number of samples where the number of
+samples depends on some function of
+epsilon and delta and typically we would
+want some well-behaved function for
+example we might want n to
+increase logarithmically with delta
+another question we could ask which is a
+slightly different question
+is how does the policy induced by the q
+function at the kth iteration
+differ from the optimal policy in terms
+of its q value so let me unpack the
+notation here so q pi k
+is the true q function meaning the true
+expected
+total reward induced by the policy pi k
+where pi k
+is the policy corresponding to q hat k
+so asking what is the difference between
+q pi k and q stars really amounts to
+asking
+how
+different is the expected reward of the
+policy iteration k
+from the best expected reward you could
+get so this is really a measure of
+regret
+right so q pi k is not the same thing as
+q hat k because you could for example
+have q hat k erroneously overestimate
+the q values q pi k is the true q value
+of the policy uh corresponding to q hat
+uh k
+which is typically the argmax policy
+and there are other questions we could
+ask too
+another kind of question we could ask is
+if i use a particular exploration
+algorithm how high is my regret going to
+be
+this is a little bit more
+elaborate
+but typically
+you know we might want to show that for
+example some kind of exploration
+procedure gives you regret that is
+logarithmic in t so what i have here is
+actually the bound the full
+version of the bound for an upper
+confidence bound exploration method
+and you can see that it has a linear
+term multiplied by delta but delta is a
+very small number and then most of the
+bad stuff comes from this
+first term which is
+which goes as the log
+of t
+but there are of course many other
+questions we can ask so these are just a
+few examples
+we'll mostly focus on
+sample complexity type questions today
+so these first few
+but keep in mind that there are other
+questions
+now when we're doing reinforcement
+learning analysis we do typically need
+to make fairly strong assumptions so
+analyzing full dprl methods in the most
+general setting it's generally not
+possible
+so
+effective our analysis is very hard
+without strong assumptions and the trick
+is to make assumptions that admit
+interesting conclusions without
+divorcing us too much from reality
+so some examples
+in exploration
+uh
+you know performance of rl methods is
+greatly complicated by exploration
+because
+how well you learn how many samples you
+need very strongly depends on how likely
+you are to find potentially sparse
+rewards
+since theoretical guarantees typically
+address worst case performance and worst
+case
+exploration is extremely hard
+we typically don't want to couple
+analysis of exploration together with
+analysis of
+sample complexity that addresses things
+like approximation error or sampling
+error
+so
+in
+studying exploration we want to show
+that some exploration method is good
+and typically good for exploration means
+that it is uh that will learn a good
+policy a policy that deviates from the
+optimal policy by some epsilon in time
+that is polynomial typically in the
+number of states
+the number of actions and in one over
+one minus gamma which is the horizon
+but
+separately from studying exploration we
+might also study learning so if we
+somehow abstract away exploration if we
+somehow pretend that exploration is
+works well how many samples do we need
+to effectively learn a model or value
+function that results in good
+performance and this is a slightly
+separate question
+so it might actually behoove us to
+separate exploration from learning
+because if we always analyze exploration
+and learning together oftentimes the
+difficulty will be dominated by
+exploration
+but worst case exploration is extremely
+pessimistic you know typical exploration
+is not nearly as bad as the worst case
+if for example you have a well-shaped
+reward
+so in many cases we might want to
+abstract away exploration somehow
+basically get rid of it so that we can
+study the sample complexity of learning
+one way we could do that for example is
+with the generative model assumption
+so this assumption just says you don't
+actually have to explore you can just
+sample any state action you want in the
+entire mdp however much you want
+for basically any state action tuple
+this is of course unrealistic this is
+not what real reinforced learning
+algorithms do but making this kind of
+assumption can be very convenient
+because it allows us to study how
+difficult learning is
+essentially if we assume that
+exploration is easy
+right so one way to do this to basically
+say we're going to have oracle
+exploration for every state action tuple
+we're going to sample uh ps prime given
+sa n times
+so we'll just literally just like
+uniform carpet bond the whole mdp
+and then let's and
+at that point the problem is still not
+solved we still need to study the effect
+of sampling error
+okay so we've got some questions we've
+got some assumptions but before i really
+dive into the analysis
+one of the things i want to talk about
+is what is the point of all this
+so
+you know we could say that maybe the
+point of all this analysis is to prove
+that our rl algorithm will work
+perfectly every time
+that's usually not possible with current
+dprl methods
+when we put in all the bells and
+whistles all the tricks of the trade we
+don't even end up with algorithms that
+are guaranteed to converge every time
+much less to work perfectly
+another goal is to maybe understand how
+errors
+are affected by problem parameters
+for example the larger discounts work
+better than small ones is it easier to
+solve a problem with a large discount or
+is it easier to solve a problem with a
+small discount is it easier to solve a
+problem with a large state space or a
+small one should we take more iterations
+or fewer iterations if we want half the
+error do we need two times the number of
+samples or do we need four times the
+number of samples or something else
+these are all somewhat qualitative
+questions at some level
+and usually we use precise theory to get
+imprecise qualitative conclusions about
+how various factors influence the
+performance of rl algorithms under
+strong assumptions
+and then we try to make the assumptions
+reasonable enough that these conclusions
+are likely to apply to real problems but
+they're not guaranteed to apply to real
+problems
+so it's very important to understand
+this i think there's a kind of a
+tendency sometimes for people to say
+well my theoretical result proves that
+my algorithm will work every time or i
+have a provable uh you know uh provably
+good rl method that's nonsense we never
+have a probably good rl method and
+anybody who tells you so
+is not being forthright
+theory in reinforcement learning and
+really in most of machine learning
+is actually about getting qualitative
+and somewhat heuristic conclusions
+by analyzing greatly simplified special
+cases
+so don't take someone seriously if they
+say that our algorithm has provable
+guarantees it never does the assumptions
+are always unrealistic and theory is at
+best a rough guide to what might happen
+this is not unique to machine learning
+of course the same is true in other
+areas for example in physics you could
+have some theory that describes the
+efficiency of the ideal engine
+now no current physical theory will
+allow you to analyze the actual fuel
+efficiency of a gasoline engine in a
+modern car it's just too complicated
+what it will tell you is some guidance
+about the limitations and potentials of
+idealized versions of that system
+and that's exactly what we do in
+reinforcement learning theory we provide
+qualitative guidance
+about the limitations and potentials of
+idealized versions of the algorithms
+that we actually use
+and what we look at when we come up with
+a with a theoretical result is not
+uh a guarantee that the method will
+perfectly have a particular sample
+complexity what we look at is how does
+this behavior change as we change
+different problem parameters
+does it become more efficient or less
+efficient as the state space gets larger
+do we need more iterations or fewer
+iterations as we increase the the
+discount factor or the horizon
+in these kinds of qualitative questions
+they're actually very important they can
+guide our choice of parameters and
+algorithm design decisions and we can
+get some qualitative guidance on those
+things by doing theoretical analysis
+so having understood all that let's
+actually get into the the meat of some
+of the analysis that we can do
+so we'll start with some basic sample
+complexity analysis and a lot of what
+i'll present in this lecture follows the
+rl theory textbook by alec agarwal and
+others linked at the bottom of the slide
+as well as some lecture slides that were
+made by alvaro kumar last year
+so we'll start with the oracle
+exploration assumption meaning that for
+every state action tuple we can sample
+the next state s prime and times
+and the algorithm that we'll start with
+is a very basic kind of model based
+algorithm
+now
+i use the term model based rather
+loosely this is actually you know a
+pretty idealized algorithm so what we're
+going to what we're going to do
+is we're going to estimate
+the transition probabilities p hat as
+prime given say simply by counting the
+number of times that we transition into
+s prime from sa
+okay a very simple tabular estimation
+strategy so there's no function
+approximation here there's no neural net
+we're just doing tabular estimation
+we're literally counting how many times
+we land in a particular status prime
+this of course only makes sense if the
+states are discrete and the actions are
+discrete and we can build a table with
+all these numbers
+um
+and then what we're going to do is
+we'll first focus just on policy
+evaluation so given some fixed policy pi
+let's just use p hat to estimate the q
+function q hat pi
+so this idealized algorithm takes some
+policy
+and then it uses this p hat to exactly
+estimate q hat pi
+now q hat pi is not the exact q function
+but it is the exact q function under p
+hat right because p hat fully determines
+an mdp and then we'll do something like
+uh you know q value iteration to
+estimate q hat pi
+okay so step two is exact
+by using an inexact model p hat
+okay this is a very simple algorithm and
+our goal is basically going to be to
+understand the error that is induced by
+the fact that p hat is not perfect
+now to uh kind of
+take stock of what we're doing here this
+is of course a rather simplistic rl
+method this is not how we would usually
+do rl
+and the main purpose of this analysis is
+really to understand how sampling error
+in estimating p hat propagates into q
+functions
+so for a little bit of context with this
+you know in supervised learning theory
+there's uh there are a lot of tools that
+we can use to answer questions like if
+i'm trying to estimate a quantity like
+p-hat and i have some number of samples
+how accurate is my estimate going to be
+and by introducing step two what we're
+really trying to do is we're trying to
+take these standard supervised learning
+results and we're trying to pass them
+through the rl machinery to say well how
+do
+bounds on sampling error from supervised
+learning translate into bounds on
+sampling error for q functions
+when that q function is a result of some
+kind of belmont backup
+so that's really going to be the flavor
+of the analysis that i'll present
+so the questions that we'll ask
+how close is q hat pi to q pi meaning
+that we're going to estimate the q
+values of our policy pi how close is it
+to the q two true q values of that
+policy
+so ideally what we want to show
+is that over all states and actions if
+we take the infinity norm of the
+difference between q pi and q by hat
+that infinity norm should be bounded by
+epsilon
+with some probability 1 minus delta
+and if the number of samples is larger
+than some function of epsilon and delta
+or hopefully it's a it's a nice
+functional well-behaved function that is
+not exponential or something crazy like
+that
+uh the infinity norm is just the max
+right so if you see me write an infinity
+norm what it really means is just the
+difference
+between the two things in the argument
+for the worst case state action tuple
+and it's good to use the infinity norm
+because it gives us a bound on worst
+case performance
+now we could ask another question
+how close is
+q hat star if we learn using p hat so if
+we don't just evaluate some policy
+that's given to us but if we instead try
+to actually run uh you know q value
+iteration like to actually find the
+optimal
+q function under p hat
+how close is it going to be to the true
+optimal q function
+so what's the difference between q star
+and q hat star and ideally we'd like to
+see that that's
+bounded by some epsilon
+so q hat star is the optimal q function
+we learn under our learned model which
+is basically what happens if we do rl
+with this method
+and as i mentioned before we could also
+ask how good is the resulting policy
+which is not the same
+so if we take the policy pi hat which
+corresponds to q hat star
+and we take the true q function of pi
+hat how different is that from q star
+meaning how suboptimal is the policy we
+get by running uh q value iteration
+under p hat
+and then that last question is really
+the one that quantifies the performance
+of rl because that's really telling us
+how much worse is the policy we get
+under the model p hat than the best
+policy we could have gotten anywhere
+okay
+now it turns out that actually the first
+question the policy evaluation question
+gives us a tool that is very good for
+answering the other two questions so
+we'll mostly focus on the first question
+how close is q hat pi to q pi for a
+given policy pi and then we'll see how
+to utilize that as a tool to answer the
+other two questions
+okay
+so before i get into this
+let's introduce some
+standard tools in supervised learning
+theory
+so all this analysis has to do with how
+the number of samples affects the error
+in estimating some quantity
+in supervised learning
+we have inequalities that allow us to
+bound the error for estimating some
+quantity using some number of samples
+and these are referred to as
+concentration inequalities because they
+quantify how quickly our estimate of
+some random variable concentrates around
+the true
+expected value of that variable
+so whenever we need to answer questions
+about how close a learned function is to
+the true function in terms of the number
+of samples we use concentration
+inequalities
+one of the most basic concentration
+inequalities and typically the first one
+that you would learn about if you take a
+machine learning theory class is
+softing's inequality
+so the full statement of huffington's
+inequality is given here
+but it's it's a little bit opaque but it
+has a very simple interpretation so let
+me describe the full statement and then
+i'll provide a little bit of intuition
+for what it's really saying
+so suppose that x1 x2 through xn are a
+sequence of independent identically
+distributed random variables with mean
+mu
+what are x1 through xn
+well these are your samples
+so you have some true distribution and
+that true distribution has a mean mu
+now we don't really know anything else
+about that distribution we'll say it has
+a mean mu and you take some samples from
+that distribution
+let x bar n
+be the sample wise average so x bar n is
+the
+sum over all the x i's divided by n so
+it's the average value
+now this is your estimate of the average
+right the true average may not match
+this if you only generated like two
+samples averaging them together doesn't
+give you their true average
+you might incur some error because you
+have too few samples
+so what hufting's inequality does is it
+quantifies
+how much error you would get
+as a function of n
+so suppose that
+uh
+each of these samples
+is in the range from b b minus to b plus
+right so this is just saying that
+whatever their mean or whatever their
+distribution is they can never be less
+than b minus and they can never be
+larger than b plus
+then we have uh the following two
+results
+your sample based
+estimate of the average x bar n
+is
+greater than or equal to the true
+average plus epsilon with probability
+that that is at most e to the negative 2
+n epsilon squared divided by b plus
+minus b minus squared
+so what this means is that the
+probability that your sample based
+estimate of the mean
+differs from the true mean in the
+positive direction by epsilon
+is no greater
+than e to the negative 2 and epsilon
+squared over b plus plus b minus squared
+this is actually very good this means
+that your probability of making a
+mistake
+larger than epsilon decreases
+exponentially in the number of samples
+and similarly you have a bound on the
+other side that the probability of your
+estimate being less than mu minus
+epsilon is also less than or equal to
+epsilon to the negative two n epsilon
+squared divided by b plus plus b minus
+squared
+so this describes how quickly your
+estimate x bar n concentrates around the
+true mean mu because as epsilon goes to
+then your estimate approaches mu and
+here we see the probability that your
+epsilon will deviate
+that your estimate will deviate from you
+by more than epsilon
+now this has a few uh implications right
+so if we estimate mu with n samples the
+probability that we're off by more than
+epsilon is at most
+the thing on the right hand side of this
+inequality
+and we can equivalently reinterpret it
+to say that if you want this probability
+to be delta so if you want the
+probability to be off by more than
+epsilon to be at most delta meaning that
+you are you have an error less than
+epsilon with probability at least one
+minus delta
+then you can simply solve for delta so
+you can say i want delta to be less than
+or equal to 2 times e to the negative 2
+n epsilon squared over b plus plus b
+minus squared the reason the 2 is there
+is because you can be off either in the
+positive direction or in the negative
+direction
+and then you can just solve for delta so
+you can take the log of both sides
+and then you can do a little bit of
+algebra rearrange these things so
+here in the first step what i did is i
+divided both sides by 2 and took the log
+then in the next step what i did is i
+divided both sides by b plus minus b
+minus squared over 2n and
+negated both sides
+so that
+changes to less than or equal to greater
+than or equal to and then you take the
+square root and you see that
+you need
+b plus minus b minus over square root of
+2n times the square root of log 2 over
+delta to be greater than or equal to
+epsilon
+so if you want some error epsilon with
+probability
+delta or you want the r to be less than
+epsilon with probability 1 minus delta
+then the number of samples you need
+scales as the square root of n
+or you can also write down a function
+for n in terms of epsilon and delta same
+thing just do a bunch of algebraic
+manipulation to get n on one side
+and you can see that
+you know if you have
+this number of samples then you will
+have error at most epsilon
+with probability no larger than delta
+so one of the conclusions that you can
+get from this is that error scales with
+1 over square root of n
+that's pretty convenient
+so hopefully this gives you some idea of
+how these concentration inequalities
+work you write down some equation for
+the probability that you'll be off by
+epsilon and then you can manipulate that
+equation to solve for the probability
+delta or to solve for the number of
+samples
+now
+in a lot of the analysis that we do in
+reinforcement learning we're concerned
+with estimating probabilities of
+categorical variables
+so p of s prime given s a is a
+distribution of a categorical variable
+not a real value variable so huffting's
+inequality applies to estimating the
+mean of a continuous valued random
+variable
+but here if we're estimating p hat we're
+actually concerned with our accuracy in
+estimating the probability distribution
+over a categorical variable in this case
+s prime
+so
+a similar kind of concentration
+inequality can be derived for that
+let's say that
+z is some kind of discrete random
+variable that takes values in one
+through d so d is the cardinality of z
+these the number of possible values and
+they're distributed according to q so q
+is a vector of probabilities that are
+all greater than zero and sums to one
+and there are d values in q
+so if you write it as a vector
+where the
+jth entry is the probability that z
+takes on its j value
+and you assume that you have n iid
+samples
+and that the empirical estimate
+is given by basically counting the
+number of times you get each value so
+exactly the way that we're estimating p
+hat up above
+then you have a concentration inequality
+that looks kind of similar to hufting's
+inequality
+um
+but for estimating the probabilities of
+these
+random variables
+so it's really the second one that we
+care about so the first one is the
+probability that your error in the two
+norm is going to be bounded the second
+one has to do with the error in the one
+norm and the error in the one norm
+that's total variation divergence that's
+the one we're going to be using so if
+you look at the last line of this
+theorem
+the probability that your estimate of
+the probabilities that q hat
+minus the true probabilities q
+in the one norm which is total variation
+divergence the probability that their
+total variation diverges is greater than
+or equal to the square root of d times
+one over root n plus epsilon
+is less than or equal to e to the
+negative n times epsilon squared okay
+and notice the similarity to
+huffington's inequality so in
+huffington's inequality we also had the
+probability be bounded by e to the
+negative
+two n times some times epsilon squared
+with some other coefficients so here we
+have a negative n epsilon squared is
+just that the constants are different
+and
+the thing that we are greater than or
+equal to
+is
+not epsilon it's now this root d1 over
+root n plus epsilon thing
+but we can do all the same stuff we can
+take this quantity and we can solve it
+for delta for example now and we know
+that
+delta is less than or equal to e to the
+negative n epsilon squared
+we can solve it for epsilon and we get
+epsilon is less than or equal to 1 over
+root n times
+the square root of log 1 over delta
+and we can solve it for n and we get
+that n is less than or equal to 1 over
+epsilon squared log 1 over delta so all
+the same stuff we can describe
+what the error will be as a function of
+the number of samples or how many
+samples we need as a function of the
+error and the probability
+so if we just make a substitution
+substitute the symbols for p hat the
+cardinality of s prime is
+uh s
+capital s the well the cardinality of
+capital s that's the number of states so
+if we just plug this directly into this
+inequality
+we know that if we use n samples for
+every state action tuple
+then the total variation divergence the
+one norm between p hat s prime given sa
+and the true p of s prime given say
+is less than or equal to the square root
+of the number of states times one over
+the square root of n plus epsilon with
+probability 1 minus delta
+now
+this is this is when we in the case
+where we have n samples for each sa so
+the total number of samples that we
+would be using to estimate this model is
+n times the number of states times the
+number of actions so just important to
+keep in mind some of the constants here
+and if if i do a little bit of symbolic
+manipulation on this just basically
+distribute the square root of s into the
+into the parentheses i get this
+and
+roughly i can say that this is bounded
+by some constant times the square root
+of the number of states times log one
+over delta divided by m right so
+it's actually one plus uh
+um the square root of log one over delta
+but
+as long as we don't care about the
+constants uh as long as we don't care
+about delta it's we can write it as some
+c and that'll make it a little bit
+convenient so then we have fewer terms
+flying around
+okay
+so now that we've got our concentration
+inequalities out of the way and we can
+understand how accurate our learned
+model is going to be as a function of
+the number of samples
+let's relate the error in p-hat to the
+error in q-hat pi
+and this is where we actually get into
+the rl centric part of the analysis so
+so far all of our discussion dealt with
+just general machine learning theory now
+we're going to get into the parts that
+are really specific to reinforcement
+learning
+so let's try to relate the model p to q
+pi
+for now we won't worry about
+approximations or anything i just want
+to write down some equations that relate
+p to q pi for a fixed pi
+and we saw this actually before when we
+talked about offline rl but i'll just
+repeat it here for convenience
+so this is the bellman equation so q pi
+at some state s an action sa is equal to
+the reward rsa plus gamma times the
+expected value
+over s prime distributed according to p
+of s prime given s a of v pi s prime
+and v pi s prime of course is the
+expected value of q pi s prime a prime
+under pi
+and we can expand out the expectation
+just write it as a sum
+writing it as a sum will make it easier
+to turn this into a linear algebra
+equation that we can then manipulate
+symbolically
+so if we write this in vector notation
+if we say that q is a vector with s a
+entries r is a vector with sa entries
+and p is a matrix we can write q pi is
+equal to r plus gamma p v pi
+so if we have let's say two states and
+two actions q pi is a big vector with s
+a entries
+so it has two times two four entries if
+you have two states and two actions
+r is also a big vector
+with four entries two by two and it
+doesn't actually matter how you arrange
+these entries so you could imagine that
+it's like s1 a1 s1 a2 s2 a1 s2 a2 or you
+could imagine that it's the other way
+around doesn't really matter it's just
+something that is of length sa
+p is a matrix that describes how a state
+action tuple transitions into a state
+so p has
+s a rows
+so for the stuff on the right hand side
+of the conditioning bar and it has s
+columns because it gives you the
+probability of each state given some
+state in action
+so the number of columns is the number
+of states the number of rows is the
+number of possible state action tuples
+and v is a vector where the number of
+entries equal to the number of states
+and you can see that all the
+dimensionalities line up so you can
+multiply p by v pi and that gives you a
+vector with s a entries and then you can
+add that to r and that will be the same
+dimensionality as q pi
+we can also write v
+as some matrix capital pi times q pi
+remember that v is an expected value
+with respect to the actions of the q
+function
+so pi here is a matrix that now has
+s different rows and s a columns and
+every entry is the probability of
+some action
+in some state
+so
+that means that
+q pi
+is equal to r plus gamma
+times some matrix p pi times q pi where
+p pi is just what you get
+by multiplying
+capital p by capital pi
+all right
+so
+now with that out of the way we have uh
+q pi is equal to r plus gamma p pi q pi
+okay so p pi is just some
+kind of a
+matrix
+and what we can do is we can take this
+gamma p pi q pi
+and throw it on the left hand side of
+the equality so we can say that q pi
+minus gamma p by q pi is equal to r
+and now we can see that you you have all
+the terms involving q pi collected on
+the left hand side
+so you can
+distribute out the matrix multiplying
+them and you get i minus
+gamma p pi times q pi is equal to r
+it turns out although it is not trivial
+to prove this that i minus gamma p pi is
+actually always going to be invertible
+so you can write q pi as being equal to
+i minus gamma p pi inverse times r
+and now we've related p to q pi so we
+can write q pi as a function of p
+and well specifically as a function of p
+pi
+it's a non-linear function
+but we have this relationship and then
+we can use it to describe how errors in
+p will affect errors in q okay
+now this is true for any dynamics so
+just like we can write q pi is equal to
+i minus gamma p pi inverse r we can also
+write q hat pi is equal to i minus gamma
+p hat pi inverse times r because
+remember q hat pi was obtained
+just by solving the learned mdp
+determined by p-hat
+so now we're going to introduce a little
+lemma that we're going to use to
+understand the relationship between
+errors in p-hat and errors in q-hat
+we'll actually introduce two lemons and
+then we'll put them together and get our
+conclusion so the first slime is what's
+called the simulation lemon the
+simulation limit describes how a q
+function in the true mdp q pi
+differs from the q function in the
+learned mdp
+q hat pi
+this is the statement of the simulation
+limit it might be a little opaque but
+i'll unpack this shortly
+so the simulation limit says the q pi
+minus q hat pi is equal to gamma times i
+minus gamma p hat pi inverse times p
+minus p hat times v pi
+so this part is the difference in
+probabilities this is basically the
+difference between the true model and
+the learned model
+this is the true value so you can think
+of these as differences in probabilities
+weighted by their value the value kind
+of
+you know roughly speaking uh constitutes
+their relative importance
+and this is this evaluation operator
+this is the thing that takes reward
+functions to q functions
+so roughly speaking what we're doing is
+we're taking our true value function
+we're converting into a kind of a
+pseudo-reward by passing it through the
+difference of the dynamics
+and then we are basically running queue
+iteration on the pseudo-reward okay and
+slightly opaque result but it'll be
+pretty useful later so first i'll prove
+the simulation lemma and that'll give
+you kind of a taste for some of the
+tools we use in these algebraic
+manipulations then i'll prove one more
+lemma and i'll put them together to
+actually quantify the error in q hat pi
+so the way we do this is actually fairly
+mechanical we have q pi minus q hat pi
+and we're going to replace q hat pi
+with
+the equation up above why well notice
+how the right hand side of the
+simulation element doesn't contain q hat
+pi
+it contains v pi so we're gonna you know
+we're gonna get v pi out of q pi of
+course uh and it also contains p hat so
+maybe somehow get p hat in there so
+we're gonna do is we're gonna take q hat
+pi and we'll we'll replace it by this
+equation i minus gamma p hat prime
+inverse r because that contains p hat
+and let's get rid of q hat pi
+and for q pi
+what we're going to do
+is we're going to stick in a
+uh p hat in there too because remember
+we need to get a p hat in front of
+everything
+so we'll just stick in i minus gamma p
+hat pi inverse times i minus gamma p hat
+pi right because that's
+a matrix a matrix inverse times itself
+which is identity so we can always put
+that in
+okay so now we're getting somewhere we
+have an i minus gamma p hat pi inverse
+in front of both terms
+and we have a q pi in there so hopefully
+that'll go somewhere
+so
+now
+what i'm going to do is i'm going to
+take that r at the end
+and i'll replace the r with i minus
+gamma p pi times q pi
+right because q pi is equal to i minus
+gamma p pi inverse r so i can multiply
+both sides by i minus gamma p pi and
+that will turn that r into an i minus k
+and p pi q pi
+so now i'm really getting somewhere i've
+got two terms they both have an i minus
+gamma p hat pi inverse in front of them
+just like the simulation lemma one of
+the terms has a p hat and the other one
+is a p
+so
+when i group them together i can
+basically since they both have an i
+minus gamma p hat pi inverse in front of
+them i get a i minus gamma p hat pi
+inverse
+then in parenthesis i have i minus gamma
+p hat pi
+minus i minus gamma p pi and the whole
+thing is multiplied by q pi
+so the identities cancel out and uh
+since that second one it becomes a minus
+minus gamma p pi i can switch the order
+and i get uh
+p pi minus p hat pi that whole that is
+all multiplied by gamma so i take the
+gamma out front and that leaves me with
+gamma i minus gamma p hat pi inverse
+times p pi minus p hat pi times q pi
+now remember the q pi that p pi is just
+p times this matrix pi
+and it's the same matrix pi for both p
+and p hat
+so that gives me this equation
+and
+v pi
+is just
+capital pi times q pi
+so i can take the capital pi out replace
+that with v pi and then i i finished
+proving dilemma
+okay
+so
+that's kind of the
+the nature of the algebraic manipulation
+it's not terribly insightful but it
+gives us this useful lemma
+now here's another useful lemma this one
+is going to be even simpler
+given p pi and any vector
+in rsa we're going to have this
+relationship
+if we apply i minus gamma p pi inverse
+meaning this
+evaluation operator to the vector v
+the infinity norm of that is less than
+or equal to the infinite norm of v
+divided by 1 minus gamma
+meaning that applying i minus gamma p pi
+inverse to some vector will blow up the
+infinity norm of that vector by at most
+a factor of one over one minus gamma
+so
+intuitively the q function corresponding
+to a reward v is at most one over one
+minus gamma times larger in terms of the
+infinity norm
+by the way we see a lot of these one
+over y minus gamma terms flying around
+just to make it clear where these come
+from
+usually when you have sums of discounted
+rewards
+you're going to have sums that look like
+this you're going to have a sum from t
+equals 0 to infinity of gamma to the t
+times some number c
+i mean usually the
+c will depend on t but typically it'll
+be bounded by some quantity like it'll
+be bounded by the largest reward so
+you'll often end up with bounds that
+have terms that look like a sum over
+from t equals 0 to infinity of gamma to
+the t times c
+and that's a c times a geometric series
+and that's equal to c over one minus
+gamma right so when you have a geometric
+series like that it ends up equaling one
+over one minus gamma that's just kind of
+a standard math result and that's where
+all these 1 minus 1 over 1 minus gamma
+terms come from
+one way to interpret it is that this is
+a kind of horizon term so if we had a
+finite horizon problem and gamma was 1
+then the multiplier in front of c would
+just be the value of the horizon
+so usually we think of one over one
+minus gamma as kind of the effective
+horizon of an infinite horizon problem
+how far out you go
+before you basically stop seeing the
+effect of those rewards so that's why we
+end up with a lot of one over one minus
+gamma terms flying around and whenever
+you see a one over one minus gamma term
+think horizon
+okay so let's go through the proof of
+this lemon
+we're going to use w as shorthand for i
+minus gamma p pi inverse v just so that
+our equations are short
+and
+that means that
+the infinity norm of v
+is going to be equal to
+the infinity norm of i minus gamma p pi
+inverse times w
+sorry that there's a there's a little
+typo here that should actually be
+i minus gamma p pi times w without the
+inverse so
+the
+this inverse here this is a little
+mistake
+so this is greater than or equal to
+uh by the triangle inequality
+the infinity norm of i times w minus
+gamma times the infinity norm of p pi
+times w
+that's just from the triangle inequality
+so whenever we have
+the
+the norm of the difference of two
+vectors that is greater than or equal to
+the difference of the norms of the two
+vectors
+and
+now
+what we can do is we can take that
+second term p pi times w
+and we actually know that the infinite
+number of p pi times w
+is greater
+is is going to be less than or equal to
+the infinity norm of w
+why well because
+p pi is a stochastic matrix
+so
+when you take a linear combination of
+some vector
+with weights that are
+greater than or equal to 0 and sum to
+less than or equal to 1
+then you can't increase the length of
+that vector
+so that's why you can take out the p pi
+term there
+so now you have
+the infinite norm of w minus gamma times
+infinity norm of w so that's 1 minus
+gamma times the infinity norm of w
+now this is a bound of course that's not
+necessarily equal to that it's just
+greater than or equal to that
+so if you divide everything through by 1
+minus gamma then you get the infinity
+norm of
+v divided by 1 minus gamma is greater
+than or equal to the infinite norm of w
+and remember w is
+i minus gamma p pi inverse times v and
+that completes the proof
+so now uh putting these pieces together
+we've got our two lemmas
+i minus gamma p pi inverse v in the
+infinite norm is less than or equal to v
+in the infinite norm over one minus
+gamma
+and we've got the simulation limit
+so now what we'll do
+is we'll plug in p minus p hat v pi from
+the simulation lemma into this second
+lemma in place of v
+and
+that will tell us
+that
+the infinity norm of q pi minus q hat pi
+that the infinity number of the
+left-hand side of the
+simulation lemma
+is of course equal to the infinity
+number of the right-hand side because if
+the left-hand side is equal to the
+right-hand side then their infinity
+norms are equal
+but then if we apply this
+this top left equation
+using p minus p hat v pi as little v
+then this is less than or equal to
+gamma that comes from the fact the whole
+thing is multiplied by gamma over one
+minus gamma that comes from the top left
+equation times p minus p hat times v pi
+in the infinity norm
+okay so now we've related q pi to q hat
+pi
+to the difference between p and p hat
+but that difference is weighted by this
+v pi thing
+so what we can do is we can say well
+if you have
+some
+some kind of matrix times
+a vector
+you know their product is is going to be
+less than or equal to the product of the
+largest entries
+so you can say that this is less than or
+equal to m over one minus gamma
+of the max over sa
+so that that's taking taking a max over
+the um
+the rows of the matrix
+of the one norm between the difference
+between the uh the entries times the
+largest possible entry in v pi
+this is a fairly crude bound right this
+is going to be pretty loose
+but it is about
+and now we've turned this into a form
+that uh uses quantities that we can
+actually get from our concentration
+inequalities from before so if you
+remember our concentration inequality
+was basically analyzing the max over sa
+of the one norm the total variation
+divergence between p and p hat
+can we bound v pi
+the infinite number of v pi well
+basically yes because v pi is the sum of
+over rewards
+and
+if you have a sum from t equals zero to
+infinity of gamma to the t times summer
+ward rt
+well let's just replace all the rewards
+of the largest possible reward let's
+call that r max
+and then we can use the same geometric
+series formula and get a one a bound of
+one over one minus gamma times r max so
+values are always bounded by one over
+one minus gamma times r max
+and we'll assume that our max is a one
+it's actually fairly standard in this
+kind of analysis just assume that your
+rewards are between zero and one the
+reason that we do that is because uh
+well rewards are invariant to additive
+and multiplicative factors so you can
+assume some range on your reward pretty
+much without loss of generalization as
+long as your rewards are always finite
+so that allows us to get rid of this v
+pi infinity term
+and
+then we're left with this equation that
+q pi minus q hat pi is less than or
+equal to gamma over one minus gamma
+squared times
+the total variation divergence on p
+maximized over sa
+so now we can use that concentration
+inequality from before
+which allows us to relate that total
+variation divergence
+the constant is actually going to be
+different it's going to be c2 instead of
+just c the reason the constant changes
+is because
+we're taking a max over all the states
+in action so that requires us to apply a
+union bound
+remember that
+these are all things that are happening
+with probability 1 minus delta so if you
+have s a different events each with
+probability 1 minus delta then if you
+want to bound the max you need to use
+the union bound but that doesn't
+actually change any of the values we
+care about it mostly just changes the
+constants
+so this is the final result that we're
+left with
+and now remember what i said at the very
+beginning the purpose of doing all this
+analysis
+is
+not to prove that anything will work
+super well but it's to understand how
+error will be affected by various
+parameters of the problem
+so we can see that you know some parts
+of the analysis are quite appealing
+for example more samples leads to lower
+error and in particular
+the values concentrate at a rate of 1
+over square root of n which is actually
+the same as in supervised learning so
+the effect of samples
+is the same
+but what is interesting is that the
+error grows quadratically in 1 over 1
+minus gamma so the gamma term in the
+numerator we don't really care about
+because that's going to be close to 1
+but the denominator would care about a
+great deal
+and the important thing about this bound
+is that the denominator is squared
+so you can think of it as error growing
+quadratically in the horizon we've seen
+error growing quadratic clean horizons
+before so that's not actually a new
+thing to us
+so basically what this tells us is that
+each backup
+over our time horizon accumulates error
+and in fact it accumulates quadratically
+now there are some uh algorithms and
+some fitting strategies for which the
+error is not quadratic so it's not
+always quadratic but it is for this
+naive scheme that we analyzed
+all right
+so that hopefully gives you a flavor of
+how this analysis works now a few
+relatively simple implications of this
+analysis
+we showed that q pi minus q hat pi is
+less than or equal to epsilon
+and epsilon is given by this equation
+what about the difference between q star
+and q hat star now this is a little
+different right because in q pi minus q
+hat pi both q functions for the same
+policy but evaluated using different
+models now we're asking what is the
+difference between the optimal q
+function under p versus the optimal q
+function under p hat and those will
+correspond to different policies
+so there's a really useful uh
+little uh
+identity that we're going to use if you
+have two functions f and g
+and you want to take the absolute value
+or in general any kind of norm of the
+difference between their supremums
+between the largest values they take on
+that's going to be less than or equal to
+the supremum of the difference
+it kind of makes sense right because if
+you're maximizing f and g separately
+that difference is going to be
+only smaller than if you're just
+directly maximizing their difference
+now
+the thing about optimal q functions is
+that they are of course
+the supremum of q pi over all the
+policies right that's what an optimal q
+function is it's the q function of the
+policy that has the largest q values
+so you can replace q star with a supreme
+over pi of q pi and you can replace q
+hat star with a supreme over pi of q hat
+pi
+and then we apply this convenient
+identity
+and we see that this is less than or
+equal to the supremum over pi of the
+difference of the q functions
+but we know from our main result
+that
+q pi minus q hat pi is less than or
+equal to epsilon for all policies pi
+which means that this whole thing is
+also less than or equal to epsilon
+okay so that's pretty convenient we just
+directly took our result and we used it
+to relate the optimal q functions
+now but this doesn't actually tell us
+what the performance of the policy that
+we find under p
+p hat will be in the true mdp
+so that's the other question what is the
+difference between q star and the true q
+function corresponding to
+pi hat star corresponding to the policy
+that we get
+by doing the arc max action under q hat
+star
+here it's uh the analysis is a little
+bit more involved
+so we're going to do is we're going to
+take this difference and we're going to
+subtract and add q hat pi hat star
+so we can always insert you know minus x
+plus x because that's equal to zero so
+we're going to put in q star minus q hat
+pi hat star plus q hat pi hat star minus
+uh q pi hat star
+and then we'll break these up using the
+triangle inequality so this is less than
+or equal to q star minus q hat pi hat
+star
+plus
+q pi hat
+star minus q hat pi h star so the second
+term in this uh basically is the
+difference between the true q function
+the learn q function for the same policy
+so we know that that is bounded by
+epsilon
+the first term q hat pi hat star is just
+q hat star right that's that is the q
+function corresponding to the best
+policy under our learned model
+um
+and then in the second term they're the
+same policy so that means that we can
+use the top left result for the second
+term and we can use the q star minus q
+hat star result for the first term and
+both of them are bounded by epsilon so
+that means that the whole thing is
+bounded by two times epsilon
+okay so that's a pretty straightforward
+way to complete these results

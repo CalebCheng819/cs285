@@ -1,0 +1,466 @@
+all right let's talk about model free
+reinforcement learning with a learned
+model so essentially model based RL by
+using model 3rl methods before we get
+into algorithms let's make a little bit
+more precise some of the things that we
+discussed in the previous portion of the
+lecture on what these back propagation
+gradients actually look like and why
+they might not be as good as using model
+3 methods
+so this is the familiar policy grading
+expression that we had before this is
+basically just directly taken from
+previous lectures now we talked about
+the policy grading as a model
+pre-reinforcement learning algorithm but
+you could just as well think of it as a
+gradient estimator they could be used to
+estimate the gradient of the reward with
+respect to the policy parameters
+used in this way it's sometimes referred
+to as a likelihood ratio gradient
+estimator or colloquially as the
+reinforced grading estimate but it's
+important to remember that as a gradient
+estimator it doesn't necessarily have to
+have anything to do with reinforcement
+learning anytime that you have these
+kinds of a stochastic computation graphs
+you could use this type of estimator
+now before the really convenient thing
+for us about this kind of gradient
+estimator is that it doesn't contain the
+transition probabilities
+that's a little bit of a lie of course
+because in reality you do need the
+transition probabilities to calculate
+the policy gradient because you need a
+sample and those samples come from the
+policy and from the transition
+probabilities
+but the transition probabilities
+themselves do not show up in the
+expression except in so far as they
+generate the samples and in particular
+we don't even know their derivatives
+but there's nothing stopping you from
+using this gradient estimator with a
+learn model so just the same way that
+you would sample from the real mdp
+before now you could sample from the
+learn model
+the alternative the back propagation
+gradient it's also sometimes called a
+pathwise gradient can be written out
+like this now this might seem like a
+very daunting mathematical expression
+but all I did here was I just applied
+the chain rule of calculus to compute
+the derivatives with respect to the
+policy parameters for those computation
+graphs that I showed in the previous
+section so there's an outer sum over all
+time steps and every time step there's
+the derivative of the action at that
+time step with respect to the policy
+parameters times the derivative of the
+next state with respect to the action
+and then that expression in parentheses
+is just the derivative of the reward for
+all future states with respect to the
+next state
+and the you know the particular
+problematic part is of course that giant
+product in the second set of parentheses
+which is a product of all the jacobians
+between time step T Prime and t plus one
+uh so
+that's a little bit of a problem because
+in there you have these uh dsda and dsds
+terms which are basically the derivative
+of the next state with respect the
+previous action and the next state with
+respect to the previous state and they
+all get multiplied together
+so if you imagine that your states are
+n-dimensional those just those DS uh DS
+terms that the very last term in the
+expression that's going to be an N by n
+Matrix and there's going to be a lot of
+those matrices getting multiplied
+together
+and if those matrices have eigenvalues
+that are larger than one then if you
+multiply enough of them together
+eventually they explode and if they have
+eigenvalues less than one you multiply
+enough of them together eventually they
+vanish so that's what makes this
+pathwise gradient so difficult to deal
+with
+um just as a detail I do want to note
+here that the likelihood ratio gradient
+at the top is technically only valid for
+stochastic policies and stochastic
+transitions the pathwise gradient at the
+bottom is technically only valid for
+deterministic policies and transitions
+but this is a solvable problem and you
+could in fact extend the pathwise
+gradient to some types of stochastic
+transitions by using something called
+the reparametrization trick which we
+will learn about in a later lecture and
+you can even make the policy gradient
+nearly deterministic by taking the limit
+as the variance of let's say a gaussian
+policy or transition probability goes to
+zero and you can still get an expression
+for it although it'll be a little bit
+different so it's easier to write the
+policy gradient for stochastic systems
+and the pathwise gradient for
+deterministic systems but that's not a
+fundamental limitation the fundamental
+difference is that the pathwise gradient
+involves that product of all those
+jacobians whereas the policy gradient
+does not
+um now some of you might be wondering at
+this point well it seems like there's
+kind of a free lunch going on here like
+how is it that you can just get rid of a
+giant product of jacobians but there was
+a trade-off of course which is the
+policy grading requires sampling so
+that's that's kind of uh where the
+difference comes in and in fact if we
+were to really dig down to the
+optimization details of these procedures
+it actually turns out the policy
+gradient has some fairly deep
+connections with things like
+um
+finite differencing methods so
+there is no relaunch the policy gradient
+does pay a price for getting rid of the
+product of jacobians but if you're
+multiplying enough jacobians together
+uh you know paying the price of
+switching over to sampling can be worth
+it
+so policy gradients might in fact be
+more stable if you generate enough
+samples because it doesn't require
+multiplying many jacobians
+now before generating lots of samples
+was a problem because when we were
+talking about model 3rl those samples
+required actually running a real
+physical system
+but if we're talking about model based
+RL then generating those samples could
+involve simply running your model which
+costs compute but it doesn't cost any
+kind of like physical interaction with
+your mdp so now that trade-off might be
+well worth it for us because generating
+more samples is just a matter of you
+know sort of sticking more gpus in the
+data center
+if you want to learn more about the
+numerical stability issues specifically
+in regard to policy gradients you can
+check out this 2018 paper that talks
+about some of the uh stability issues
+but the short version is that the model
+free gradient can actually be better
+now
+from this we could write down you know
+what again I might call them uh I might
+make up a name for the name I'm going to
+make up is model based RL version 2.5
+model based RL version 2.5 is going to
+be very similar to 2.0 except instead of
+using back propagation it's going to use
+the policy gradient so step one run some
+policy to collect a data set step two
+learn a Dynamics model step 3 use that
+Dynamics model to sample a whole lot of
+trajectories with your current policy
+step four use those trajectories to
+improve the policy via policy gradient
+and you can of course use all the actor
+critic tricks all that stuff here
+and then repeat step three a few more
+times so you can take many policy
+gradient steps resampling trajectories
+each time but not generally generating
+any more real data nor retraining your
+model
+and once you've improved your policy
+enough that you're happy with it then
+you would run your policy to collect
+more data append those to your data set
+and use that larger data set to Now
+train a better model
+okay so this algorithm would get rid of
+the issue with back propagation that we
+discussed before but it still has some
+problems and in the end this is not
+actually the model based RL method that
+most people would want to use
+so what might be the problem with this
+procedure
+take a moment to think about this and
+again you could pause the video and
+Ponder this on your own time and when
+you're ready to continue then continue
+and I will tell you what's wrong with
+this
+okay so the issue really has to do with
+making long model based rollouts
+to understand this issue let's actually
+think back to something we discussed
+earlier in the course when we talked
+about imitation learning when we talked
+about imitation learning we learned that
+if you train a policy with supervised
+learning
+uh and you try to run that policy
+you might make a small mistake because
+every learn model will make at least a
+small mistake
+but the problem is that when your
+learned policy makes a small mistake
+it'll deviate a little bit from what
+we'll see in the data and when it
+deviates a little bit from What was seen
+in the data it'll find itself in an
+unfamiliar situation where it'll make a
+bigger mistake and these mistakes will
+compound
+and we learned when we talked when we
+discussed imitation learning that this
+issue really comes down to something
+called distributional shift it comes
+down to the problem that the
+distribution Over States under which
+your policy was trained with supervised
+learning differs from the distribution
+of states that it receives as input when
+it's actually executed in the
+environment
+now the same exact challenge applies to
+learned models
+so when we talked about this of course
+before when we discussed learn models
+that
+if the black curve now represents
+running Pi Theta with the true Dynamics
+and the red curve represents running it
+with a learn model then when you run it
+with the learn model the learn model
+will make some mistakes it'll put itself
+into slightly different states and in
+those slightly different states it'll
+make bigger mistakes so if your model
+based rollout is long enough eventually
+it'll differ significantly from The Real
+World because the mistakes get bigger
+and bigger
+now this is all for the case where
+you're running the same policy as the
+one that you used to collect the data
+but of course in model based RL version
+2.5 you're going to change the policy
+you're going to make it better with
+respect to your model which means that
+the issue is even further exacerbated
+because now you'll be running with a
+learned Dynamics model that is different
+from the real dynamics model and with a
+modified policy that is different from
+the policy that collected the data so
+the distributional script will be even
+worse
+so how quickly does the error accumulate
+well even in the best case when you run
+the same exact policy just like in the
+behavioral cloning discussion it'll
+accumulate as Epsilon t squared and I
+would leave it as an exercise to you
+guys to show that in fact that there's a
+bound of Epsilon t squared and the bound
+is tight the logic for that is extremely
+similar to what we had in behavioral
+cloning but the takeaway for us for now
+is that errors
+build up very quickly as the Horizon of
+your model based rollout increases which
+means that making long model based
+rollouts is very costly to you in terms
+of accumulated error this is another way
+of saying that the longer you roll out
+is the more likely it is that the
+conclusion you draw from that rollout
+meaning that its reward will differ from
+what you would actually get if you were
+to roll out in the real world
+so
+perhaps what we want to do is avoid long
+rollouts perhaps we want to devise model
+based RL methods that can get away with
+only ever using short rollouts
+can we do something like this
+so long rollouts are bad because they
+have huge accumulating error well what
+if we just reduce the Horizon like you
+know our task has a horizon of 1000 and
+we'll limit our rollouts to only 50
+steps
+this will have much lower error
+the problem is that of course what an
+NDP with a horizon of 1000 doesn't look
+the same as the same mdp with a horizon
+of 50. there may be something that
+happens in those later time steps that
+you'd never see in the earlier time
+steps if you're for example controlling
+a robot that's supposed to cook a meal
+in the kitchen well maybe it'll take 30
+minutes to cook the meal and if you only
+make model based straws that are five
+minutes in length that's hardly enough
+time for the robot to like put the pot
+on the stove
+so this isn't really good enough because
+you're essentially just changing the
+problem
+so here's a little trick that we can use
+what if we only ever make short model
+based rollouts but we'll still use a
+smaller number of long Real Worlds so
+let's say that these black trajectories
+actually represent real world rollouts
+that are to the full length of the mdp
+and we'll collect these relatively
+infrequently and then when we make our
+model based rollouts we won't start them
+at the beginning we'll actually sample
+some States from these real world
+rollouts we'll sample them maybe
+uniformly at random over the whole
+trajectory and then from each one we'll
+make a little short model based rollout
+so this has some interesting trade-offs
+we do have the much lower error because
+our model based rollouts are very short
+now
+and we get to see all the time steps so
+you will sample some of these States
+from very late in the trajectory and
+make your model based raw from there so
+you will see later time steps as well
+but here's the problem
+what kind of policy does the state
+distribution of these model-based
+rollouts correspond to
+well the answer is it's complicated in
+fact if your policy is changing as
+you're making these uh short model based
+rollouts that are branched from the from
+the real world rollouts
+you use the different policy to roll
+into that state then you're using to
+roll out of it so you got to those
+orange dots using the policy that was
+collecting the data and then when you
+run your model from there now you're
+switching to the new policy that you are
+improving
+and that's actually a little bit
+problematic because
+the state distribution that you get from
+this is not the state distribution of
+your latest policy it's not the state
+distribution of the policy that
+collected the data either it's actually
+kind of a mix of the two
+that's not necessarily fatal and
+certainly if you make small changes to
+your policy then all that same logic
+that we talked about when we discussed
+Advanced policy grading methods would
+still apply but usually the point of
+using model based RL is to improve your
+policy more between data collection
+episodes so that you can be more data
+efficient
+and in that case this gets to be a
+little bit of a problem because if the
+whole point is to change the policy a
+lot now that state distribution mismatch
+is going to hurt us if we use on policy
+methods like policy gradient algorithms
+so we can do this
+but it turns out that to make this work
+really well typically it's better to use
+off policy algorithms like Q learning or
+Q function actor critic methods
+although it is possible when people have
+devised policy grading based strategies
+that employ this kind of idea you just
+can't change the policy as much in
+between data collection rounds
+okay so model based RL with short
+rollouts is something that we could call
+model based RL version 3.0 and this is
+actually getting much closer to the
+kinds of methods that people actually
+use in practice
+so the way these methods you work is
+just like before they would collect some
+data use that data to train a model then
+they would pick some states
+from the data set they collected in the
+real world
+and then use them all to make short
+rollouts from those States and these can
+be very short they can be as short as
+one time step in Practical algorithms
+even when they're longer they're on the
+order of 10 time steps so very short
+much shorter than the full Horizon of
+the problem
+and then typically these methods would
+use both real data and the model based
+data to improve the policy with some
+kind of off-polic crl method so this
+might involve Q learning or it might
+involve active critic methods and what I
+have written here is that they improve
+the policy but in reality they typically
+have both a policy and a queue function
+and typically they would generate a lot
+more data from the model than they would
+have from the real mdp
+so they would do this a few times and
+then they would run the policy in the
+real mdp to collect more data to append
+to the data set and then retrain the
+model and repeat the process
+and there's often a lot of delicate
+design decisions that go into these
+methods in terms of how much they
+improve the policy in between data
+collection how much data they collect
+how much data they collect from the
+model and so on
+um so in the next portion of the lecture
+we will talk about specific designs for
+these algorithms and get a sense for the
+overall system architecture for these
+kinds of methods

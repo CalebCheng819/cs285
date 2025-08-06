@@ -1,0 +1,432 @@
+all right so in the next portion of the
+lecture
+uh we'll dive a little deeper into this
+concept of uh
+state coverage and we'll generalize the
+notion of maximizing the entropy of your
+state
+more generally to matching some target
+distribution over states
+and in the course of this i think we'll
+see some interesting connections
+between the kind of exploration concepts
+that we're discussing in this lecture
+and the kind of concepts that we covered
+on monday
+all right um so let's start with a
+little aside let's talk about
+uh how we can do unsupervised
+exploration with intrinsic motivation
+objectives so
+intrinsic motivation is another term
+that's used to refer to these kind of
+novelty seeking things
+that we saw on monday like pseudo counts
+and so on
+so the common method of exploration that
+we saw on monday
+is that you somehow incentivize your
+policy by a given s
+to explore diverse states to visit novel
+states that have not been visited very
+frequently before
+and you could do this before seeing any
+reward on monday this was because the
+reward is
+very delayed or very sparse it could be
+done in settings where the reward is
+absent altogether
+but what will you actually get when you
+do this if there's no reward at all
+well if you reward visiting novel states
+uh
+you know essentially if a state is
+visited often then it becomes not novel
+so you can add a variety of exploration
+bonuses that will do this we learned
+about things like counts
+the one that i'll talk about here is a
+very simple bonus which is just
+negative log p of s
+you could use you know plus one over n
+of s
+negative log p of s this is sometimes
+referred to as intrinsic motivation it's
+just another variant
+on the same idea uh but everything i'm
+going to say is also true
+for pseudo counts ex2
+you know hash exploration all these
+things
+so let's say that we're basically
+penalizing density under
+under pi so we want to visit states with
+low density
+so you could imagine the following
+procedure update your policy to maximize
+this
+reward with this bonus and then update
+your state distribution
+to fit your current state marginal and
+then repeat right very standard
+procedure very similar to what we saw on
+monday
+well what you're going to get if you do
+this when there's no reward at all
+is that when your policy goes and does
+something then the density estimator
+will fit whatever your policy did
+and then the policy will go and do
+something else and then the destiny
+estimator will fit what that policy did
+and then we'll go and do something else
+and so on and so on so the density
+estimator
+this uh p pi of s it will eventually
+have
+high coverage it will assign reasonably
+high probabilities to all states
+but the policy that you'll end up with
+will kind of be arbitrary the policy
+will end up kind of
+chasing its tail all around the space
+you won't actually end up with a policy
+that gets uniform coverage over states
+the final policy will be arbitrary it'll
+just go to whatever place
+the previous policy has been to less
+often
+but the density estimate will get good
+coverage when you do this
+so this is not by itself a great way of
+solving that original problem i posed
+where you want is a policy that goes to
+many different places so they can select
+between them
+so what if you actually do want a policy
+that gets good coverage so you don't
+just want a density estimator that has
+uniform coverage over the state space
+but you
+actually want a policy that will
+randomly go to different states
+and will have about equal probability of
+landing in all possible states
+so the state marginal matching problem
+can be posed as learning a policy pi
+a given s so as to minimize the kl
+divergence
+between state marginal p pi of s and
+some target state marginal p
+star of s if p star of s is uniform
+then you're just maximizing state
+entropy but if it's not uniform in
+general you might be matching some
+target state entropy
+these are very similar problems
+so can you use this intrinsic motivation
+idea from before can you essentially use
+one of these novelty seeking exploration
+objectives
+so let's construct our reward
+analogously to before so
+we're going to construct it as log p
+star which is the desired
+state distribution minus log p pi which
+is our current state distribution now
+right off the bat something you might
+notice if you're
+uh if if you're up up to speed on your
+information theory definitions
+is that the rl objective will be the
+expected value of this
+under the stationary distribution so
+it'll be the expectation
+under p pi of s of r tilde
+and the expectation under p pi of s of r
+tilde
+is exactly that kl divergence up there
+so
+that's kind of interesting it seems like
+the rl objective
+is exactly the quantity that we want so
+does that imply that rl will optimize
+this
+well not exactly because rl is not aware
+of the fact that
+the reward itself depends on the policy
+so this does not by itself perform state
+marginal matching for a very subtle
+reason
+even though the objective is exactly the
+state marginal matching objective
+the algorithm the rl algorithm is not
+aware of the fact that the minus log p
+pi of s depends on pi so as a result you
+get this tail chasing problem that i had
+on the previous slide
+you get this issue where the policy will
+keep jumping to different places
+and at the end will not actually
+minimize that kl divergence
+but let's try to sketch out what that
+algorithm would look like anyway
+and then we'll see that there's actually
+a very simple fix that will fix this
+problem
+so here's how we can sketch out this
+algorithm and i'm going to use
+somewhat tedious notation for for a
+reason this notation will be important
+later
+so at every iteration we're going to
+learn a policy pi
+k where k here indexes the iteration so
+the first iteration is k equals 1 the
+second iteration is k equals 2 etc
+we'll learn a policy pi k to maximize
+the expected value under pi
+of r tilde k and again i'm
+using the sub superscript k on artilda
+to denote that this is
+the r tilde that used the density
+estimator from iteration k
+and then you will update your density
+estimator maybe it's a
+variational autoencoder or some other
+distribution to fit the current state
+marginal the state marginal of this new
+policy
+uh by k and then you'll repeat this
+process
+so at the end uh you know let's say that
+this
+this orange circle is the density we're
+trying to match uh
+you know your policy will keep jumping
+around so at the end your final policy
+let's say pi 4 here is going to some
+arbitrary places going to the lower
+right
+but the uh the green circles the density
+estimate for all these policies
+actually is not too far off from the
+orange circle
+so we need to modify step two a little
+bit we need to
+update p pi k s to fit all the state
+scenes so far not just states from the
+latest policy
+but states from all the policies right
+so then we get the union of the green
+circles
+not just the last green circle that's a
+very easy change to make essentially
+figure density estimator to your replay
+buffer
+but another change that we're going to
+make is instead of returning this latest
+policy we'll actually return a mixture
+policy
+so the final policy that will return
+will be
+a mixture model that averages together
+all the policies seen so far
+so the end result is not one policy it's
+actually many policies
+and the way that you're going to
+actually uh do this is you're going to
+run a randomly chosen iterate a randomly
+chosen
+pi k that might seem like kind of a
+weird decision
+like you'd think that the last policy
+would be the best one why are we
+randomly selecting from among all the
+policies we saw during learning
+well it turns out that this procedure
+does perform marginal matching
+and proving this requires a little bit
+of game theory
+so the thing is that
+the last uh
+the the state distribution where p pi of
+s is equal to p star of s
+is the nash equilibrium of a two player
+game
+the players in that game are the state s
+density estimator
+and the pulse
+so this is a gain between
+pi k and p pi k
+there's a special case here if uh p star
+of s
+is is a constant then you have a uniform
+target and maybe it's a little easier to
+think about it that way
+uh in that case the klever is just the
+entropy
+now it turns out that the way
+that you can recover the nash
+equilibrium in a two-player game like
+this
+is by just having the players play
+against each other meaning that each
+time
+each player gives the best response so
+the best response for the density
+matching algorithm is to actually fit
+the density
+the best response for the policy is to
+maximize our tilde
+but simply running this best iterated
+best response algorithm
+doesn't actually produce a nash
+equilibrium it turns out that you get a
+nash equilibrium
+if you do what's called self-play and in
+self-play
+what you're supposed to do is you're
+supposed to return the historical
+average of all the idiots that you've
+seen
+so the final iterate is not the nash
+equilibrium but the mixture of all the
+iterates
+is the nash equilibrium and this is a
+very well known result in game theory
+so essentially you can prove that this
+pi star that i have in step three which
+is a mixture of all the pi
+k's is the natural equilibrium for this
+two player game
+and that means that it's going to be
+minimizing
+the scale divergence between p pi and p
+star
+if you want to learn more about this if
+you want to go into more detail
+about this check out these two papers
+linked at the bottom of the slide
+efficient exploration by state marginal
+matching
+and provably efficient maximum entropy
+exploration
+okay so a few experiments this is a
+little uh
+ant robot that's supposed to run around
+in this maze with three different wings
+and the sac this is just a standard rl
+algorithm
+doesn't explore all three wings equally
+it kind of gravitates in this case
+towards the top right one
+whereas the state marginal matching does
+cover all of them equally so it gets
+better coverage
+and there's some quantitative results as
+well so anyway high level idea to take
+away from this
+is that the individual iterates that you
+get when you're on intrinsic motivation
+do not get good state coverage they do
+not match target distributions
+but if you average together those
+iterates then you do and the way you
+prove that
+is by using the theory of self-play
+which you can show
+is a nash equilibrium this two-player
+game
+okay um
+one thing i want to talk about briefly
+next is
+so far we talked about how these
+unsupervised exploration methods
+they aim to get good coverage either a
+uniform distribution over
+goals or matching some state
+distribution matching maybe a uniform
+distribution
+but is coverage of valid states actually
+a good exploration objective like why do
+we want to
+cover as many states as possible
+so in sku fit we were covering the space
+of goals in
+state marginal matching if you have the
+special case where p stars are constant
+then you're maximizing state entropy uh
+they're kind of moral is the same thing
+so what is this a good idea well um
+here's a little result of this it's kind
+of an obvious result i'm going to call
+it uh
+somewhat humorously eisenbach's theorem
+after ben eisenbach who's the student
+that
+actually um you know wrote this out in
+the paper linked at the bottom but it's
+a it's
+not really a theorem it's kind of a a
+really trivial result that follows from
+classic maximum entropy modeling
+what you can show is that if a test time
+an adversary chooses the worst possible
+goal
+g there's actually a single answer
+to what goals you should practice during
+training so
+if at test time you're going to get the
+worst possible goal essentially
+when you when you come home in the
+evening your robot has done the
+practicing you're intentionally going to
+give the robot the hardest test
+like you know you hate the company that
+made this robot you want to give them a
+one-star review you're going to
+intentionally give it the hardest task
+just to watch it fail so that you can
+you can complain afterwards
+if you're going to give the robot the
+worst possible goal and the robot
+knows that you're going to give it the
+worst possible goal which goals should
+it practice during training how should
+it construct
+that training distribution take a moment
+to think about this
+so it turns out that we can show that
+the best distribution to use during
+training if you believe that you're
+going to get an adversarially chosen
+goal
+is actually the uniform distribution
+and it's it's actually a very simple
+result that follows from classical
+maximum remodeling
+results it's it's very simple and it's
+described in this paper linked at the
+bottom of the slide
+called unsupervised metal learning for
+reinforcement learning
+so what this means is that in the
+absence of any knowledge about what
+you're going to get
+maximizing the entropy of your goals or
+the entropy of your states
+is kind of the best thing you can do
+because if you don't know what kind of
+goal you'll get at test time
+the only thing you can really assume is
+that it might be the worst case goal so
+if you want to make the worst case
+as good as possible go for uniformly
+distributed goals
+if you can and that's kind of the
+justification for doing this uniform
+coverage business
+and the probably official maximum entry
+exploration paper also discusses this
+point in a fair bit

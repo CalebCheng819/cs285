@@ -1,0 +1,201 @@
+all right next let's briefly discuss how
+we can use these uncertainty aware
+models
+for control and go through a few
+examples of some
+papers that have actually used things
+like this
+all right so let's say that we've
+trained our uncertainty aware model
+perhaps by using a bootstrap ensemble
+and now we'd like to use it
+in our model based rl version 1.5
+algorithm
+to actually make decisions so
+before when we were planning we were
+essentially
+uh optimizing the following objective we
+were optimizing the sum
+from t equals one to h of the reward at
+s t
+a t where s t plus one is equal to f of
+s d a t
+so whether you use random shooting cem
+whatever this is essentially the problem
+that you're solving
+now we have n possible models
+and what we would like to do is choose a
+sequence of actions
+a1 through ah that maximizes the reward
+on average over all the models so now
+our objective is
+the sum over the models times one over n
+of the sum over the time steps for the
+rewards
+for the states predicted by that model
+where s t
+comma i is given by the dynamics for
+model i
+so this is the case if we if you learn a
+distribution over deterministic models
+uh if you have stochastic models then uh
+you would have an expectation for each
+model with respect to its distribution
+so in general for some candidate action
+sequence a1 through ah
+step one is to sample a model from p of
+theta given d
+which if you have a bootstrap ensemble
+amounts to just choosing
+one of the n models randomly step two
+at each time step sample st
+plus 1 from p of st plus 1 given stat
+and that parameter vector that you
+sampled from the posterior
+step 3 calculate the reward as the sum
+over all the time steps
+uh for those predicted states and then
+step four
+is to repeat steps one through three to
+accumulate the average reward
+as necessary so this would be the recipe
+for any general
+representation for the posterior b theta
+given d if you have a bootstrap ensemble
+you could also sum over all the models
+instead of sampling them
+that can be simpler if you have a small
+number of models
+if you estimate your posterior with some
+other method like a bayesian neural net
+then you can sample multiple different
+random parameter vectors
+and estimate the reward for each one
+now this is not the uh only option that
+you could have
+this is a sampling procedure for for
+evaluating the reward
+you could imagine other procedures for
+instance you could
+evaluate possible next states from every
+model at every time step
+and then perform something like a moment
+matching approximation
+to figure out an estimate of the actual
+state distribution of
+the actual distribution p of st plus one
+for instance by estimating its mean and
+variance
+and other methods have done things like
+that as well
+but a simple procedure is to use this uh
+this process that i have on the slide
+to evaluate the total reward of every
+candidate action sequence a1 through ah
+and then optimize over the action
+sequences using your favorite
+optimization method
+like random shooting or cross-country
+mountain
+it's also possible to adapt uh
+continuous optimization methods like lqr
+to this setting
+uh in that case something called the
+re-parametrization trick can be very
+useful
+which we will cover uh next week
+okay so take a moment to look over the
+slide make sure that this really makes
+sense to you
+this is a pretty important slide to
+understand if you want to know how to
+implement
+a model based rl with epistemic
+uncertainty
+okay so does this basic scheme work
+well here are some plots i'm going to
+show
+this from a paper called deep
+reinforcement learning and a handful of
+trials
+so before we saw on the half cheetah
+task how this uh
+model based rl version 1.5 algorithm
+could get us from a reward of zero to
+about 500
+if we actually implement epistemic
+uncertainty using bootstrap ensembles
+then we can get model based rl to get a
+reward over 6 000
+in about the same amount of time as the
+1.5 algorithm so
+especially in low data regimes these
+epistemic uncertainty estimates
+really do make a really big difference
+in performance
+here's a more recent illustration of a
+model based rl method
+with uh an ensemble of models this is
+actually a real world robotic experiment
+where this
+robotic hand is manipulating objects in
+the palm
+this is using essentially model-based
+url version 1.5
+with a particularly sophisticated model
+and an ensemble for uncertainty
+estimation and
+this hand learns by directly by
+interacting with these objects
+and about three hours they can perform a
+full
+turn with both objects in the palm so
+this is 1.5 hours
+and there's two hours and it can do a
+full 180 turn
+and then after four hours it can do it
+pretty reliably
+so something about the uncertainty
+estimation really does seem to work and
+it does seem to be quite important for
+these model-based star real methods so
+if you want to implement model-based rl
+highly recommended to consider
+uh epistemic uncertainty estimation
+if you want to learn more about
+epistemic uncertainty and model based rl
+here are a few suggested readings this
+paper by mark desinroth called pilco
+this is an older paper from around 2011.
+this paper uses gaussian processes
+rather than neural nets for model
+learning
+but this was a sort of one of the
+foundational papers in really
+establishing the importance of epistemic
+uncertainty estimation
+in model-based reinforcement learning it
+has some good discussion of why it
+matters so i would encourage you to read
+this
+if you're interested in the topic more
+recent papers
+uh this is the uh the model based url
+version 1.5 paper that i mentioned
+before that
+does kind of okay but not great on half
+cheetah this is the
+paper that introduced the the ensembles
+from model based rl
+and managed to get you know comparable
+results to model free rl
+this is a paper that i would encourage
+you to check out if you're especially
+interested
+in the intersection of model based model
+free rl that uses models
+for estimating value functions uh and
+this is another uh closely related paper
+that also integrates epistemic
+uncertainty at multiple different uh
+points in the previous method

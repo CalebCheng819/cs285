@@ -1,0 +1,590 @@
+all right welcome to the lecture 10 of
+cs285
+today we're going to shift gears and
+we're going to go from discussing
+model-free reinforcement learning
+algorithms to discussing algorithms that
+actually utilize
+models but before we actually can talk
+about
+model based reinforcement learning in
+detail we need to understand a little
+bit
+about how models can actually be used to
+make decisions
+regardless of whether those models are
+learned or
+pre-specified manually so in today's
+lecture
+we're going to talk about algorithms for
+optimal control and planning
+these are methods that assume access to
+a known model of the system
+and that use that model to make
+decisions
+and these algorithms will look very
+different from the model free
+reinforcement learning algorithms
+that we learned about in the first nine
+lectures of the course
+so in today's lecture there actually
+will not be any learning at all
+but then in subsequent lectures we'll
+see how
+some of these optimal control and
+planning algorithms
+can be used in conjunction with learned
+models
+to make decisions more optimally
+all right so in today's lecture we're
+going to
+get an introduction to model-based
+reinforcement learning
+we're going to talk about what we can do
+if we know the dynamics and how we can
+make decisions
+we'll discuss some stochastic black box
+optimization methods which are
+very simple and commonly used because of
+their simplicity
+we'll talk about monte carlo tree search
+and then we'll talk about trajectory
+optimization specifically
+the linear quadratic regulator and its
+non-linear extensions
+so the goals for today's lecture will be
+to understand how we can perform
+planning with known dynamics models in
+discrete and continuous spaces
+and get some overview for the kinds of
+algorithms for optimal control
+and trajectory optimization that are
+widely in use
+okay so let's start with a little recap
+in the preceding lectures we learned
+about
+algorithms that optimize the
+reinforcement learning objective
+and the reinforced learning objective is
+given here on the slide
+the objective is to maximize the
+expected value
+under the trajectory distribution p
+theta tau
+induced by your policy pi theta
+of the total reward along that
+trajectory and we learned about a number
+of variants on this basic recipe
+including methods that use discounts
+the trajectory distribution is formed by
+multiplying together
+the initial state probability the policy
+probabilities
+pi theta a t given st and the transition
+probabilities
+pst plus 1 given st18
+and i'm going to use p theta of tau or
+interchangeably pi theta of tau
+to denote the trajectory distribution
+and make it clear that it depends on
+theta
+so in the algorithms that we've
+discussed so far
+we've assumed a model-free formulation
+meaning that we assume that we do not
+know
+p of s t plus one given s d a t and
+not only that but we don't even attempt
+to learn so these were all algorithms
+that managed to get away with only
+sampling
+from p of s d plus 1 given st along full
+trajectories
+without ever needing to actually know
+what the probabilities were
+or ever needing to make predictions
+about for example
+what would have happened if you had
+taken a different action from the same
+state
+in fact if you recall our discussion of
+q-learning we managed to intentionally
+avoid this issue
+by switching over from value functions
+and policy iteration over to q functions
+so so far we've assumed that the
+transition probabilities are not known
+and made no attempt to actually learn
+them
+but what if we do know the transition
+probabilities and
+as a bit of terminology i'm going to say
+transition probabilities transition
+dynamics
+dynamics or models all of those things
+basically mean the same thing they all
+refer to
+p of s d plus 1 given s t a t although
+in some cases
+those transition dynamics might actually
+be deterministic meaning that only one
+state
+has a probability of 1 and all their
+states are probability of 0.
+so hopefully it'll be clear from context
+which one i'm talking about
+all right so oftentimes in practical
+problems we do actually know the
+transition dynamics
+for example if you are playing a game
+like an atari game or chess or go
+in all of those settings you really do
+know the rules that govern the game
+either because it was programmed by hand
+or as in the case of board games because
+the rules are known and they're
+specified in a
+in a rulebook somewhere
+some systems can easily be modeled by
+hand so if you have a physical system
+where perhaps the true transition
+dynamics are not known exactly
+it might still be a system that is easy
+to manually model
+so for instance the physical properties
+of a vehicle on a dark road
+are very difficult to model but the
+kinematic properties of a car
+driving on a smooth clean road without
+slippage
+are actually fairly easy to model you
+can write down some equations of motion
+and that serves a pretty good model in
+practice
+and of course many of the tasks that we
+want to solve
+we have simulated environments simulated
+analogs for those tasks
+in which case we also technically do
+know the transition dynamics
+although we may not be able to express
+some convenient quantities like
+derivatives
+in closed form if we have a very complex
+simulator
+all right now in many other cases even
+if we don't know the dynamics
+they might be fairly easy to learn
+a very large kind of sub-domain in
+robotics for example
+is system identification system
+identification deals with the problem of
+fitting
+unknown parameters of a known model so
+for example
+if you know that your robot has four
+legs and you know roughly how long those
+legs are but you might not know their
+masses and motor torques
+system identification deals with the
+problem of fitting those unknown
+quantities
+to your known and well-modeled scaffold
+you could also fit general purpose
+models to observe transition data
+and that is going to be the focus of
+many of the model based rl algorithms
+that we'll cover in this course
+so does knowing the dynamics the
+transition dynamics and all etc
+does it make things easier well
+oftentimes yes
+oftentimes if we know the dynamics there
+is a range of algorithms available to us
+in our toolbox
+that we would not be able to use in the
+model free setting
+and many of these algorithms can be
+extremely powerful as i'll show you at
+the end
+of today's lecture
+all right so let's summarize what's
+going on with
+these model based methods model based
+reinforcement learning
+refers to a way of approaching rl
+problems
+where we first learn transition dynamics
+and then use those learned transition
+dynamics
+to figure out how to choose actions
+today we're going to talk about how we
+can make decisions if we know the
+dynamics
+so how can you choose actions under
+perfect knowledge of the model
+so perfect knowledge of the model means
+that you
+know exactly what this edge in the
+palmdp graphical model
+is you know all of the entries in the
+corresponding cpt
+or you know the functional form of the
+distribution in the corresponding cpd
+in the continuous case
+so this is the domain of algorithms that
+go under names like optimal control
+trajectory optimization
+and planning the distinction between
+these
+is a little bit murky but generally
+trajectory optimization
+refers to a specific problem of
+selecting a sequence of states and
+actions
+that optimize some outcome planning
+usually refers to the discrete analog of
+that problem although planning
+can also refer to its continuous version
+in which case planning and trajectory
+optimization
+are essentially the same thing although
+typically algorithms that go under the
+name planning
+consider multiple possibilities in a
+kind of discrete branching setting
+whereas strategy optimization algorithms
+typically perform smooth gradient based
+optimization
+optimal control refers to the more
+general problem of
+selecting controls that optimize some
+reward or minimize some cost
+so trajectory optimization can be viewed
+as a way to approach the optimal control
+problem
+in fact arguably all of reinforcement
+learning really is tackling the problem
+of optimal control
+from the perspective of learning
+okay and then next week we're going to
+discuss what happens when we have
+unknown dynamics
+so in today's lecture we're entirely in
+the setting where we assume the dynamics
+were given to us
+next week we'll talk about what to do
+when they weren't
+and then also later on we'll talk about
+how we can
+also learn policies so in today's
+lecture we're just concerned
+with figuring out near optimal actions
+without policies
+but later on we'll also talk about how
+if you learn a model
+you could also use it to learn a policy
+okay so what is the objective
+for these planning or control methods
+well there's no policy anymore
+there's just states and actions so if
+you're in this target environment
+a very reasonable way to formulate a
+planning objective
+is to plan a sequence of actions that
+will minimize
+your probability of getting eaten by the
+tiger
+that is basically a planning problem if
+you're only concerned with selecting
+those actions
+you don't care about the resulting
+policy then you're doing planning
+or trajectory optimization in continuous
+spaces
+so you can express this as the problem
+of selecting a sequence of actions
+to minimize a sum of costs or
+maximize a sum of rewards
+but if we simply formulate an
+unconstrained problem
+which is to select a sequence of actions
+to minimize
+c-s-d-a-t then we're not really
+accounting for the fact that future
+states are influenced by past actions
+so in order to turn this into an
+optimization problem you have to
+actually write it
+as a constrained optimization problem
+minimize with respect to a1 through a t
+the sum of the costs from time step one
+to t subject to the constraint
+that every successive state is equal to
+the dynamics applied to the previous
+state in action
+this is the formulation for the
+deterministic dynamics case
+we can also extend it to the stochastic
+dynamics case
+by expressing things in terms of
+distributions and expectations
+we will typically use notation for the
+deterministic case in this lecture
+but i will note when appropriate how
+these methods can be extended to the
+stochastic case
+okay so the deterministic case
+is actually relatively straightforward
+you have an agent and you have an
+environment
+the environment tells your agent what
+state they're in so the environment
+tells them you're in state s1
+and then the agent performs an
+optimization given that they are in
+state s1
+can they imagine a c sequence of actions
+a1 through a capital t
+that will minimize that total cost
+and then they send these actions back to
+the world
+and those actions get executed so those
+actions a1 through at
+represent the agent's plan
+so if you want to write things in terms
+of rewards you can formulate this
+optimization
+as i did on the previous slide where a
+one through a capital t
+is selected as the r max of the reward
+subject to the constraint that
+s t plus one is equal to f of s d a t i
+apologize there's a small typo on this
+slide
+that a t plus one should be an s t plus
+one
+okay so in the deterministic case this
+is all good
+but what happens in the stochastic case
+so in the stochastic case
+now you can define a distribution over a
+sequence of states
+condition on a sequence of actions so
+you can say that well the probability of
+s1 through s capital t
+given a1 through a capital t is given by
+probability of s1 times the product of
+the s d plus one given s t a t terms
+notice that the probability of a t given
+s c doesn't appear here
+because we are conditioning everything
+on a plan we are conditioning everything
+on a sequence of actions
+so in this case we can select our
+sequence of actions
+as the sequence a1 through a capital t
+that maximizes the expected value of the
+reward condition on that action sequence
+where the expectations taken under the
+distribution shown at the top
+this is a reasonable way to approach the
+planning problem in stochastic
+environments
+but i'm going to claim that this is in
+some cases
+not a very good idea so the
+deterministic case on the previous slide
+was fine you can get optimal behaviors
+that way but this
+can actually be very suboptimal in some
+cases
+take a moment to think about this in
+which case
+would planning a sequence of actions in
+this way in the stochastic case
+be extremely suboptimal try to think of
+a concrete example try to think of a
+situation
+where this kind of plan when you go and
+execute it
+might lead to very bad outcomes
+so the kind of situations
+where this type of planning is a bad
+idea
+are ones where information will be
+revealed to you in the future
+that will be useful for taking better
+actions
+here's an instance of a stochastic
+planning problem that many of you might
+be familiar with
+let's say that i tell you that i will
+give you a math exam
+and it's a very easy math exam let's say
+it's just testing arithmetic you know
+one plus
+three equals four or something that's
+just a long list of questions
+i won't tell you the questions in
+advance because it's an exam
+and i will tell you given the state that
+you're in the state where i'm about to
+hand you the exam we haven't seen the
+questions yet
+tell me the sequence of actions that you
+will take to maximize your reward
+so the trouble with this situation is
+that you might know exactly how to
+answer
+every possible question on that exam
+without knowing which questions are on
+the exam
+you can't tell me right now what your
+actions will be
+so if i ask you to solve this open loop
+planning problem
+you might imagine the possible outcomes
+if you write different answers
+without knowing the questions trying to
+imagine writing the answers
+you'll probably only come up with
+outcomes where the rewards are very bad
+because for pretty much every possible
+sequence of answers
+you might write there's probably some
+exam that has high likelihood where
+those answers are incorrect
+so you might opt for a highly suboptimal
+action which is to say
+i don't want to take the exam at all
+because i know i can't do well
+you know come back tomorrow with
+something else but
+if you somehow had a way to do closed
+loop planning if you had some way to
+observe
+s2 where the questions are revealed to
+you then you can get a much higher
+reward
+so as an aside for terminology what is
+all this business with loops
+some of which appear to be open and some
+which appear to be closed
+well when we say closed loop what we
+mean is that
+an agent observes a state takes an
+action
+typically according to some policy and
+this process repeats repeatedly so the
+agent gets to actually look at the state
+before taking the action and in this way
+they close the loop between perception
+and control the open loop case
+is what we've discussed so far in this
+lecture in the open loop case
+you're given a state and then you have
+to commit to a sequence of actions
+and you will execute those actions
+without actually looking
+at what new state is revealed to you so
+this is called the open loop case
+because you commit to a sequence of
+actions
+and those actions are executed in open
+loop they're executed without regard for
+what is going on in the world at
+subsequent states
+open loop planning can be optimal in
+simple deterministic settings
+but in general in stochastic settings
+settings where some new information is
+revealed to you
+in the form of the new states that you
+observe open loop tiling is generally
+sub-optimal
+and we prefer to typically do
+closed-loop planning
+okay so it open loop planning you can
+think of this as the state is revealed
+to you at t equals one
+and then it's a kind of one-way
+communication
+okay so if there is this closed loop
+case
+an open loop case and so far we've
+talked about the open loop case
+an obvious question we could ask is well
+what does the closed loop case look like
+in a closed loop case each time step
+the agent observes a state and then
+responds with an action which you can
+also think of as observing the first
+state
+and then committing to a closed loop
+policy so instead of
+sending back a sequence of actions you
+send back a relationship between states
+and actions
+a mapping that tells the world for every
+state the agent might be in
+which action would they take so
+reinforcement learning typically solves
+closed loop problems
+so in the closed loop case you create a
+policy pi
+a t given s t and now you're you don't
+condition on a fixed set of policies
+but uh on a fixed set of actions but you
+condition on an entire policy
+and then your objective is exactly the
+same as the reinforcement learning
+objective from before
+now there are many different choices we
+can make for the form of pi
+so so far in the course we've talked
+about very expressive classes of
+policies
+like neural networks but you can do
+near optimal closed-loop planning with
+much less expressive policy classes
+so you can think of a neural net as a
+kind of global policy it
+tells the agent what to do in every
+possible state they might encounter
+but you could also imagine a very local
+policy so you could look at the initial
+state s1 and say
+well i'm going to stay in a fairly
+narrow state region if i start from the
+state
+so i could produce a kind of a local
+policy like for instance a time varying
+linear policy
+this is much more common in optimal
+control applications for instance
+if you are controlling a rocket to fly
+some trajectory
+that is technically a stochastic setting
+because the rocket can deviate
+from the planned trajectory due to
+random perturbations
+in air currents wind and motor
+properties
+however it's not going to deviate very
+much and if you correct those deviations
+quickly
+you will mostly stay close to your
+planned trajectory
+so you can get away with a very simple
+very local policy such as a policy
+that simply provides linear feedback on
+the state that says well
+as your state deviates you apply action
+the opposite direction
+proportional to the amount of deviation
+so these kinds of control
+controllers are much more common in the
+domain of optimal control and trajectory
+optimization
+okay so more on this lecture

@@ -1,0 +1,470 @@
+all right so the first algorithm that
+i'm going to kind of dive more deeply
+into is going to tackle this question
+how do we learn without a reward
+function by
+proposing and reaching goals and
+as i mentioned at the beginning this
+lecture was really intended
+more to discuss sort of cutting edge
+research topics
+and maybe provide a slightly different
+perspective for thinking about
+exploration
+so i won't actually discuss the
+algorithm
+in sort of enough detail to implement it
+but hopefully enough detail for you to
+kind of understand the main ideas
+but i will have references to papers at
+the bottom and if you
+uh want to get all the details then i
+would encourage you to read those papers
+but you know think of this more as a way
+to get a
+perspective on how we can approach this
+unsupervised exploration problem
+mathematically less as a as a
+specific tutorial about a particular
+method that you actually
+should be using all right so
+the example scenario again that we're
+dealing with is this setting where you
+have a robot
+you put it in your kitchen it's supposed
+to spend the day
+practicing various skills and then in
+the evening when you come home
+you're going to give it a task and
+perhaps you will ask it to do the dishes
+and should somehow utilize the
+experience that it acquired
+to perform that task now
+uh one fairly mundane thing that we have
+to figure out for this before we can
+even get started is how we're going to
+actually
+uh propose uh how we're actually going
+to command goals
+to the robot once the learning is
+finished so
+if you want sort of a real world analogy
+maybe you can think of it like this
+maybe you're going to show the agent
+uh an image of the situation that you
+would like it to
+uh to reach in rl parlance this would
+amount to
+giving it the observation or the state
+that constitutes the goal for the task
+so what you would like is you would like
+to somehow have the agent learn
+something that enables it to accomplish
+whatever goal you give it and the goal
+will be specified by a state if we're
+talking about
+images maybe it's an image of the
+desired outcome
+this is not necessarily the best way to
+communicate with a with
+autonomous agents but it just allows us
+to nail down something very concrete
+the problem will be given a state the
+agent should reach that state
+and then the unsupervised learning phase
+should
+train up a policy that would allow the
+agent to reach
+whatever state you would care to command
+it
+now as a technical detail
+we need some mechanism for comparing
+different states
+if those states are very complex like
+images just like we saw in the uh
+in the exploration lecture on monday we
+need some notion of similarity between
+those states because in general in high
+dimensional or continuous spaces
+every state will be unique so
+there are many ways to deal with this
+problem but the way that we'll deal with
+it for now is we'll say
+well let's just train some kind of
+generative model
+the particular generative model i'll use
+as a working example is something called
+a variational auto encoder
+which we'll cover a few weeks from now
+but there are many other choices
+and we'll just assume that this
+generative model has
+some latent variable representation of
+your image so if your image is
+x you can also think of as a state s
+then your
+latent variable model will construct
+some latent variable representation of
+that state
+which i'm going to note as z so z would
+be
+sort of a compact vector that describes
+what's going on
+in the scene and we'll assume that that
+vector is you know
+at least somewhat well behaved meaning
+that similar
+functionally similar states will lie
+close together in that
+latent space but there are many ways to
+get this effect
+all right and then of course the main
+thing that we're concerned with
+is we would like our agent to basically
+have this unsupervised training phase
+where before we even specify any goals
+that should accomplish
+it can sort of imagine its own goals
+propose those goals to itself attempt to
+reach them and as a result
+acquire a goal reaching policy without
+any
+manual supervision without any reward
+supervision
+so intuitively what it's going to be
+doing is going to be using the slate in
+space to propose potential
+z vectors that could try to treat us
+goals attempt to reach those goals
+and as a result improve its policy
+okay so let's try to sketch out what
+session algorithm might look like
+we're going to have our variational
+autoencoder as our generative model
+so that has a distribution x given z
+which is a distribution over images
+given latent codes
+you can also think of it as s given z so
+i'm going to use x here but
+s means the same thing and then we have
+our latent variable distribution p
+of c and when you train a variational
+autoencoder as we'll learn a few weeks
+from now
+you also need an inference network that
+maps back disease
+from states so if you have a generative
+model like this
+one of the ways you could propose a goal
+is you could just sample it from the
+model
+so you could sample your latent variable
+from the latent variable
+prior so sample zg from p of z
+and then reconstruct the corresponding
+image by sampling
+x g from d theta x j given z g
+so that will give you an imagined image
+and again you don't have to do this
+with vaes any kind of charitable model
+would work something that can propose a
+goal
+and then you could attempt to reach that
+goal using a policy
+so your policy now would be a
+a conditional policy so it'd be a
+distribution of our actions given the
+current image x
+and given the goal xg
+and when you attempt to to reach the
+goal using this policy
+the policy may or may not succeed so
+let's say that it reaches some state and
+we'll call that state x bar
+ideally we would like x bar to be equal
+to x g but in general it might not be
+in fact x g might not even be a real
+image it may be impossible to reach
+so you'll get some other image x-bar
+and in the process of writing that
+policy you'll of course collect data
+which you can use to update your policy
+maybe using something like a q-learning
+algorithm like what you're doing for
+homework 3.
+and you can also use that data to update
+your generative model so if in the
+course of attempting to reach that goal
+you saw some other images that you
+hadn't seen before incorporating
+that data to update your generative
+model might give you a better general
+model that can propose
+more interesting goals and then you can
+repeat this process
+so this is a basic sketch of an
+algorithm that utilizes
+a goal proposal mechanism an
+unsupervised goal proposal mechanism
+and a goal condition policy and the
+interaction of these two things
+leads it to proposed goals and then
+attempt to reach them
+okay but there's a little bit of a
+problem with this recipe because
+the generative model is being trained on
+the data that you've seen
+so it's going to generate data that
+looks very much like the data that
+you've seen
+which means that if your agent figures
+out how to do
+one very specific thing maybe it figures
+out how to pick up a mug
+now it has lots of data of picking up
+that mug and when it generates
+additional images additional goals it'll
+generate lots more data of picking up
+that same mug
+and might not bother with other things
+so this is where we can bring in some
+ideas
+related to what we covered in the
+lecture on monday some of these
+exploration ideas
+let's imagine that we have this 2d
+navigation scenario so the little
+circles
+represents states that you visited
+intuitively what you would like to do is
+you would like to take this data set
+and modify it skew it some way to
+upwaite the rarely seen states very much
+like the novelty seeking exploration
+that we discussed on monday
+and if you can do this if you can upload
+the rarely seen states
+before fitting your generative model
+then when you fit your generative model
+it should assign higher probability to
+the tails of this distribution
+so that when you propose new goals it
+will sort of broaden broaden it out
+and visit more states there on the
+fringes and hopefully expand its
+repertoire
+of states that it can reach so this is
+the intuition behind what we want
+to make such an algorithm really work
+so how do we do this well the idea is
+that we're going to modify step four
+instead of blindly using all the data
+we've collected to fit our generative
+model
+we're going to actually weight that data
+so that's basically what this step will
+be so the standard way to fit our
+generative model is basically maximum
+likelihood estimation
+find the generative model that maximizes
+the expected log
+probability of the states that you
+actually reached which i'm denoting here
+with x bar
+instead you could imagine having a
+weighted maximum likelihood
+learning procedure where you train your
+generative model to assign high
+likelihood to the states that you've
+seen x bar
+but weighted by some waiting function w
+of x bar
+and intuitively you would like that
+waiting function to upweight
+those states or those images that have
+been seen
+rarely
+what do we have at our disposal that can
+tell us how rarely something has been
+seen
+well we're using a generative model to
+propose these goals
+and a generative model should be able to
+give us a density score
+just like when we learned about counts
+and pseudo counts
+so what we can do is we can assign a
+weight based on the
+probability density that our current
+model p theta assigns
+to that state x so we'll set the weight
+to be
+p theta of x bar raised to some power
+alpha
+where alpha is a negative number
+so this will essentially be 1 over p
+theta of x
+bar to some positive power or equally p
+theta of x bar to some negative power
+and one of the things we can prove i'm
+not going to go through the the proof
+for this but
+the proof is in these papers uh it's
+possible to prove that if you use a
+negative exponent
+then the entropy of p theta of x will
+increase meaning that each time you go
+around this loop
+you will be proposing broader and
+broader goals
+and if your entropy always increases
+that means that you eventually converge
+to the maximum entropy distribution
+which would be a uniform distribution
+over possible valid states
+now a uniform distribution over valid
+states is not the same as a uniform
+distribution over x
+so x might represent an image totally
+random images just kind of static
+might not actually be valid states so
+what you should be
+looking for is a uniform distribution
+over valid states a uniform distribution
+over valid images
+okay now looking at this equation you
+know one thing that might jump out at
+you
+is that this looks an awful lot like
+what we saw when we had
+uh pseudo counts and count based
+exploration so if you remember
+count based exploration our bonuses had
+this form like 1 over n of s
+or square root of one over n of s in
+general they were the form n of s
+raised to some negative power negative
+one half if you have
+one over square root or negative one if
+you have one over n
+so this looks an awful lot like that
+by raising the p theta of x bar to some
+negative power we're actually
+doing something that greatly resembles
+discount based exploration
+except instead of using it as a reward
+we're using it to train our goal
+proposal mechanism
+to propose diverse goals
+all right so uh the
+main change we're going to make is we're
+going to fit our generative model
+with this weighting scheme where the
+weight is the previous density for that
+state
+raised to some negative exponent now one
+question we could ask is
+well what's the overall objective of
+this entire procedure it seems like we
+laid out a recipe
+but in machine learning we like to think
+of algorithms as
+optimizing objectives so what is the
+objective for this algorithm
+well i mentioned that the entropy of the
+goal distribution
+will increase every step around this
+loop
+which means that one of the things we're
+doing is we're maximizing
+the entropy of the goal distribution
+that's good because we want good
+coverage we want to cover many many
+different goals
+so the goals get higher entropy due to
+this skew fit procedure
+what does the rl part do well your
+policy which you can also write as pi of
+a given s comma g so it's
+probability of action given current
+state and given goal your policy is
+trained to reach the goal g
+which means that as the policy gets
+better the final state
+which i'll denote as s here is going to
+get closer and closer to g
+so that means that the probability of g
+given your final state becomes more and
+more deterministic
+essentially if your policy is very good
+you could pose this question
+given the final state s that the policy
+reached what is the goal g that it was
+trying to reach
+if the policy is very good you could
+just say well the goal was probably the
+thing that it actually reached because
+it's a good policy it's going to reach
+its goal
+so that means that the better the policy
+is the easier it is to
+predict g from s which means that the
+entropy
+of p of g given s is lower
+so that means that you're also
+minimizing the conditional entropy
+of g given s
+and now when we look at this equation
+something should jump out at us
+that if we are max maximizing
+h of g minus h of g given s that means
+that we are maximizing the mutual
+information
+between s and g
+and maximizing the mutual information
+between s and g
+leads to good exploration because we're
+maximizing the entropy of our goals
+so we have coverage of all possible
+goals and effective goal reaching
+because we're minimizing the entropy of
+the goal given the state
+so that's another way that this concept
+of mutual information
+leads to an elegant and very simple
+objective that quantifies exploration
+performance essentially in this case
+the mutual information between states
+and goals quantifies
+how effectively we can reach the most
+diverse possible set of goals
+all right now for a quick robot video uh
+this was an actual research paper that
+we did a few years back
+and uh what we did what we did with this
+kind of objective is we put the robot in
+front of a door
+so that's that hook shaped thing that's
+the uh the gripper for the robot
+uh and but we didn't tell that it needs
+to open the door it was just supposed to
+figure out
+the sound on its own and in the top row
+you can see the goals that it's
+suggesting to itself the actual images
+that it's generating
+and in the bottom row you can see the
+behavior and at zero hours it's
+not really doing very much it's kind of
+wiggling around in front of the door
+uh 10 hours in it tends to touch the
+door handle and occasionally gets the
+door open
+and after 25 hours it pretty reliably uh
+messes with the door and opens it to all
+different angles
+and when the system is fully trained
+then you could give it an image of the
+door
+open to a different angle and it will
+successfully open it to that angle

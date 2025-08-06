@@ -1,0 +1,180 @@
+all right in the last portion of today's
+lecture
+i'm going to go over a little case study
+that demonstrates the power
+of optimal control algorithms in the
+case
+where we know the true dynamics and the
+point that i want to make with this is
+just
+kind of partly to motivate why we want
+to study model based rl
+and partly to show that these things
+really do work and they really do things
+that are pretty impressive
+compared to even the best model free rl
+methods
+so the case study that i'm going to talk
+about is this paper called
+synthesis and stabilization of complex
+behaviors through online trajectory
+optimization
+by yuval tossa tomares and emmanuel
+totoro
+what this paper describes is
+a fairly simple almost textbook
+algorithm but implemented quite well
+that uses iterative lqr as an inner loop
+in something called model predictive
+control
+so model period of control is a way to
+use a model based planner
+in settings where your state might be
+unpredictable and the
+the main idea in model predictive
+control is very simple every time step
+you observe your current state xt then
+you use your favorite planning or
+control method
+to figure out a plan a sequence of
+actions ut ut
+plus one etc all the way out to u
+capital t
+and then you execute only the first
+action of that plan discard the other
+actions
+observe the next state that occurs and
+re-plan all over again
+so essentially model print of control is
+a fancy way of saying
+replan on every single time step and
+that's what this paper does
+uh most of the contributions in this
+paper are actually in the particular
+implementation
+of iterative lqr and if you want to kind
+of know all the bells and whistles all
+the tips and tricks for implementing
+iterative lqr effectively
+i would encourage you to check it out
+what i want to show you today
+is the video of the result from that
+paper so
+i'm going to play the video and narrate
+a little bit
+so here what they're showing is a simple
+acrobat system using iterative lqr
+they're going to show a swimmer and a
+little hopper
+as well as a more complex humanoid
+so here's the acrobat two degrees of
+freedom and only one control dimension a
+very simple cost
+and first they just run it passively so
+no controls at all
+and then they turn on the controller and
+you can see that in real time the
+controller actually discovers how to
+swing up the acrobat
+so there's no learning at all although
+you do have to know the dynamics
+but the impressive thing is that this
+behavior is actually
+discovered completely automatically and
+completely in real time
+and uh because you're they're using
+model creative control
+when they apply perturbations to the
+system the robot successfully
+recovers from those perturbations
+here they have a little swimming snake
+and his goal is to get to the green dot
+while avoiding the red dot and again
+kind of the interesting thing here
+is that this undulating swimming gate is
+actually discovered by the controller
+automatically just through optimization
+without needing to
+know know or learn anything in advance
+except of course for the
+system dynamics
+here's the hopper system
+so here what they're going to do is uh
+they're going to
+first apply some perturbation forces to
+it just to show off their physics engine
+and then having applied those
+perturbation forces they'll show what
+happens
+when you uh actually ask the hopper to
+stand up so it figures out on its own
+how to jump up and stand
+and then when they apply perturbations
+to it it reacts to those perturbations
+and manages to stay upright
+and uh here they show that it can react
+to even very extreme perturbations
+here they're showing what happens if
+they give it the wrong dynamics so
+because they're
+planning every step they can actually
+get somewhat sensible results even when
+the dynamics are misspecified so here
+the true robot has half the mass that
+the controller thinks it does
+and here it has double the mass of the
+controller thinks it does so you can see
+with double the mass it kind of
+struggles a little bit
+but still does something seemingly
+reasonable
+uh here they're going to be controlling
+a 3d humanoid the cost function here is
+i should say pretty heavily engineered
+so
+it's still a fairly short horizon
+controller it's not planning far into
+the future
+and the cost function therefore needs to
+be quite detailed so here they turn it
+on
+and it figures out how to stand up it's
+a little bit slower than real time
+so they had to speed up this video to
+play it back but uh
+it manages to do some rudimentary
+stepping balancing
+and pretty intelligent reactions even in
+the face of fairly extreme perturbations
+okay if you're interested in additional
+readings on these topics
+here's what i would recommend this
+monograph by maine and jacobsen called
+differential dynamic programming
+is the original description of the ddp
+algorithm from which
+ilqr is inspired this is the
+npc paper for which i just presented the
+video
+this is a paper that provides a
+probabilistic formulation and trust
+fusion alternatives
+to the deterministic line search for lqr
+so if you want to know
+how to handle these kind of lqr things
+in stochastic settings this could be
+something to check out
+and in next week's lectures we will
+extend this to the case where the
+dynamics are perhaps not known
+so what's wrong with known dynamics well
+no dynamics are great if you're
+controlling some system that is easy to
+model like the kinematics of a car
+but if you're trying to get a robot to
+fold a towel or sort some objects in a
+factory maybe modeling all those exactly
+is very difficult or even impossible and
+in those cases
+maybe we can learn our models so that's
+what we'll talk about next

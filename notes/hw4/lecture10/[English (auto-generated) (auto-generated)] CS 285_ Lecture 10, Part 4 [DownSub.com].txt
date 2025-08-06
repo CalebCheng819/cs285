@@ -1,0 +1,413 @@
+all right so in the next part of today's
+lecture we're going to extend
+the discussion of lqr that we had in the
+previous part
+to stochastic dynamics and also to
+non-linear systems
+so let's start with stochastic dynamics
+because that's actually a pretty easy
+one
+before we have linear dynamics that are
+deterministic
+if we have stochastic dynamics in the
+special case of the stochastic dynamics
+are gaussian
+meaning that p of x t plus one given x d
+ut is a multivariate normal distribution
+with a mean given by the linear dynamics
+and a constant covariance
+then it turns out that exactly the same
+control law
+that we had before turns out to still be
+optimal
+i'm not going to derive this although
+you can
+derive it a as a homework exercise on
+your own
+but the intuition for why that's true is
+that a gaussian is symmetric which means
+that
+if your mean is that a particular value
+of xt if you go a little to the left
+and a little to the right those
+differences will actually cancel out in
+your quadratic cost
+and you'll end up with the same value so
+adding gaussian noise
+turns out to not change the solution for
+ut
+however there is a little bit of a
+nuance to this which is that adding
+gaussian noise
+does change the states that you end up
+visiting so
+remember in lqr we have this backward
+recursion and the forward recursion
+computes the states that you visit
+now the states that you visit are
+actually stochastic which means that you
+can't produce
+a single open loop sequence of actions
+but you can treat
+that expression for the optimal action
+kx plus little k
+as a controller as a policy and it turns
+out that if you use that policy
+that turns out to be the optimal closed
+loop policy in the linear quadratic
+gaussian case
+that's quite an interesting result so
+there's no change to the algorithm
+you can ignore the sigma due to symmetry
+and if you want to check this on your
+own the hint is that the expectation of
+a quadratic function under a gaussian
+actually has an analytic solution you
+can look this up
+and once you can express the expected
+value of your quadratic functions under
+these gaussians
+you can calculate their derivative set
+the derivative to zero
+and you will find that the control law
+is the same but the important difference
+here
+is that now you are not getting a single
+sequence of states and actions
+you're really getting a closed form
+control law out of lqr
+so that's kind of interesting because it
+turns out that lqr actually does produce
+closed-loop plans not just open-loop
+plans
+okay so xt is now sampled from some
+distribution and it's no longer
+deterministic it turns out to actually
+still be
+gaussian which is very convenient
+okay so this is basically the stochastic
+closed loop case
+and the particular form of pi that we
+ended up with
+after using lqr is a time varying linear
+controller
+so our action is now linear in the
+status
+capital k times the state plus little k
+but it's potentially a different capital
+and lowercase k at every time
+so this maybe gives us some idea of an
+alternative to global neural net
+policies
+all right so that's kind of the easy
+part now the
+the main thing i'm going to talk about
+in this portion of the lecture is
+actually what happens in the non-linear
+case
+and in the non-linear case we can extend
+lqr
+to get something that is sometimes
+called differential dynamic programming
+or ddp
+and also sometimes called iterative lqr
+or ilqr
+also sometimes called ilpg if you have
+the linear gaussian setting
+so before we had these linear quadratic
+assumptions which were the assumption
+that our dynamics
+is a linear function of x and u and our
+cost is a quadratic function of x and u
+so can we approximate some non-linear
+system as a linear quadratic system
+locally
+take a moment to think about this
+question what are some mathematical
+tools that you know of
+that can allow us to do this
+well one thing we can do is we can
+employ a taylor expansion
+so if you have some nonlinear function
+and you want to get let's say a first
+order function or a second order
+function
+that approximates it in some
+neighborhood what you can do is that you
+can compute its first and second
+derivatives
+and then employ the taylor expansion
+so if we have some current sequence of
+states and actions maybe the best states
+and actually found so far
+which i'm denoting with x hat so you
+have x hat one x
+x hat two x sub three you have one you
+have two you have three
+then you can express the dynamics
+approximately
+as the f evaluated at x hat
+and u hat which is just x hat t plus one
+plus
+the gradient of the dynamics with
+respect to the state in action
+and similarly you can express the cost
+with a linear term depending on the
+gradient
+and a quadratic term depending on the
+hashing
+so now we've approximated our dynamics
+and our cost
+as linear and quadratic in the
+neighborhood of some sequence of states
+and actions
+denoted by x hat and u-hat
+and if you do this then you know you can
+express this linear quadratic system i'm
+going to call it
+f bar and c bar in terms of the
+deviations of x from x hat
+so this delta x and delta u represents x
+minus x hat and u minus u hat
+so these are deviations these are
+differences from x hat and you had
+and now we're back in the linear
+quadratic regime which means that
+we can simply plug in this thing into
+the regular lqr algorithm
+and solve for the optimal delta x and
+delta u
+so delta x and delta u are the deviation
+from x hat and u hat
+you can use lqr to solve for the optimal
+delta x and delta u
+and then add them to the old x hats and
+u hats to find
+new x's and use
+so here is the iterative lqr algorithm
+based on this idea
+we're going to repeat the following
+process until convergence for all the
+time steps
+we're going to calculate the dynamics
+matrix as the green of the dynamics
+around x-hat and u-hat
+and we're going to calculate a linear
+quadratic term for the cost
+and then we're going to run the lqr
+backward pass
+using delta x and delta u as our state
+and then we're going to run the forward
+pass but for the
+forward pass we're actually going to use
+the original nonlinear dynamics
+so we're not going to actually use uh
+the linearized dynamics to get x t plus
+one we're going to use the original
+nonlinear dynamics and the reason that
+we do this is because we want to get the
+x
+the x t plus one that will actually
+result from taking that
+actual ut not just some approximation to
+that
+so we'll do the forward pass with linear
+dynamics and u given by
+capital k times delta x plus lowercase k
+plus u hat which we just get from
+substituting in the delta x and delta u
+equations
+and then we will update x hat and u-hat
+by simply setting them to be the x's and
+u's that we got from our forward pass
+and then repeat this process so
+essentially the backward pass
+computes a controller expressed in terms
+of delta x
+and delta u that will give you better
+costs than we had so far
+the forward pass checks how good that
+controller actually is
+and checks which states you'll get from
+running it
+and then updates x hat and you had to be
+those new states and actions
+all right uh so why does this work
+well let's compare this procedure to a
+well-known optimization algorithm which
+is newton's method
+so newton's method is a procedure that
+you might use for minimizing some
+function
+g of x in newton's method you repeat the
+following process until convergence
+compute the gradient at some initial x
+hat
+compute the hessian and then set x hat
+to be the argument of the quadratic
+approximation of the function
+formed by that gradient and hashem and
+then repeat
+this is very much like what iterative
+lqr does so iterative lqr is basically
+the same idea you locally approximate
+a complex nonlinear function via taylor
+expansion which leads to a very simple
+optimization problem
+in in the lqr a linear quadratic problem
+and then you repeat this
+process multiple times until you arrive
+at a local optimum
+in fact ilqr can be viewed as an
+approximation of newton's method
+for solving that original optimization
+problem imposed
+the main way in which ilqr differs from
+newton's method is that it doesn't
+consider
+the second derivative of the dynamics
+it's not too hard to derive a version
+of lqr that does consider quadratic
+dynamics
+and if you do that you get exactly
+newton's method and you still have an
+elegant
+recursive formulation for it and that is
+what differential dynamic programming or
+ddp
+is doing so newton's method
+needs to use second order dynamics
+approximations which is reasonable
+although it requires
+a tensor product because the second row
+of the dynamics now is a 3d tensor
+and that's what differentiating
+programming does so if you really want
+to
+consider a full newton's method check
+out ddp although in practice just
+linearizing dynamics
+tends to be pretty good okay
+now the connection to newton's method
+allows us to derive a little improvement
+to the iterative lqr procedure that i
+presented so far
+that ends up being very important for
+good practical performance
+so let's go back to regular newton's
+method to gain some intuition
+here is the optimization that newton's
+method does in the inner loop
+and we could ask why is this a really
+bad idea
+think about this for a minute if you
+actually do this repeatedly
+i would posit that for many real
+functions you will really struggle to
+find a local optimum
+think about why that might be the case
+so here's a picture that illustrates
+that point let's say that the blue line
+represents your function
+and you're currently located at this
+point
+now newton's method approximates your
+complicated function
+with a quadratic function and let's say
+that the first and second derivative of
+your
+of your blue function results in this
+quadratic approximation
+if you actually go to the option of this
+quadratic you'll end up at this point
+and this point is actually worse than
+the point that you started at
+so what you want is you want to kind of
+backtrack and
+find a point that is close to your
+starting point where this quadratic
+approximation
+is still trustworthy this notion of
+trustworthiness
+is very related to the trust regions
+that we discussed in the advanced policy
+gradients lecture last time
+so using this intuition let's go back to
+our iterative lqr algorithm
+where in the iterative lqr algorithm can
+we perform this backtracking
+so essentially what we want to do is we
+want to compute our solution
+and then we want to check if the
+solution is actually better than what we
+had before
+and if it's not better then we want to
+somehow move closer
+to where we were before
+it turns out the forward pass is a very
+convenient place to do this
+and a very simple way to modify the
+forward pass to perform this line
+search is to modify the constant term
+the little k by some constant alpha
+between zero and one so this is the only
+change that we've made
+this constant alpha allows us to control
+how much we deviate
+from our starting point so imagine what
+would happen if i set alpha to zero
+if i set alpha to zero then at the first
+time step
+my action would be x1 minus x1 hat
+but x1 is always the same so that's just
+zero alpha is zero
+so that means that my first action is
+just u hat one
+and because my first action is u hat one
+my second state
+is x hat two which means that
+x two minus x hat two is also zero alpha
+is zero which means my second control is
+also you have two
+so if alpha goes to zero i will execute
+exactly the same actions
+that i executed before and in general as
+i reduce alpha
+i will come closer and closer to the
+to the action sequence that i had before
+so you can search over alpha until you
+get improvement
+essentially you can run the backward run
+the backward pass
+and then run the forepass repeatedly
+with different values of alpha
+until you find one that you're happy
+with now in practice
+you actually want to be a little more
+ambitious so a very simple way to do it
+is to just
+reduce alpha until the new cost is lower
+than the old cost
+but the other thing you could do is you
+could calculate how much improvement and
+cost
+you would anticipate from your quadratic
+approximation and you could actually
+reduce alpha until you get some fraction
+of that anticipated improvement
+you could also do a bracketing line
+search where you basically assume
+that the true function looks roughly
+quadratic
+in between the basically the blue circle
+and the red cross
+and you could do in a bracketing line
+search will basically find the optim of
+that function
+so uh there are many other ways to do
+line searches but
+if you want to implement this in
+practice look up something like a
+bracketing
+line search and that can be a pretty
+good choice

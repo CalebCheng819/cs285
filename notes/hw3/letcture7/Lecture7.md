@@ -112,7 +112,6 @@ $$
 $$
 y_i \leftarrow r\left(s_i, a_i\right)+\gamma \max _{a^{\prime}} Q_\phi\left(s_i^{\prime}, a^{\prime}\right)
 $$
-
 2．网络更新：
 $$
 \phi \leftarrow \arg \min _\phi \frac{1}{2} \sum_i\left\|Q_\phi\left(s_i, a_i\right)-y_i\right\|^2
@@ -172,7 +171,6 @@ $$
 $$
 \phi \leftarrow \arg \min _\phi \frac{1}{2} \sum_i\left\|Q_\phi\left(s_i, a_i\right)-y_i\right\|^2
 $$
-
 本质是在最小化期望贝尔曼误差（Expected Bellman Error）：
 $$
 \mathcal{E}=\frac{1}{2} \mathbb{E}_{(s, a) \sim \beta}[(Q_\phi(s, a)-\underbrace{\left[r(s, a)+\gamma \max _{a^{\prime}} Q_\phi\left(s^{\prime}, a^{\prime}\right)\right]}_{\text {Bellman最优算子 } \mathcal{T}^* Q_\phi})^2]
@@ -181,21 +179,18 @@ $$
 $$
 Q_\phi(s, a)-\left[r(s, a)+\gamma \max _{a^{\prime}} Q_\phi\left(s^{\prime}, a^{\prime}\right)\right]
 $$
-
 称为时序差分误差（TD Error）
 
 当误差 $\mathcal{E}=0$ 时：
 $$
 Q_\phi(s, a)=r(s, a)+\gamma \max _{a^{\prime}} Q_\phi\left(s^{\prime}, a^{\prime}\right)
 $$
-
 这正是 Bellman 最优方程！这意味着：
 1．$Q_\phi$ 是最优 Q 函数 $Q^*$
 2．导出策略为最优策略 $\pi^*$ ：
 $$
 \pi^*(a \mid s)= \begin{cases}1 & \text { if } a=\arg \max _a Q^*(s, a) \\ 0 & \text { otherwise }\end{cases}
 $$
-
 | 算法           | 更新公式                                                     | 优化目标     |
 | :------------- | :----------------------------------------------------------- | :----------- |
 | 值迭代（表格） | $Q_{k+1}(s, a) \leftarrow \mathcal{T}^* Q_k$                 | 直接赋值     |
@@ -212,17 +207,14 @@ $$
 $$
 \mathcal{L}(\phi)=\frac{1}{2}\left[Q_\phi\left(s_i, a_i\right)-y_i\right]^2
 $$
-
 2．梯度计算：
 $$
 \nabla_\phi \mathcal{L}=\underbrace{\left(Q_\phi-y_i\right)}_\delta \cdot \underbrace{\nabla_\phi Q_\phi\left(s_i, a_i\right)}_{\text {梯度 }}
 $$
-
 3．参数更新：
 $$
 \Delta \phi=-\alpha \delta \nabla_\phi Q_\phi\left(s_i, a_i\right)
 $$
-
 物理意义：将Q值向目标值 $y_i$ 方向推动，步长由学习率 $\alpha$ 和TD误差 $\delta$ 共同决定。
 
 在online policy中的第一步，我们并不使用之前说的greedy policy
@@ -240,11 +232,9 @@ $$
 - **重要性**：在实践中，运行拟合 Q 迭代或 Q-learning 算法时，非常希望修改步骤 1 中使用的策略，使其不仅仅是 `argmax` 策略，而是注入一些额外的随机性以产生更好的探索 。
 
 #### epsilon greedy
-
 $$
 \pi\left(a_t \mid s_t\right)= \begin{cases}1-\epsilon & \text { if } a_t=\arg \max _{a_t} Q_\phi\left(s_t, a_t\right) \\ \epsilon /(|A|-1) & \text { otherwise }\end{cases}
 $$
-
 运作机制：
 - 以概率 $1-\epsilon$ 选择最优动作（利用）
 - 以概率 $\epsilon$ 随机选择动作（探索）
@@ -255,11 +245,9 @@ $$
 - **学习后期**：随着学习的进行，Q 函数变得更好，可以减小 ϵ 。
 
 #### Boltzmann Exploration 
-
 $$
 \pi\left(\mathbf{a}_t \mid \mathbf{s}_t\right) \propto \exp \left(Q_\phi\left(\mathbf{s}_t, \mathbf{a}_t\right)\right)
 $$
-
 **规则**：动作的选择概率与 Q 值的指数成正比 。
 
 **对比 ϵ-greedy**：当有两个同样好的动作时，ϵ-greedy 会给次优动作分配低得多的概率 ，而 Boltzmann 探索会以几乎相等的次数选择它们 。
@@ -286,7 +274,6 @@ $$
 $$
 V^{\star} \text { is a fixed point of } \mathcal{B} \quad V^{\star}(\mathbf{s})=\max _{\mathbf{a}} r(\mathbf{s}, \mathbf{a})+\gamma E\left[V^{\star}\left(\mathbf{s}^{\prime}\right)\right] \text {, so } V^{\star}=\mathcal{B} V^{\star}
 $$
-
 对任意两个值函数 $V$ 和 $\bar{V}$ ，Bellman最优算子 $B$ （contraction）满足：
 $$
 \|B V-B \bar{V}\|_{\infty} \leq \gamma\|V-\bar{V}\|_{\infty}
@@ -295,12 +282,10 @@ $$
 $$
 V_{k+1}=B V_k
 $$
-
 2．误差演化：
 $$
 \left\|V_{k+1}-V^*\right\|_{\infty}=\left\|B V_k-V^*\right\|_{\infty} \leq \gamma\left\|V_k-V^*\right\|_{\infty}
 $$
-
 3．递推关系：
 $$
 \left\|V_k-V^*\right\|_{\infty} \leq \gamma^k\left\|V_0-V^*\right\|_{\infty}

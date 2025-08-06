@@ -1,0 +1,721 @@
+okay so so far we've covered black box
+optimization methods for planning
+and monte carlo research which is
+suitable primarily for kind of discrete
+actions and
+stochastic environments next we're going
+to talk about trajectory optimization
+with derivatives
+so so far the methods we've discussed
+don't actually use derivatives of the
+dynamics but in many cases in continuous
+environments
+we might actually know what the
+derivatives of the dynamics
+are and as a bit of notation i mentioned
+before that
+in reinforcement learning and dynamic
+programming we like to use
+s t and a t to denote the state of
+action and we like to use r for rewards
+in optimal control it's much more common
+to use x
+t and u t ut for the state in action
+and to use costs instead of rewards
+since the this part of the lecture deals
+with
+trajectory optimization and optimal
+control methods that are most commonly
+studied
+in the optimal control community i like
+to use x's and u's
+uh just so that you know the notation is
+more similar to what you might find in a
+textbook
+don't be confused by this and uh it's
+probably a good mental exercise
+to try to mentally substitute s's for
+x's and a's for use
+and think about what these methods would
+look like
+if we're maximizing rewards instead of
+minimizing costs
+but the basic principles are exactly the
+same is just the difference of a sign
+and some letters okay so
+to think about how we can use
+derivatives for planning let's go back
+to our original constrained optimization
+problem so
+back when we defined the uh model based
+planning problem we said well
+we want to minimize your cost or
+maximize your reward
+with respect to a sequence of actions
+but just that isn't enough you have to
+also incorporate your dynamics into this
+which you can think of as a constraint
+so you could say well
+i'm minimizing my sequence of actions u1
+through u capital t
+subject to the constraint that x t is
+equal to f of x t minus 1
+comma u t minus 1. and
+when you have a constrained optimization
+problem with equality constraints
+you could always substitute in the
+constraint value for the variable and
+get an unconstrained optimization
+so this is this constraint optimization
+problem i've written here
+is the same as minimizing c of x1 comma
+u1
+plus c of f of x1 comma u1 comma u2
+plus c of f of f of x1 comma u1
+comma u2 comma u3 and so on and so on
+and so on
+it's just a huge pain to write this out
+but it is an unconstrained optimization
+problem
+so if we want to optimize this using
+derivatives we could do
+kind of the obvious thing you could say
+well we have an unconstrained
+optimization problem
+we know how to solve those you just
+compute derivatives via back propagation
+and optimize
+so specifically the derivatives that you
+need in order to apply chain rule which
+is what
+propagation is to this minimization
+problem
+you need to know df dxt you need to know
+dfd
+and you need to know dc dxd and dcdut so
+you need to know the derivatives
+of both the cost and the dynamics with
+respect to both of their inputs
+and in practice
+just using first order gradient descent
+on these kinds of objectives
+while possible tends to work very very
+poorly
+so in practice it actually really helps
+to use a second order method for solving
+these kinds of optimization problems
+and it turns out that if you want to use
+a second order method essentially
+newton's method
+there's a very convenient structure to
+this problem
+that provides us with a very efficient
+algorithm that does not require
+computing giant hashem and matrices
+you could use first order gradient
+descend and first order gradient descent
+will typically produce quite poor
+solutions uh because
+since you are you know for something
+like the last term in the sum since
+you're multiplying
+many many many jacobians together unless
+all those jacobians just happen to have
+eigenvalues
+close to one you will end up with either
+vanishing or exploding gradients
+but second order methods can effectively
+compensate for this
+one aside that i want to mention before
+i get into describing how second-order
+methods
+for trajectory optimization work is the
+difference between shooting methods and
+co-location
+so if you study trajectory optimization
+you might hear these terms being thrown
+around a fair bit
+a shooting method is a method that
+optimizes over actions
+so this equation describes a shooting
+method
+if we want to minimize the sum with
+respect to the actions
+the reason this is called a shooting
+method is that you can think of the
+actions
+in the beginning of the trajectory
+having a big effect on the result later
+on
+so it's like when you pick that first
+action sort of shooting into the state
+space
+and seeing where the result will land
+and this also describes
+why shooting methods can be so
+numerically unstable with first order
+optimization algorithms because while
+that last action
+has a minimal effect on your objective
+the first action has an enormous effect
+essentially the sensitivity of your
+objective to that first action is very
+large
+and for non-linear objectives you know
+most objections will be at least
+quadratic and the sensitivity translates
+into very poor
+numerical conditioning meaning that you
+have some very large
+eigenvalues in your hessian and some
+very small eigenvalues and we have a mix
+of very small eigenvalues for those
+later actions and very large eigenvalues
+for those earlier actions
+the result is poor numerical stability
+which first order gradient descent
+methods
+struggle with
+a co-location method is a method that
+optimizes over actions and
+states with additional constraints so in
+a co-location method
+you would go back to the original
+constrained optimization problem
+which is to minimize the sum of costs
+subject to the constraint
+that x t equals f of x t minus 1 ut
+minus 1.
+but now you would optimize over either
+both states and actions
+or sometimes you would optimize over
+only states
+with the actions themselves determined
+by an equality constraint
+this is sometimes referred to as inverse
+dynamics but the simplest way to think
+about this is
+if you're optimizing over states and
+actions so in that case
+you can imagine your optimization
+variables are all the dots along this
+trajectory
+and you can move any of them however you
+please so long as the constraints are
+obeyed
+now for this kind of problem the
+conditioning tends to be a lot better
+because now you don't have actions
+having these enormous effects
+uh you know to the end of the trajectory
+but it of course depends very much on
+how you choose to enforce that
+constraint
+so there are different methods of
+constraint enforcement some of which act
+as relaxations
+some of which are exact some which act
+as linearizations
+and they all have different effects on
+the difficulty of this problem
+so i won't discuss co-location methods
+too much in today's lecture they tend to
+be a little bit more complex
+but they do tend to be more numerically
+well conditioned and
+typically would work better with first
+order methods
+than the shooting algorithms what i'm
+going to do instead however is i'm going
+to talk about a very classic shooting
+method
+that is a second order method which is
+based on the linear quadratic regulator
+so in presenting the linear quadratic
+regulator i'll actually start
+with a special case of a linear control
+problem
+and then i will tell you what happens in
+the nonlinear case
+so this is our optimization problem
+minimize the sum of costs
+with respect to the actions and it
+really corresponds to that original
+constraint optimization problem but i've
+just substituted in
+the variables for the constraints just
+to make it clear to you that
+it really is an unconstrained problem
+and the constraints are are really to
+help us
+write it so the linear case refers to a
+setting where
+f of x t comma u t is a linear function
+meaning that you can express f of x d
+comma u t as some matrix times the
+vector
+where you stack x d and u t plus some
+constant vector little f
+t notice that this is a deterministic
+dynamics
+we'll talk about how lqr can be extended
+to the stochastic case
+by introducing the gaussian quadratic
+sorry the linear quadratic gaussian
+regulator later the lqg setting
+but for now this is deterministic
+and we're going to assume that our cost
+function is quadratic
+it's important for the cost to be
+quadratic because if the cost was linear
+then we would have a minimization of a
+fully linear objective
+without constraints which in general has
+a solution infinity and that's not
+useful so we need our cost to be at
+least quadratic
+which means that it can be written as
+one half times a quadratic form
+with some matrix capital c t plus
+the quadratic plus the linear term with
+little ct
+so in the same way the dynamics is
+linear the cost function is quadratic
+linear and quadratic and that's why this
+is called the linear quadratic regulator
+what are we regulating well we're
+regulating our trajectory and we have a
+linear dynamics and a quadratic cost
+so this goes in for f and this goes in
+for c
+and notice that we're allowed to have a
+different
+f matrix and f vector in a different c
+matrix and c vector
+for every time step so even though
+we have a linear dynamics might actually
+have a different linear dynamics every
+single time step
+and that's going to be important later
+when we try to extend this to the
+non-linear case
+okay so here's our problem setup
+and the question that we're going to
+start with is the base case
+we're going to solve for just the last
+action
+and we're going to solve for the action
+u t as a function
+of the last state x t so the last state
+x t
+is unknown but what we can do is we can
+express the optimal u t
+for this linear quadratic system as an
+expression that depends
+on the last state x t so here's how we
+can do it
+the total portion of the objective that
+depends on the last action
+is the q function at the last time step
+right because
+changing the last action won't change
+the reward or the cost
+at time step capital t minus one so we
+know that the only portion of this
+objective that is influenced by ut
+is the cost of the last time step and
+that's given by some constant
+plus the quadratic cost function
+so really choosing u t is just a matter
+of
+choosing the value of u t that minimizes
+this expression
+and this expression is quadratic in ut
+now it also depends on x t so in order
+to solve this quadratic equation
+it'll help us to break up capital c
+and lowercase c into parts that
+influence that
+that influence you and that parts that
+influence x so
+x t can be written as a matrix
+consisting of four parts
+a top left corner c x x and a bottom
+right corner c
+u u and then uh about a a bottom left
+and a top right
+c u x and c x u we would in general
+assume that the cost is symmetric so
+c x u would be c u x transpose
+now the
+objective is quadratic is a quadratic
+form in ut
+where the quadratic term is just c u
+and then all the other terms add up to
+make a linear term that also depends on
+the x
+and then the linear term can also be
+broken up into an x dependent term and a
+u dependent term
+so if we take the derivative of this
+with respect to u
+we would get the component of the
+quadratic formula depends only on x so
+that's derivative of zero
+we would have the cross term which would
+be u
+c u x x and x c x u u
+and since we assume these are symmetric
+uh the
+sum of the derivatives of those would
+just be c u x x so it's actually one
+half c u x x plus one half
+c uh c x u x x transpose c x u transpose
+but if you add those up and assume
+symmetry then together
+it's just c u x x then you have the
+derivative of the quadratic term which
+is u
+transpose c u u times one half and if
+you take the derivative of that
+the one half goes away and you're left
+with c u u
+and then you have the constant component
+that comes from
+uh u transposed to u so you take the
+derivative of that you just get cu
+so now you have an expression that has
+some terms that are linear in you and
+sometimes that don't depend on you
+so what you're going to do is you're
+going to take all the linear terms to
+the right hand side of this equation
+and hit them by c u inverse and you get
+the solution
+which is that u equals negative c u
+inverse
+times c u x x plus c u
+so this is the solution where the
+gradient is equal to zero
+and that's the optimized quadratic
+function and we know the quadratic
+functions are convex
+so this is the optimal choice for the
+last action
+the trouble is that it's not a fixed
+value it's actually a value that depends
+on x
+you can simplify this by writing u t as
+some matrix k t times x plus some vector
+little k
+where the matrix big k is negative c
+u inverse c u x and the vector little k
+is negative c u inverse little cu
+so there are a lot of symbols and a lot
+of linear algebra but the actual
+derivation is very very simple you have
+a quadratic objective for the last
+action
+you solve that quadratic function by
+setting the derivative to zero
+and you get this rule for selecting ut
+of course the trouble is that
+it depends on x capital t so in order to
+actually get a number for ut
+you have to figure out what x capital t
+should be
+so here's our q function for the last
+time step
+and since u capital t is fully
+determined by x capital t
+we can eliminate it by substitution so
+what we can do
+now is we can just plug in the rule for
+u-capital t that we derived on the
+previous slide
+and now we get an expression that
+doesn't depend on your capital t
+so this is the value function this is
+the total cost that you'll get
+if you start in state x capital t and
+then follow
+the optimal action the action that
+minimizes cost
+so it's a complicated expression but
+it's still quadratic
+so it has only linear quadratic and
+constant terms
+and depends only on x capital t
+if you want to expand this out here is
+the expansion of this so all i did is i
+just
+crunched the matrix algebra and after
+crunching the matrix algebra
+i'm left with a mess of an equation but
+if you look at this equation carefully
+you'll notice that this equation only
+has terms that are quadratic in x
+or terms that are linear in x so that
+means that i can collect all the
+quadratic terms
+into some matrix that i'm going to call
+v capital t
+and i can collect all the linear terms
+into some vector that i'm going to call
+little v
+capital t now the expressions for
+capital v and lowercase v
+are pretty complicated but they're all
+just multiplications
+of matrices and vectors that we saw on
+the previous slide
+so while it takes a long time to write
+it's actually very very simple to derive
+so long story short i'm left with an
+expression for v of x
+t that has one quadratic term one half
+v transpose x transpose v x and one
+linear term
+x transpose little v
+so now let's think about the previous
+time step let's think about the time
+step
+t minus one my objective here will be to
+express
+the value for u t minus 1 in terms of
+x t minus 1 and the expression for the
+value at x t
+that we derived previously so ut minus 1
+affects x t
+in turn it also affects u t but we've
+eliminated ut from our calculation
+so the way that u t minus 1 affects x t
+of course is governed by the dynamics
+so x t is equal to f of x t minus 1 ut
+minus 1
+which from our linearity assumption is
+just given by the matrix ft minus 1
+times the vector x t minus 1 u t minus 1
+plus the constant vector f t minus 1.
+so that means that the q value at time
+step t minus 1
+is our quadratic cost at time sub t
+minus 1
+plus the value evaluated at f of x t
+minus 1 ut minus 1.
+and now what i'm going to do is i'm
+going to substitute my linear equation
+for x t
+in place of this f and i'm going to
+substitute my quadratic
+expression for the value function x at x
+t
+for this function v so i know that v
+is some constant plus this quadratic
+form which means that i can substitute
+that in there
+and i can express my v in terms of x t
+minus 1 and u t minus 1.
+so all i've done is i've taken my
+expression for v
+and i replay and everywhere that x t
+occurs i replaced it
+with the expression for x t that i
+obtained from my dynamics
+and again it's an expression it takes a
+long time to write but it's actually
+very simple
+because it just has a collection of
+linear and quadratic terms
+so here are the quadratic terms and here
+are the linear terms everything here is
+either quadratic or linear
+in xt minus 1 and ut minus 1.
+so here's what i'm left with i have my q
+function at time step t minus 1
+which consists of the cost which is
+quadratic and the value function and for
+the value function i can plug in
+the expression uh from the dynamics and
+i get something that's quadratic that's
+also quadratic and linear
+in x t minus 1 and ut minus 1.
+so then i can collect all the quadratic
+and the linear terms from both the costs
+and the value function
+and i can express my q x t minus 1 ut
+minus 1
+as a quadratic term and a linear term
+if you're getting lost in the linear
+algebra at this point
+what i would recommend is to actually
+get out a sheet of paper and follow
+along with these derivations so
+uh again these derivations are very
+simple mathematically but they take a
+long time to write
+so if it's unclear to you you can get
+excellent clarity on the lqr algorithm
+by just following along with the lecture
+and writing out the derivation
+making sure that each step of the
+derivation is completely clear to you
+okay so the expression for the quadratic
+term and the linear term are given here
+they have the quadratic and linear term
+from the cost plus
+this second set of terms which comes
+from the value function
+and the form of these is actually pretty
+elegant so the quadratic term for the
+value function
+is just hit on either side by the
+dynamics matrix
+and the linear term has a term that
+comes from the quadratic value function
+term which is
+dynamics matrix transpose times v little
+f plus
+the linear term which is just the
+dynamics matrix times little v
+so it actually intuitively kind of makes
+sense but if it's not clear to you
+please follow along on a sheet of paper
+and work this out
+okay so just like before we can write
+the derivative of this q
+function with respect to u ut minus 1.
+notice that its form is exactly
+identical to what we had for ut
+only now instead of having capital c and
+lowercase c we have capital q and
+lowercase q
+but the form is exactly identical which
+means that the solution is exactly
+identical
+so the solution for u t minus 1 is just
+some matrix k t
+minus 1 times x d minus 1 plus some
+vector
+little kt minus 1. and big k
+is negative q u inverse q u x and little
+k
+is negative qu inverse times little q
+u okay so the derivation here was
+actually pretty much the same
+as for the case of u t with the main
+difference that we have
+a different matrix and vector which we
+derived by combining the
+cost and the value function of the next
+time step
+all right so the what this suggests is
+that we can express
+our solution as a kind of recursive
+algorithm where we start at the very
+last time step
+and from time step capital t all the way
+back to time step one
+we calculate a q matrix and a q vector
+where at the last time step capital t
+the v's are just zero because there is
+no capital v t plus one and there's no
+lowercase vt plus one
+but all others we calculate them using
+this formula we express our q function
+as a quadratic form
+and we choose our action u t as the
+argument of this q
+which is a linear expression in terms of
+x where capital k
+is negative q u inverse q u x and lower
+case k is negative q u
+inverse q u then we express our value
+function
+as a quadratic form in terms of these
+cues
+and the expression for the value
+function is a little bit complicated but
+it's still very easy to derive
+just by plugging in the expression for u
+in place of u in that formula for the q
+function
+and then collecting all the quadratic
+and linear terms to express the value
+function as a function only of v of x
+with a quadratic term and a linear term
+again if at this point you're having a
+little bit of trouble following the
+algebra
+it's a very good idea to get out a sheet
+of paper and just
+rederive this you know following along
+with the slides it's quite easy to read
+arrive
+it just takes a long time to write all
+right
+so now we have a value function at time
+step t which means that we can repeat
+and go to time step t minus 1
+and use that value function to compute
+the preceding q function
+when we're all done with this what we've
+produced is an expression for capital k
+and lowercase k
+at every single time step so going
+backwards through time we've expressed
+our
+action at every time step as a function
+that is linear in the state
+and has this constant term and when we
+get all the way back to u1
+the nice thing at time step one is that
+we actually know x1
+x1 is the one thing that we are given
+which means that we know x1
+and therefore we can compute a numerical
+value for u1
+and once we know both x1 and u1 then we
+can use our known transition dynamics
+to calculate x2 and once we know x2
+then we can calculate u2 as capital k2
+times
+x2 plus lowercase k2 so once we know
+once we get to the beginning
+then we perform a forward recursion
+where for every time step from t equals
+one to capital t we can compute u t
+as k t x t plus little kt
+and we can calculate x t plus one by
+using our dynamics
+and then repeat this process so you can
+think of it as kind of
+unzipping everything going backwards
+expressing it in terms of xt and then
+zipping it back up going forward
+plugging in those xt's as you compute
+them and that will get you
+numerical values for a sequence of x's
+and u's that describes the optimal
+trajectory
+in this linear quadratic system
+and remember that the q function here
+really is
+the the q function it's the total cost
+from now until the end
+if you take the action u t and state x t
+and then follow the optimal policy
+and this is the value function the total
+cost from now until
+the end if you start in xt and then
+follow the optimal policy
+okay so that's it for the basic lqr
+derivation but again if
+something here is unclear to you the
+linear algebra is actually pretty simple
+it just takes a long time to write so if
+it's not clear i would highly encourage
+you
+to go back through the slides and redo
+the derivation following along on a
+sheet of paper

@@ -1,0 +1,457 @@
+hi welcome to lecture 12 of cs285 today
+we're going to talk about model-based
+reinforcement learning for learning
+policies
+so at the conclusion of the previous
+lecture the final model based RL
+algorithm that we concluded on was a
+model based RL method with model
+predictive control so I dubbed this
+model based RL version 1.5 that's of
+course not what it's actually called but
+that's just the name that I was using
+for it
+the way it works is you first collect
+some data using some initial policy like
+random policy then you train a Dynamics
+model then you plan through the small to
+choose actions using one of the variety
+of planning methods that we discussed
+execute the first action that was
+planned then observe the resulting state
+append that transition to the buffer and
+then plan again so every single time
+step you're replining through the model
+which of course as we discussed helps
+compensate for model errors and then
+every so many steps you would retrain
+the model with the additional data that
+you've collected oftentimes this uh n is
+some multiple of the Horizon so you
+would retrain the model after every
+future trajectories but you could also
+do it continuously
+so the convenience with methods like
+this is that they can essentially use
+many of those optimal control planning
+or direct optimization procedures as a
+kind of subroutine but they have some
+shortcomings
+so the biggest shortcoming of course is
+that most of the planning methods that
+we talked about especially the simplest
+ones like random shooting and
+cross-entry Method are open loop methods
+meaning that they are going to optimize
+for the expected reward given a sequence
+of actions
+as we discussed before open loop control
+is sub-optimal
+so if you want to to think about an
+example that illustrates why it's
+sub-optimal the example that I gave last
+week was this example of the math test
+so if I tell you that I'm going to give
+you a math test a very simple one just
+add two one-digit numbers
+and you get a choice you have two time
+steps on the first time step you can
+either accept the test or go home and on
+the second time step you have to look at
+the test and produce an answer if you
+produce the right answer you get two
+thousand dollars if you produce the
+wrong answer you lose one thousand
+dollars and if you go home then you get
+nothing
+if you have an open loop strategy that
+means that on that very first time step
+before even seeing the test you have to
+commit to an answer you have to actually
+commit to both actions
+so any optimal planner in this case
+would actually choose not to take the
+test because the probability of guessing
+the answer randomly before seeing the
+exam is very low
+model operative control doesn't actually
+solve this because although model
+predictive control replans every time
+step
+each time step it is still planning an
+open loop so if it ever enters the state
+where it's presented with a math test
+it'll produce the right answer but it
+will not choose to enter that state
+because it doesn't realize it will get
+the opportunity to replant
+and this is actually very important this
+is part of what makes these uh control
+algorithms relatively simple but it's
+also one of their biggest downsides
+so to overcome this we really need to
+move towards the closed loop case where
+instead of committing to a sequence of
+actions we commit to a policy so in the
+closed loop case the agent observes a
+state and then produces a policy that
+will be followed thereafter and the
+objective for that is much closer to the
+original reinforcement learning problem
+the difference of course is with the
+model based general setting is that we
+will model P of St plus one given as dat
+explicitly which might potentially give
+us some other ways of addressing this
+problem but the objective is exactly the
+same as in regular RL is to produce a
+policy that will choose actions for
+whatever state you might find yourself
+in and this
+kind of approach if you if we're able to
+develop an effective closed loop control
+algorithm would address the math test
+problem because it would be able to
+optimize a policy that gives the right
+answer for every possible observed state
+of the math test and their portal
+realize that it can safely take the test
+and then produce the right answer even
+though it doesn't know what the answer
+is until the test has been observed
+now of course in reality there's a
+choice to be made which is the form of
+Pi
+so when we're when we talked about model
+3rl before we generally discussed Pi
+represented by highly expressive
+function approximators like neural
+networks and these give us Global
+policies that'll produce decent actions
+everywhere or at least everywhere that
+they were trained
+when we discussed optimal control
+methods last week we also talked about
+some methods that can give closed loop
+controllers but that are only locally
+good for example iterative lqr doesn't
+just produce a sequence of actions it'll
+actually produce a linear feedback
+controller and that linear feedback
+controller will give you good actions in
+a local neighborhood around the open
+loop plan that you've produced so this
+is a kind of an in-between where it is
+technically closed loop but it's not a
+globally effective closed loop strategy
+so it's only going to be effective if
+you devate a little bit from your
+initial plan
+so in today's lecture we're really going
+to focus on methods that we can use to
+train Global policies like neural
+networks but leveraging learned models
+and thereby getting us full policy-based
+model-based neural methods
+so let's start with a little straw man
+example if we um didn't know anything
+about reinforcement learning if we just
+uh you know missed the entire first part
+of this course and we tried to set up
+this problem where we have learn models
+and we want to learn a policy that
+maximizes reward and we just wanted to
+bring to bear the tools that we know and
+love from Deep learning essentially the
+tools of back propagation and continuous
+optimization how might we do this
+well what we might do is we might set up
+a computation graph right we have an
+optimization problem which is to
+maximize the total reward
+in deep learning we know how to solve
+optimization problems we Implement them
+with auto automatic differentiation
+software compute gradients and then do
+gradient descent or gradient Ascent so
+our objective is the sum of rewards so
+let's set up a computation graph that
+allows us to compute the sum of rewards
+for a given policy
+so in this computation graph there are
+basically three types of functions there
+are policies which look at States and
+produce actions there are dynamics which
+look at States and actors that produce
+the next state and there are rewards
+that look at States and actions that
+produce a scalar value so this is
+basically the computation graph
+uh if you assume that the reward is a
+known function maybe something that you
+can also compute derivatives for and F
+is a learned model so that's a neural
+net and Pi is a learn model that's also
+a neural net this is a perfectly valid
+computation graph that you could set up
+you could actually implement this in pi
+torch
+you could Implement a loss which is the
+negative of the sum of all the rewards
+and you can call Dot gradients on it
+I'm kind of sweeping under the rug all
+the details about stochasticity so this
+is only for deterministic systems but
+even for stochastic systems for certain
+kinds of stochastic uh
+models you can still do this for example
+if you have gaussian models you can use
+something called the reparametrization
+trick which we'll talk about later in
+this course uh to set up computation
+graphs like this that are continuously
+differentiable even if you have the
+gaussian noise being out to both the
+policy and the model but for now let's
+just think about the deterministic case
+so everything here can be implemented
+you can call Dot gradients on it and it
+will actually give you the gradient of
+the reinforcement learning objective at
+least for the stochastic case
+so the question is will this work if you
+actually set this up will you be able to
+optimize pythate
+so will you be able to actually run back
+propagation from each of those reward
+nodes into all of the betas the
+parameters of those Pi Theta nodes and
+actually optimize your policy to yield a
+larger and larger reward
+um in general the answer is no so let me
+just walk through this I'm going to call
+this model based RL version 2.0 let me
+just make it very explicit what this
+algorithm is and then I'll explain why
+in general this doesn't really work
+uh so just like before you would start
+off by running some base policy to
+collect the data set train a Dynamics
+model on it and then you would build
+this computation graph that I've drawn
+here or something like it back propagate
+through your Dynamics into the policy to
+optimize the policy parameters and then
+run the policy appending the visited
+data to the data set and then retrain
+okay so this is a a very reasonable way
+to extend the model based star element
+as we've seen before to now have learned
+policies instead of planning
+so what's the problem with this
+well I would encourage each of you to
+pause the video now and think about what
+the problem might be why this recipe
+might go wrong
+and as a hint
+the reason that this doesn't work is not
+because it's incorrect necessarily it
+doesn't work for the same reason that
+many other kinds of
+neural networks that have this kind of
+temporal structure in other fields of
+deep learning tend to fail if
+implemented naively so that's a little
+hint maybe consider pausing the video
+and thinking a little bit about what
+might be wrong with this recipe
+Okay so the issue is basically something
+like this
+just like in a trajectory optimization
+when we talked about shooting methods we
+discussed how the actions earlier on in
+this trajectory have compounding effects
+much later in the future whereas the
+actions at the end have relatively
+little effects so you have really big
+gradients with respect to the actions at
+the beginning and therefore big grades
+with respect to the policy parameters
+compared with smaller gradients at the
+end and those of you that are familiar
+with uh numerical optimization uh we'll
+probably recognize at this point that if
+you have this situation where some of
+the variables get hit with really big
+gradients some get hit with really small
+gradients you're typically in a
+situation where something is very ill
+conditioned and that's in fact what
+happens here
+so
+uh visually you can think of it like
+this that a small change to that action
+at the beginning will wiggle the rest of
+this trajectory in pretty drastic ways
+and
+the problem is similar to the parameter
+of sensitivity uh that we get with
+shooting methods and structure
+optimization
+except that it's no longer convenient to
+use second order methods like lqr right
+so when we learned about
+trajectory optimization and shooting
+methods we talked about this lqr method
+which looks a little bit like Newton's
+method actually computes qualities that
+look like second derivatives and
+actually provide a much better behaved
+optimization process again those of you
+that are familiar with numerical
+optimization we'll probably recognize
+what I'm saying now that well if you
+have an ill-conditioned problem meaning
+something where the Hessian has very
+high curvature you would probably want
+to use a second order method that would
+improve significantly over a first order
+method that's more or less the same
+thing that's happening here however with
+project optimization and shooting
+methods using second order techniques
+was very convenient because we never had
+to build a giant hashron we could just
+use this dynamic programming procedure
+to compute the what was essentially a
+hashron vector product very efficiently
+using lqr that option is no longer
+available to us when we're optimizing
+policies because the policy parameters
+couple all the time steps together so
+you no longer have this convenient
+optimization procedure that can start at
+the end and work its way backwards
+it is possible to implement second order
+optimizers in general for these kinds of
+problems and they will work better than
+first order optimizers but they no
+longer benefit from the convenient
+temporal structure in the problem and
+they tend to be fairly difficult to use
+they're especially difficult to use with
+neural Nets because second order
+optimizes for neural Nets tend to be
+kind of flaky and difficult to set up
+so it's not impossible but it doesn't
+have to work very well
+from more of a deep learning perspective
+the problems are actually very similar
+to what you get when you try to train
+recurrent neural networks naively with
+back propagation Through Time
+um so those of you that are familiar
+with RNN training
+we'll probably recognize a lot of what
+I'm saying that if we set up a recurrent
+neural network naively without using
+fancy architectures like lstms or
+Transformers then we get these problems
+with Vanishing and exploding gradients
+because the derivatives
+um of the later rewards with respect to
+the earlier policy parameters involve
+the product of many many jacobians and
+unless those jacobians have eigenvalues
+that are close to one then the gradients
+will either explode or vanish so if the
+eigenvalues tend to be larger than one
+that will explode if they tend to be
+smaller than one they'll vanish
+very similar to the problem that you get
+with training recurrent neural networks
+now at this point of course you might
+wonder if these are similar to the
+problems that we get when training occur
+in neural networks can we use similar
+solutions for example could we use
+something like an lstm model
+the problem here is that in an RNN you
+essentially get to choose the Dynamics
+whereas here we don't get to choose the
+Dynamics ourselves so we have to really
+Train F to be as close as possible to
+the real dynamics otherwise we won't get
+policies that actually end up working in
+the real system
+so with an LCM we could choose a form
+for uh those functions that participate
+in the back propagation through time so
+that for example their derivative sub
+eigenvalue is close to one maybe their
+derivatives are dominated by an identity
+Matrix that's more or less what an lstm
+provides you with but that's not really
+an option when you're doing model based
+RL because you don't get to use any
+Dynamics you want you really need F to
+match the real dynamics which might have
+high curvature and they might and it
+might have uh
+with eigenvalues that are very far from
+one so since you don't get to choose F
+you can't really use most of the
+solutions that have been developed in
+the Deep learning world because most of
+those Solutions have to do with
+essentially changing the function to
+make it an easier function to
+differentiate
+so we're actually in a bit of trouble
+here while it's certainly
+plausible that future Innovations for
+model-based RL will make it easier to
+push gradients through long-term Pro
+trains like this at the moment
+differentiating through long chains
+consisting of learned Dynamics and
+learned policies tends to behave very
+poorly and for this reason
+gradient-based optimization with
+model-based RL for policies is kind of a
+very tricky proposition
+so what's the solution well most of what
+we're going to discuss in today's
+lecture ask actually has to do perhaps
+surprisingly with using derivative PRL
+algorithms with models that are going to
+be used to generate synthetic samples
+this might seem weirdly backwards like
+essentially what this means is if you're
+going to learn a model don't actually
+make use of the fact that the model is
+known or has known derivatives instead
+pretend that the model is essentially a
+simulator of the environment and use it
+to simulate a lot more data to speed up
+model 3rl
+it might seem strange that that's kind
+of the best that we've got but it
+actually is often the best that we can
+do and it actually tends to work very
+well now in reality we can of course
+hybridize to some degree between model
+free training and some amount of
+planning but just using models to
+simulate experience for model for Ariel
+can be very effective it's essentially a
+kind of model based acceleration for
+model 3rl so the underlying RL methods
+will be virtually identical to the ones
+that we talked about before they'll be
+policy gradient methods extra critic
+methods Q learning methods and so on but
+they'll just get additional data
+generated by a learned model
+so that's what we'll talk about in the
+next section

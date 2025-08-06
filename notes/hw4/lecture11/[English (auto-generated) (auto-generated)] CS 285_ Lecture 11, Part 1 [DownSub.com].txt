@@ -1,0 +1,550 @@
+welcome to lecture 11 for cs285
+in today's lecture we're going to talk
+about model-based reinforcement learning
+algorithms
+so first we'll discuss the basics of
+model-based rl where we learn a model
+and then use this model for control
+we'll talk about a naive way of
+approaching this problem discuss a few
+candidate algorithms
+and then talk about some problems with
+these algorithms we'll talk about the
+effect of distributional shift in model
+based rl
+and then we'll discuss uncertainty in
+model-based rl and how being aware of
+uncertainty
+can make a really big difference in the
+performance of algorithms
+then i will conclude with a discussion
+of model based rl with complex
+observations
+and then next time we'll discuss how we
+can use model based rl to learn policies
+so all the algorithms we'll discuss in
+today's lecture
+learn only a model and then they use
+algorithms such as the ones in the
+previous lecture
+to plan through that model whereas next
+time we'll talk about how we could also
+use models to learn policies
+so the goals for today's lecture will be
+to understand how to build
+model-based rl algorithms understand the
+important
+considerations for model based rl and
+understand the trade-offs
+between different model classes so why
+should we learn the model
+well if we had some estimate of the
+dynamics for example
+a function f of st comma a t that
+returns st plus one
+then we could simply use all those tools
+from last week
+to control our system instead of having
+to deal with
+model free rl algorithms in the
+stochastic case we would learn a
+stochastic model of the form p of sd
+plus 1 given sdat
+for most of the algorithms that i'll
+discuss in today's lecture
+i'll present them as deterministic model
+algorithms of the form f of st
+comma a t equals st plus one but uh
+almost all of those ideas can just as
+well be used with probabilistic models
+that learn a distribution over the next
+state and
+when this distinction is salient i'll
+make it explicit
+so let's think about how we can learn f
+st comma a t from data
+and then plan through it to select our
+actions
+we could imagine a very simple model
+based rl algorithm prototype i'm going
+to call it
+version 0.5 it's not quite version 1.0
+it's not quite the thing you want to use
+but it's perhaps the most obvious thing
+we can start thinking about
+in this model-based rl version 0.5
+algorithm
+step one would be to run some basic
+exploration policy to collect some data
+and this exploration policy could just
+be a completely random policy so it's
+not a neural network or anything like
+that it just selects actions
+uniformly at random and collects a data
+set of transitions
+so here our transition is a tuple s
+comma a comma s
+prime we saw state s we took action a
+and we arrived at state s prime and that
+got us our transition and we'll have a
+data set of these transitions and we can
+use this data set
+to then train our model with supervised
+learning
+so we'll learn a dynamics model f of s
+comma a
+that minimizes the average over all the
+points in our data set
+of the difference between fsi ai
+and si prime and if your states are
+discrete then maybe you'd use some other
+cross-entropy loss
+if your states are continuous you could
+use something like a squared error loss
+most generally you would use a negative
+log likelihood loss
+of which squared error is a particular
+special case for a gaussian likelihood
+and then once you've trained your
+dynamics model you would use your model
+to go and select actions using for
+example any of the algorithms that we
+covered
+last week so does this basic recipe work
+well in a sense yes so in some cases
+this basic recipe will work very well in
+fact
+there are many previously proposed
+methods that have utilized this recipe
+this is essentially how system
+identification works in classical
+robotics
+so if you have a robotics background if
+you've heard the term
+system identification system
+identification basically refers to the
+problem
+of taking some data and using that data
+to identify the unknown parameters in a
+dynamics model
+now typically the parameters that are
+being identified in this way
+are not something like the weights in a
+neural net they might be the unknown
+parameters
+of a known physics model so maybe you
+have the equations of motion of your
+robot
+but you don't know the masses or the
+friction coefficients of different parts
+and you would identify those
+this is why this is referred to as
+system identification instead of system
+learning so you really know a lot
+already about your system and just
+identifying a few unknowns
+when you use this kind of procedure you
+do need to take some
+care in designing a good base policy
+because that good base policy needs to
+explore the different modes of your
+system so if your system can react in
+different ways to different states
+you're ready to see representative
+examples of all the states that elicit
+different reactions
+so if there's some large region that you
+haven't visited perhaps you will get an
+erroneous
+identification of your parameters that
+will not model that region one
+but this kind of approach can be
+particularly effective if you can hand
+engineer a dynamics representation
+maybe using your knowledge of physics
+using your knowledge of the system
+and then fit a relatively modest number
+of parameters
+in general however this approach doesn't
+really work with large high-capacity
+models
+like deep neural networks and to
+understand why that's the case
+let's consider a simple example let's
+say that i'm trying to walk around on
+this mountain
+and i'd like to get to the top of the
+mountain so my procedure will be to
+first run a base
+policy pi zero like a random policy to
+collect my data set
+so maybe i do essentially a random walk
+on the mountain
+and i'm going to use the result of this
+random walk to learn my dynamics model
+uh so this is my policy pi zero maybe
+just a random policy
+that produced some data and i'm going to
+use it to learn f
+and i want to get to the highest point
+on the mountain so i'm going to ask f to
+predict
+how high will i be if i take certain
+actions and then i'll plan through that
+now for this part of the mountain that i
+walked on it seems like going further to
+the right
+gets me higher up so from this random
+data that i got from this
+pi zero policy my model will probably
+figure out
+that the more right you go the higher
+your altitude will be
+which is a very reasonable inference
+based on that data so when i
+then plan through that model to choose
+my actions
+well what do you think is going to
+happen right so i'm going to be in for a
+bad
+time i'm going to be in for a bad time
+for a reason that we've actually seen
+before
+so the data that i use to train my model
+comes from the distribution over states
+induced by the policy pi
+zero we can call this p pi zero s t
+take a moment to think about why using a
+model
+train on p pi zero s t can lead to some
+really bad
+outcomes when we then use that model to
+plan
+as a hint the answer to this is
+something that we've seen before
+in several of our previous lectures so
+the issue is basically the following
+the issue is that when we plan through
+our model
+you can think of that planning as
+executing another policy
+we can call it pi f because f is the
+model and pi
+f is the policy induced by that model pi
+f is not a neural net pi f is just a
+planning algorithm run on top of the
+model f
+so pi f is fully determined by f
+and it has its own state distribution
+its state distribution is p
+pi f of st and in this case that
+distribution involves
+going very far to the right and falling
+off the mountain
+the reason that the problem happens is
+because p pi f of st
+is not equal to p pi 0 of s t
+so we're we are experiencing
+distributional shift
+and the way the problems of this
+distribution shift manifest themselves
+is that
+our model is valid for estimating
+the outcomes of actions in the region
+that was visited during data collection
+meaning for states with high probability
+p pi zero of st
+but when we plan under that model when
+we select the actions for which the
+model
+produces states of the highest reward
+the ones that go
+the most up we will end up
+going to states during our planning
+process virtually
+that have very low probability under p
+pi zero of st
+and our model will make erroneous
+predictions at those states
+and when it makes erroneous predictions
+at those states then
+it will choose the best action in that
+erroneously predicted state
+feed that back into itself and then make
+an even more erroneous prediction about
+the following state
+this is basically exactly the phenomena
+that we saw before
+when we talked about imitation learning
+and in fact the two have a very close
+duality because
+you can think of the full trajectory
+distribution as just a product of policy
+time
+dynamics times policy times dynamics
+times policy et cetera et cetera
+so if you can experience distributional
+shift by messing with the policy
+you can of course also experience
+distributional shift by messing with the
+model
+so distribution mismatch becomes
+exacerbated
+as we use more expressive model classes
+because more expressive model classes
+will fit more tightly
+to the particular distribution seen in
+the training data
+in the system identification example on
+the previous slide
+if we have let's say an airplane and
+we're fitting
+you know three numbers like some drag
+coefficient a lift coefficient and so on
+yeah we can technically over fit to a
+narrow region of train data but there's
+only three numbers and there's only so
+many ways
+that those numbers can be chosen to fit
+the training data so if our
+model if the true model is in the class
+of our learn models then we'll probably
+get those three parameters right and
+that's why system identification
+basically works in robotics but when we
+use high capacity model classes
+like deep neural networks then this
+distributional shift becomes a really
+major problem
+and we have to do something to address
+it otherwise we fall off the mound
+so can we do better well take a moment
+to imagine
+how we could modify the model based rl
+algorithm version 0.5
+to mitigate this distributional shift
+problem
+so one way we can do this is we can
+borrow a very similar idea to what we
+had before when we talked about dagger
+in dagger we also posed this question
+can we make the state distribution of
+one policy
+equal to the state distribution of
+another policy
+and the way we answered that question
+for dagger was by collecting additional
+data
+and requesting ground truth labels for
+that data
+now with dagger this was quite difficult
+because getting ground truth labels
+required asking a human expert to tell
+us what the optimal action was
+in model based rl this turns out to
+actually be a lot easier
+in model based rl you don't need to ask
+any human expert
+what the right next state is you can
+simply take a particular action a
+particular state
+and observe the next state in nature
+which means collect more data
+so from this we can get kind of model
+based rl version 1.0
+the reason i call this 1.0 is because
+arguably this is
+kind of the simplest model based rl
+method which
+does work in general at least
+conceptually although there are a lot of
+asterisks attached to that statement
+in terms of how to implement it so it
+works well so the procedure goes like
+this
+number one run your base policy to
+collect data just like before
+number two learn your dynamics model
+from data
+just like before number three
+plan through your dynamics model choose
+actions
+and number four execute those actions
+and add the resulting data to your data
+set and then go to step two again
+so the main loop consists of training
+the dynamics model on all the data so
+far
+planning through it to collect more data
+appending that data to your data set
+and retraining it's essentially just
+like dagger only for models
+although there's a little bit of that
+statement is a little bit of an
+anachronism because
+this procedure will actually existed in
+the literature long before dagger did
+but
+we presented it in the opposite order in
+this class so you can think of it as
+dagger for model-based arrow so this
+recipe
+does in principle work it actually does
+mitigate distributional shift
+and in principle you should get a model
+that works well
+so where we see that before well this is
+just dagger for models
+okay so at this point you have version
+1.0 which is a viable algorithm
+and you can actually use that algorithm
+but we can still do better
+so first let's ask this question what if
+we made a mistake
+right so with falling off a cliff it's
+rather
+sudden so if you fall off a cliff you
+realize you've made a mistake but at
+that point it's too late
+and there's nothing more that you could
+do but many real problems are not like
+that
+let's say that you're driving a car and
+your
+model is a little bit erroneous so your
+model predicts that you'll go straight
+not if your steering wheel is pointed
+straight with steering wheel is a little
+bit to the left so the model is just a
+tiny bit off it says well if you steer
+like two degrees to the left
+then you'll go straight a fairly
+innocent mistake in a complex dynamical
+system
+so if you do that then when you actually
+execute your model you'll go a little
+bit to the left instead of going
+straight
+and then you'll go a little bit to the
+left again and again and again now as
+you collect
+more data that iterative data collection
+should fix this problem
+so asymptotically this method will still
+do the right thing
+however we can do better and we can get
+it to learn faster
+by fixing the mistakes immediately as
+they happen instead of waiting for the
+whole model to get updated
+so we can do is we can re-plan our
+actions
+at exactly the moment when you've made
+the mistake and perhaps correct it
+so the way that you can do better is
+look at the state that actually resulted
+from taking that action
+and then ask your model what actually
+should take in this new state
+instead of continuing to execute your
+plan
+and this is what we're going to call
+model-based reinforcement learning
+version 1.5
+which is also in the literature often
+called model predictive control
+or npc which i alluded to briefly at the
+end of the previous lecture
+so the idea here is just like before run
+your base policy
+train your dynamics model plan through
+your dynamics model to choose a sequence
+of actions
+but then execute only the first planned
+action
+observe the actual real state that
+results from taking that action
+and then plan again so you append that
+transition to your data set
+and then instead of waiting for that
+whole sequence of actions to finish you
+immediately re-plan
+now this is much more computationally
+expensive because you have to repeat the
+planning every single time step
+but with this procedure you can do much
+better with a much worse model
+because your model maybe doesn't realize
+that uh
+you know steering a little to the left
+won't cause it to go straight once it's
+actually gone to the left at that point
+the mistake is so big that it can
+probably figure out that okay now
+i really need to steer to the right to
+get out of here uh and this kind of
+model frigative control procedure
+can be much more robust uh to mistakes
+in the models
+uh than the naive 1.0 procedure that i
+showed on the previous slide
+and then of course every n outer loop
+steps you repeat this whole process and
+retrain your model and end here might be
+some multiple of the length of your
+trajectory
+so in practice this version 1.5
+procedure
+pretty much always works better with the
+main consideration being that it's
+considerably more computationally
+expensive
+so replanning basically helps avoid
+model errors
+and your homework 4 assignment will
+essentially involve implementing an
+algorithm
+that basically does this so if this
+procedure is not clear to you
+please do make sure to ask a question in
+the comments and come to the class
+discussion
+and ask ask about clarifications because
+it's very important to get this
+particular procedure correct
+okay so now one question we can ask is
+well
+how should we re-plan so how do we plan
+through
+fsa to choose actions
+the intuition is that the more you
+re-plan
+the less perfect each individual plan
+needs to be so while the computational
+cost of replanting might be very
+high in practice since you're going to
+be re-planning and fixing your mistakes
+you can kind of afford to make more
+mistakes during this replanning process
+so a very common thing that people do
+when they actually implement this
+procedure
+is they use much shorter horizons for
+step three
+than they would if they were making a
+standard open loop plan
+and they just rely on their own planet
+to fix those mistakes
+so even things like random sampling can
+often work well here
+random shooting whereas they might not
+work well for constructing a long open
+loop plan
+and if you remember the demonstration
+that was shown at the end of class last
+week
+this was illustrating nbc with
+replanning using actually a fairly short
+horizon and really relying almost
+entirely on that ruby planning
+to fix up the mistakes

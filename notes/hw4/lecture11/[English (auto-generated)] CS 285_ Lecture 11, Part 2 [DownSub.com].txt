@@ -1,0 +1,300 @@
+all right in the next portion of today's
+lecture
+we're going to talk about the role of
+uncertainty in model-based reinforcement
+learning
+uncertainty plays a really important
+role in model-based rl
+because even though the model-based rl
+version 1.0 algorithm
+in principle can solve the model-based
+serial problem
+in practice it has some pretty major
+issues so
+let's try to understand this with an
+example
+here is an experiment that we actually
+did here at berkeley
+a couple years back studying deep model
+based reinforcement learning methods
+essentially methods like model based rl
+version 1.5
+which i presented before using a deep
+neural net model
+so these experiments were conducted on
+the half cheetah
+simulation task which you guys tried in
+homework one
+and what this first little orange part
+of the curve shows
+was what we got from running just
+the basic model based rl version 1.5
+algorithm
+starting from scratch so this is the
+algorithm that replans every step and it
+really collects additional data
+and then what we did is we used that to
+bootstrap a model free rl learner
+and ran it for a lot longer obviously
+and
+uh the red part of the curve shows what
+the model free learner
+did so a couple of things jump out at us
+here first
+the model free learner gets to much
+better final performance
+second perhaps more optimistically the
+model based learner can get to some
+you know slightly better than zero
+performance relatively quickly so the
+x-axis here is a log scale
+the reward for the model based learning
+here was about 500 the reward for the
+model free learner was about 5 000.
+um here's what 500 reward looks like so
+it's not completely terrible like
+it is actually moving forward just
+slowly and here is what a reward of 5000
+looks like after the model free training
+so what's going on here why is it that
+the model based learner
+is so much worse than the model free
+learner well
+in contrast to regular supervised
+learning problems
+the model based rl problem with this
+iterative data collection
+poses kind of a unique challenge to the
+neural net training algorithm
+see the trouble is that we need to not
+over fit
+when we have small amounts of data over
+here in the beginning but we still have
+enough capacity
+to do well once we have large amounts of
+data and that turns out to be very
+difficult
+see the the thing is we're mitigating
+the distributional shift problem
+by using our model to collect additional
+data but that means that our model
+needs to be pretty good even early on
+when it doesn't have
+very much data and high capacity models
+like neural nets
+are very good in the high data regime
+but they don't really struggle in the
+low data regime
+so for this reason they'll do pretty
+poorly in the early stages and when they
+do poorly in the early stages
+they essentially don't produce effective
+exploration which means
+then they end up actually getting stuck
+so why why do we have this performance
+gap
+well it really comes down to uh
+something like
+an overfitting problem exacerbated by
+distributional shift so
+this is sort of the classic picture that
+we think of when we think of what we're
+fitting we have
+a collection of points formed by a
+straight line plus noise
+and we fit some really powerful function
+approximately and we get something like
+the blue line
+now in reality model based rl uh things
+are not quite that clear cut
+and distributional shift also plays a
+really big role but
+basically the issue is along these lines
+so it's in model-based styles we're
+actually planning through our model
+if our model makes mistakes that are
+kind of in the positive direction
+so for instance if the y-axis here is
+the predicted reward
+for different trajectories it'll be very
+tempting for the planner
+to select those trajectories that result
+in the largest mistakes in the positive
+direction so the planner will
+essentially
+exploit mistakes in a model and if the
+model overfits
+then it has lots of these little holes
+lots of these little spurious peaks
+for the planter to exploit so it's not
+uh quite as simple as the regular or
+fitting problem it's actually somewhat
+worse because the planner is going to
+exploit all those holes in our
+overfitted model
+okay so what i'm going to discuss in
+this part of the lecture
+is how appropriate uncertainty
+estimation can help us fix this problem
+so how can uncertainty estimation help
+well
+so with uncertainty estimation what you
+could imagine we'll be doing is
+for every state action pair we will be
+predicting not just a single next state
+s prime but actually a distribution of
+possible next states that you could
+reach
+under your uncertainty about the model
+so the reason this might be a good idea
+is uh let's say that uh you'd like to
+walk up to the edge of the cliff to get
+a beautiful view of the ocean
+so your goal is here right at the edge
+of the cliff
+now if you are very confident in your
+model
+you might say well if i plan actions
+that get to the edge of the cliff
+i'll be standing right on the edge and
+i'll get the highest reward
+but if you're extremely uncertain about
+your model
+and you understand this uncertainty then
+when you take the expected value
+of the reward under your highly
+uncertain model you'll realize
+that walking right up to the edge of the
+cliff has a pretty high probability
+of causing you to fall over the edge
+which would incur a very large negative
+reward
+so you will automatically choose to stay
+further back because as you get closer
+the probability of accident falling off
+increases due to your model uncertainty
+due to the fact that maybe you don't
+know exactly where the cliff is
+now crucially this phenomena can emerge
+even if we don't do anything special
+even if we don't specifically uh plan to
+be let's say pessimistic under the model
+or avoid the worst case
+that's not what we're doing here even if
+we just reason about the expected
+value of the reward under an uncertain
+model we'll already get this kind of
+behavior
+that avoids highly uncertain regions if
+they can negatively impact the reward
+so what this does is it forces the
+planet to essentially hedge its bets
+it forces it to take a sequence of
+actions that would be good in
+expectation
+which sort of means that in all possible
+futures
+that are represented by your model
+uncertainty that sequence of actions is
+a pretty good one
+now an important implication of this
+statement is that the way that you model
+your uncertainty
+really needs to consider the possible
+worlds
+in which you could be in so this is not
+really about the setting where
+the dynamics are noisy this is about the
+setting where you don't know what the
+dynamics
+are so there are many possible worlds
+that could be consistent with your data
+and you'd like to take actions that are
+good in expectation
+under the distribution of those possible
+worlds given your data set
+this is a fairly special kind of
+uncertainty
+so yeah we would expect the
+reward under high variance predictions
+to be very low for when we approach the
+edge of the cliff
+if we're modeling uh the answer
+incorrectly even if the mean is the same
+okay so
+there the only real change we're gonna
+make is in step three we'll only take
+actions for for which we think we'll get
+high reward in expectation
+uh under our certain dynamics and this
+is going to avoid that
+exploitation problem which is going to
+result in our algorithm doing much more
+sensible things
+particularly in those early stages in
+training when model uncertainty is very
+high
+and then the model will adapt and get
+better and hopefully it'll become more
+confident
+in those regions where we're seeing high
+rewards so then
+eventually we'll approach right to the
+edge of the cliff because we'll
+gradually refine our model
+so intuitively you can think of this as
+you don't know quite where the cliff is
+you walk a fairly safe distance to it
+but you collect a little bit more data
+refine your understanding and then you
+can walk a little closer to it next time
+now there are a few very important
+caveats i mentioned before this is a
+very special kind of uncertainty
+so one caveat is
+that you do need to explore to get
+better
+so if you're very cautious if you draw a
+really big
+kind of an interval uh around your
+target
+and you have a particularly nasty reward
+structure
+you might end up never going anywhere
+near
+high reward regions and then your
+exploration might be hampered
+so you have to make sure that this uh
+uncertainty aware exploration is not
+harming exploration too much and we'll
+talk about exploration much more a few
+lectures from now
+the other thing to remember is that the
+expected value is not the same as a
+pessimistic value
+so this is not an uh an algorithm that
+tries to
+uh of you know maximize worst-cased
+error or be robust or anything like that
+you could derive robust algorithms based
+on uncertainty estimation
+for example by using a lower confidence
+bound instead of the expected value
+but that is not what we're talking about
+here that's a very reasonable thing to
+do if you're especially concerned about
+safety
+but here we're just talking about taking
+the expected value
+the expected value is also not the same
+as an optimistic value
+so you could be optimistic with respect
+to your uncertainty and then you'd
+expect more exploitation
+but you would also expect to see some
+better optimistic exploration strategies
+and again we'll talk about that a few
+weeks from now
+so the expected value is a pretty good
+place to start and that's what
+we're going to do for now

@@ -1,0 +1,455 @@
+all right so on monday we had kind of a
+longer lecture about
+core topics in exploration in today's
+lecture we're going to do something a
+little different
+uh i'm actually going to discuss a
+different perspective on exploration
+which is
+quite uh distinct from the one on monday
+and a little bit unusual this is not how
+most people think about exploration
+problems
+but i think it offers a different
+perspective that might get us thinking
+about
+what exploration really is so this
+lecture is much more of kind of a
+state-of-the-art research focused
+lecture uh partly to get you thinking
+about final project topics
+partly to just get you thinking about
+how how else we could
+consider the exploration problem
+differently from how it is considered
+conventionally
+and this lecture will be probably a
+little bit shorter and a little bit
+quicker to get through all right so
+what's the the exploration problem just
+to recap from monday
+well the exploration problem can be kind
+of summarized with these two animations
+so
+in homework three you used your q
+learning algorithm to learn a variety of
+atari games and you know probably some
+of them work pretty well
+but some games are easy to learn whereas
+others are seemingly impossible
+and we learn on monday how this is due
+in part to the fact that
+some of these games have highly delayed
+rewards where intermediate reward
+signals
+don't really correlate with what you're
+supposed to be doing
+so that's what monday's lecture was
+about and conventionally we think about
+exploration
+as this problem where you have to trade
+off exploration exploitation
+and figure out some way to incentivize
+your rl agent
+to visit novel unusual states or states
+where it has a lot of information gain
+but here is a different way we can think
+about the exploration problem
+what if we don't just consider delayed
+rewards or sparse rewards but we
+consider a setting where the rewards are
+absent
+all together what if we want to recover
+diverse behaviors without any reward
+signal at all
+so uh you could imagine this from kind
+of a more of an
+ai or uh kind of scientific perspective
+you could say well uh
+human children for example seem to be
+able to uh
+you know spend copious amounts of time
+playing with things in their environment
+presumably they're not acting randomly
+and presumably they're getting something
+out of this you know it's a
+energy intensive activity both for them
+and their parents so there must be a
+reason
+uh why this is something that people do
+probably there is something that is
+learned
+through play through undirected uh
+exploration and it's not just random
+there's some
+notion of goals being set some notion of
+goals being accomplished
+and some presumably very useful body of
+knowledge
+that is that is distilled the brain
+through this activity
+so why might we want to learn without
+any reward function at all
+well perhaps we could acquire a variety
+of different skills
+without any explicit reward supervision
+create a repertoire of those skills and
+then use them to accomplish new goals
+when those goals are given to us
+maybe we can use some sub skills that we
+can use with perhaps a hierarchical
+reinforcement learning scheme
+and perhaps we can explore the space of
+possible behaviors
+to build up a large data set a large
+buffer that can then be used
+to acquire other tasks so
+this is a pretty different way of
+thinking about exploration conventional
+exploration is thought of
+as this problem where you just have to
+seek out the states that have reward
+here we're thinking about instead as the
+problem of acquiring skills
+that could then be repurposed later if
+you want
+a kind of a more practically minded
+example you could imagine that
+you have a robot in your home and you
+buy that robot
+you put it in your kitchen and then you
+turn it on
+and the robot's job is to figure out
+what it can do in this environment that
+could potentially be useful
+so that when you uh come home in the in
+the evening and you say well
+now i need you to do my dishes whatever
+the robot
+practiced during this unsupervised phase
+it can repurpose
+to very very efficiently figure out how
+to clean your dishes
+so if you can prepare for an unknown
+future goal then when that goal is given
+to you
+you can accomplish it quite quickly
+all right so in today's lecture
+we're going to cover a few concepts that
+might help us start thinking about this
+uh
+this problem this is a big open area of
+research there are no
+fixed known and perfect solutions but
+perhaps some of the concepts i'll
+discuss
+might help you start thinking about how
+formal mathematical tools and
+reinforcement learning algorithms
+could be brought to bear on this kind of
+problem
+so we'll discuss first some definitions
+and concepts from information theory
+which many of you might already be
+familiar with but getting a refresher on
+those
+will be important for everyone to be on
+the same page as we talk about the more
+uh
+you know sophisticated algorithms that
+come next then we'll discuss
+how we can learn without a reward
+function to figure out strategies for
+reaching goals
+so we'll have an algorithm that proposes
+goals attempts to reach them and through
+that process
+acquires a deeper understanding of the
+world
+then we'll talk about a state
+distribution matching formulation
+of reinforcement learning where we can
+match desired state distributions
+and in the process perform unsupervised
+exploration
+we'll discuss whether coverage of valid
+states whether basically
+breadth and novelty is a good
+exploration objective by itself and why
+it might be
+and then we'll talk about how we can go
+beyond just covering states and actually
+covering the space of skills and what
+the distinction between those
+is all right but let's start with some
+definitions and concepts from
+information theory before we dive into
+the main technical portion
+of today's lecture so first
+some useful identities uh
+as all of you probably know we can use p
+of x to denote a distribution and of
+course we'll see that a lot in today's
+lecture
+we saw that a lot already and you can
+think of a of a distribution as
+something that you fit to a bunch of
+points and you get
+maybe a density uh in continuous space
+or distribution discrete space
+h of p of x denotes entropy and we've
+seen this
+before uh entropy is defined as the
+negative uh of the expected value of the
+log probability
+of x and intuitive the entropy
+quantifies how broad a distribution
+is so if you have a discrete variable x
+then the uniform distribution has the
+largest entropy
+whereas a distribution that is peaked on
+exactly one value and zero everywhere
+else
+has the lowest entropy so intuitively
+the entropy is kind of the width of this
+distribution
+so that that's stuff that hopefully all
+of you are already familiar with
+now another concept which maybe not
+everyone is familiar with but that will
+come up
+a lot in today's lecture is mutual
+information
+the mutual information between two
+variables x and y
+which we write with a semicolon like
+this because we could also have
+mutual information between groups of
+variables so you can have mutual
+information between
+x together with z and y in which case
+you would write i of x comma z semicolon
+y
+this is defined as the kl divergence and
+remember kale divergence is a measure
+of how different two distributions are
+it's defined as the kl divergence
+between the joint distribution over x
+and y
+and the product of their marginals so
+intuitively
+if x and y are independent of each other
+then their joint
+will just be their product of marginals
+and the scale divergence will be zero
+as x and y depend on each other more and
+more their joint distribution will be
+more and more different from their
+product of marginals
+in which case you'll see the scale
+divergence go up
+[Music]
+now we can write the mutual information
+as the expected you know just using the
+definition of kl divergence
+as the expected value under the joint
+distribution over
+x and y of the log of the ratio of the
+joint and the product of marginals
+intuitively you can think of it like
+this if these green dots represent
+samples from our distribution
+here looking at this picture you notice
+that there's
+a clear trend the y values clearly
+depend on the x values
+they're not fully determined by the x
+values but there's definitely a trend in
+a relationship
+whereas here the y values seemingly
+don't depend on the x values
+so in the top picture you have high
+mutual information essentially if i tell
+you x
+you can do a decent job of guessing why
+at the bottom you have low mutual
+information if i tell you x
+you will not do any better at guessing
+why than if i hadn't told you about it
+now one important thing about mutual
+information
+is that it can be also written as a
+difference of two entropies
+so you can write the mutual information
+as the entropy of y
+minus the entropy of y given x
+and this just follows from a little bit
+of algebra so you can basically start
+with the definition at the top
+manipulate that equation a little bit
+and you will end up with the equation at
+the bottom
+but this way of writing mutual
+information also has a very appealing
+intuitive interpretation you can think
+of mutual information as the reduction
+in the entropy of y that you get from
+observing x
+this is essentially like that
+information gain
+calculation that we saw in the previous
+lecture on monday
+so mutual information tells you how
+informative x is about why
+and because it's symmetric it also tells
+you about how informative y
+is about x
+all right so let's tie this into rl a
+little bit
+so the kind of information theoretic
+quantities that will be useful
+in our discussion today's lecture will
+be the following
+i'll use pi of s to denote the state
+marginal distribution
+of policy pi in previous lectures i also
+refer to this sometimes as p
+theta of s same exact thing
+when i write h of pi of s this refers to
+the state marginal
+entropy of the policy pi now this is
+kind of
+an interesting quantity because it
+quantifies the coverage that our policy
+gets
+so if you have a very random policy that
+visits all possible states
+you would expect that h of pi of s would
+be large
+here's an example of how mutual
+information can crop up
+in reinforcement learning and i won't go
+to this in too much detail but
+it's a cons it's a fairly intuitive
+concept that's worth bringing up
+so one very classic quantity uh that has
+been defined in reinforcement learning
+in terms of mutual information
+is something called empowerment so a lot
+of this comes from work by
+daniel blaney and colleagues empowerment
+is defined as the mutual information
+between the next state
+and the current action there are a lot
+of variants of empowerment has also been
+defined as the mutual information
+between the next state and the current
+action
+given the current state as well as other
+variants but let's
+think about the simple version the
+mutual information
+between the next state and the current
+action
+if we substituted in the entropy
+equations that we had on the previous
+slide we know that we can also write
+this
+as the entropy of the next state minus
+the conditional entropy of the next
+state given the current action
+why is this called empowerment take a
+moment to consider that
+you know empowerment in english mean
+refers to
+how much power you have how capable you
+are
+of achieving your desired end goals
+what does this equation tell us about
+empowerment take a moment to think about
+it
+maybe write a comment uh in the comments
+section
+so the way that we can think about this
+equation is
+it's saying that
+you would like the entropy of the next
+state to be large
+which means that you would like there to
+be many possible next states
+but you would like that entropy to be
+small condition on your current action
+so that means that if you
+know which action you took it's easy to
+predict which state you landed in that
+means you have
+a lot of control authority about the
+environment means you have a lot of
+ability
+to deterministically influence which
+state you'll be in
+on the other hand if you don't know the
+action you want the state entropy to be
+large
+so that means that you have a variety of
+actions available to you and different
+actions will lead to very different
+states
+and if you have both of these things
+then what you should get is an agent
+that places themselves in a situation
+where they have many actions available
+to them that will all lead to very
+different states
+but will do so in a reliable and
+controlled manner
+so if you have a room maybe you want to
+stand in the middle of that room because
+from there you can access
+all the parts of the room
+deterministically
+if you had just one of these things that
+wouldn't do the job if you just had the
+entropy over the next state
+now that's not really providing you with
+empowerment because there
+you want to put yourself in a situation
+where the future is very random maybe
+it's out of your control
+if you just have the negative entropy of
+the next state given the current action
+that's not quantifying the the notion
+that you want many options available to
+you
+so there you might put yourself in a
+very deterministic situation
+maybe you're sitting at the bottom of a
+well
+the next state is extremely predictable
+whether you know the action or not which
+means that the next state given the
+current action is also extremely
+predictable
+so that would minimize the second term
+but wouldn't maximize the first term
+but if you have both of these terms then
+the only way to satisfy that objective
+is to put yourself in situations where
+you have many actions available
+that lead to many different future
+states but you have a lot of control
+about which state you get
+by choosing your action so that's why
+this quantity is referred to
+as empowerment and the main reason i
+wanted to illustrate this
+you know we're not going to go into
+detail about empowerment today's lecture
+but i want to illustrate this
+just to give you sort of a taste for how
+mutual information concepts
+can quantify useful notions in
+reinforcement learning
+so this can be viewed as quantifying a
+notion of control authority
+in an information theoretical way
