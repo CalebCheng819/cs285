@@ -1,0 +1,1178 @@
+in today's lecture we're going to
+discuss offline reinforcement learning
+this lecture is going to cover quite a
+few you know fairly recent uh methods so
+it'll be both an overview of the
+fundamentals and also just kind of a
+survey of various techniques we'll talk
+about very classic techniques for
+offline rl going back several decades
+as well as some of the more recent ones
+but first let's start with a little bit
+of motivation to explain why we're
+covering this topic and what this is
+so
+uh
+one bit of motivation that
+i find pretty interesting is
+this observation that the kinds of
+situations where current reinforcement
+learning methods of the sort that we
+learned about in previous lectures work
+really well
+just they just look kind of different
+than the settings where we've seen
+supervised deep learning techniques be
+very effective so you know as we all
+know reinforcement learning is
+fundamentally
+as we learned about it so far an active
+and online process whether you're doing
+on policy or off policy algorithms
+they're all about iteratively
+interacting with the environment
+collecting some data using that to
+improve your policy and then collecting
+some more data
+and we know that deep reinforced
+learning methods work well across a
+range of different
+problem settings including ones that are
+really difficult
+but if we uh just look at the kind of
+domains where supervised methods work
+well we see a really big gap and it's
+not so much a gap in terms of how
+complex the task is but it's a gap in
+terms of generalization so if you look
+at
+for example state-of-the-art techniques
+for image recognition you know generally
+these techniques are tested on
+recognizing objects in images taken from
+the internet that could be all over the
+world in any situation and so on whereas
+the policies that we train with uh dprl
+they typically work best in
+more constrained closed world
+environments so the alphago system can
+beat the world champion and go but it
+doesn't have to worry about like
+somebody spilling coffee on the go board
+right it deals with a closed world
+environment with known and well
+understood rules or at least uh you know
+these systems deal with settings where
+the
+you know the world is uh kind of
+contained within a particular kind of
+environment
+now it's fairly easy for us to say that
+maybe the only difference between the
+stuff on the left and the stuff on the
+right is just the variability of data so
+if you were to take one of these
+deep rl algorithms that we learned about
+in the previous lectures
+and just scale it up so that it's
+trained with a huge
+amount of data for many different
+situations maybe it will generalize just
+as effectively as the supervised
+techniques and in fact we're going to
+analyze that with some examples uh in a
+few moments
+but the big challenge with doing this in
+a classic kind of on policy framework or
+even off policy algorithms that in
+iteratively collect more data and use a
+replay buffer
+is that we're essentially asking the
+algorithm to collect these very large
+data sets in the loop actively so if you
+imagine that you need an imagenet size
+data set to generalize effectively then
+for non-policy algorithm you're
+essentially asking for an imagenet size
+data set every iteration and even for an
+off policy algorithm you're asking for
+an imagenet size dataset for every uh
+training run and that can quickly get
+extremely unwieldy all right ideally we
+with data sets that are as large and as
+complicated as the ones that we need for
+supervised techniques the ones that
+require millions of samples or maybe
+billions of sentences for a
+state-of-the-art language models ideally
+we would collect those only once and
+then use them repeatedly just like in
+the world of supervised learning
+and this is really key because if we
+really ask ourselves a very basic
+question what is it that makes modern
+machine learning work
+at a very high level
+you we really need large data sets and
+large high-capacity models to get
+effective generalization
+so
+we can't really get the sort of
+generalization that we've seen in
+supervised learning land with our rl
+methods if we don't have these two
+ingredients
+and the you know using large models is
+not too difficult you just need a big
+enough data center
+but
+using those large data sets in an active
+learning framework can be very tough
+so
+the basic principle behind offline
+reinforcement learning is to essentially
+develop reinforced learning methods that
+can reuse previously collected data sets
+to essentially create a kind of a data
+driven rl framework
+so so far in the course we learned about
+on policy rl on policy rls when you have
+a policy that interacts with the world
+collects some data use the data to
+update throws that data out and then
+interact to the world some more so for
+example policy gradients are a classic
+example of this every iteration they
+collect some trials they use those
+trials to improve the policy and then
+they discard them and collect some more
+we learned about off-policy rl
+techniques like q-learning
+which you can kind of think of it as a
+buffered version of on-policy rl so for
+off policy methods they buffer all their
+data into the replay buffer and then
+they replay from that buffer
+which is great for improving data
+efficiency but the
+off policy rl methods that we learned
+about so far in the course
+actually do require additional online
+collection
+meaning that after you update the policy
+you do need to use that policy to
+collect some more data perhaps with some
+exploration scheme like epsilon greedy
+it might not be completely obvious why
+this is the case and we'll actually
+analyze this shortly we'll actually
+discuss what happens if you simply run
+an off-paul crl algorithm but then stop
+collecting more data
+so the main topic for today's lecture
+will be to figure out how to devise
+offline rl algorithms and these are also
+sometimes called batch reinforcement
+learning algorithms and also less often
+fully off policy reinforced learning
+algorithms basically the difference
+between these and the other two is that
+in offline reinforcement learning
+you don't actually get this active
+interaction you just get a buffer so you
+assume that somebody else collected that
+buffer for you by writing some other
+policy which we refer to as a behavior
+policy it's called pi beta
+by the way it's very important to
+distinguish the behavior policy from the
+expert policy that we had in imitation
+learning so in offline reinforcement we
+don't assume that pi beta is any sort of
+expert pi beta could even be fully
+random it's just a mechanism that was
+used to collect a data set
+and then that data set would be used
+during a training phase to train up the
+best policy we can get
+and then that policy is deployed but
+once it's deployed there's no more
+training so in a sense this is just like
+every other
+machine learning discipline where you're
+given a data set you train the best
+model you can on that data set and then
+you go and use that model and there's no
+active or online phase there's no
+exploration
+and we could imagine different ways that
+such offline rl methods could actually
+be utilized in reality
+for example
+you might ima imagine that you have a
+robot that is tasked with doing a wide
+variety of chores around the house and
+repairing electronics and sweeping the
+floor and cooking
+and maybe over the course of its
+lifetime it gathers a large and very
+diverse data set of everything that is
+done before and then when you wanted to
+learn a new skill maybe you will load up
+all of that past data use it to train up
+the best skill you can get
+and that's your offline training phase
+and that already gives you a good
+initialization and then of course in
+reality there's no reason to do things
+fully offline so you could then deploy
+it and collect more data and further
+refine with some online reinforcement
+learning
+but the
+key thing here is that you're not
+relying entirely on that online phase
+you're actually getting a lot of basic
+functionality from the offline data
+this seems like actually a very
+reasonable model of uh you know how
+people would do things too if i were to
+try to
+you know explain to you some new tasks
+that you're supposed to be doing you
+would probably draw on your past
+experience on everything you know about
+the world to get an initial guess for
+how to do it and that guess might
+actually be very good but then you could
+still refine your skill with some
+practice with some trial and error
+and you know developing these kinds of
+methods could potentially open the door
+to a wide range of rl applications that
+are very difficult to do with fully
+online active settings you know
+obviously including things like robotics
+but also domains where it's very
+difficult to imagine applying rl methods
+with active exploration like for example
+medical diagnosis
+can you have a policy that learns to
+recommend prescriptions and tests for a
+patient it would be ridiculous to
+explore actively you know we already had
+our experience with active exploration
+for drug prescription in our
+exploration lectures last week didn't go
+so well
+but if you take prior data and use it to
+distill out the best policy maybe you
+can do quite well
+scheduling scientific experiments
+controlling power grids logistics
+networks and so on there are a lot of
+applications where we would like to use
+learning based control we would like to
+use reinforcement learning but it's very
+difficult to imagine doing online
+exploration
+okay so
+let's get into more of the details what
+does the term offline rl really mean
+well so
+these are the pictures we had on the
+previous slide but formally we're going
+to say that we have a data set d
+and just like in our discussion of q
+learning from before the data set is
+really a data set of transitions state
+action next state and reward
+now these transitions are likely to be
+arranged into trajectories meaning that
+you know for the first transition the s
+prime is actually the s for the second
+transition so very likely it's arranged
+into trajectories but the algorithms
+that we're going to discuss uh
+usually don't assume that with the
+exception of important sample policy
+gradients but most dynamic programming
+algorithms most algorithms that are
+based on q functions just assume that
+your data set is arranged into
+transitions
+we will have states and we will often
+refer to state distributions we've used
+different notation in this class at
+different points mostly because i want
+to make sure that you guys are familiar
+uh with all the notation that's used in
+the literature
+but
+we'll use the symbol d with a
+superscript corresponding to a policy to
+denote a state marginal state
+distribution induced by that policy
+we will use pi beta to denote the
+unknown policy that collected our data
+set so in reality you usually don't know
+what pi beta is so someone gave you a
+data set maybe you're doing autonomous
+driving and your data set consists of
+all sorts of human driving good drivers
+bad drivers mediocre drivers
+you don't actually know what their
+policy is
+but for the purpose of mathematical
+analysis you can assume that there
+exists some policy pi beta you just
+don't necessarily know it
+there's some kind of transition function
+there's some kind of reward that's just
+like before
+and as i said the behavior policy is
+generally not known
+the rl objective is just like before is
+to maximize the expected sum of
+discounted rewards so nothing really
+changed there
+and there are several types of offline
+rl problems that we could define
+one sort of auxiliary problem which is
+not the full offline rl problem but it's
+closely related is what's called off
+policy evaluation and we'll discuss this
+a little bit the main focus of the
+lecture is is on off policy rl but we'll
+discuss off policy evaluation a little
+because it forms kind of a common
+building block
+an off policy evaluation basically
+refers to this problem given a data set
+d estimate the return of some policy
+now it could be the behavior policy
+that's actually very easy but there's a
+little typo on the slide that should
+actually be j of pi
+so it's estimate the return of some
+policy that you're given using a data
+set d estimating jf pi beta is actually
+pretty easy
+um
+but you could use the same data set to
+estimate the value of some other policy
+that was not the one that collected the
+data and that's a lot harder and that's
+that's called off policy evaluation
+offline reinforcement learning
+which is also sometimes called batch rl
+and sometimes fully off policy rl
+is given the data set d learn the best
+possible policy
+now as we saw
+in previous lectures oftentimes learning
+a policy requires evaluating a policy
+right so in actor critic methods for
+example we would evaluate our current
+actor and then we would improve it so
+some sort of off policy evaluation
+uh is often in the inner loop a of an
+offline rl method
+but i will discuss a little bit later
+how in some sense the general off policy
+evaluation problem the problem of
+evaluating any policy can actually be a
+little bit harder than learning the best
+possible policy the intuition for why is
+that when you're learning the best
+possible policy you don't actually have
+to evaluate
+some other policies that might never
+arise in the course of learning
+now there's a subtlety with this
+statement and i intentionally wrote it
+in kind of a slightly cryptic way
+given d learn the best possible policy
+by theta that is not necessarily the
+best possible policy in the mdp it's the
+best possible policy that you can learn
+using your data set
+and it's i think pretty easy to see
+why given certain data sets the optimal
+policy may simply never be learnable so
+for example if you have a very large mdp
+with some really good states like maybe
+montezuma's revenge when you win the
+game there's a really high reward but
+all of your data is in the first room of
+montezuma's revenge well there's no way
+you could possibly use that data to
+learn the true optimal policy because
+large parts of your mdp are just never
+seen in the data
+so we have to be a little bit careful
+with what best possible policy means and
+you know the formal statement is not
+here on the slide it's actually pretty
+complicated but the informal intuition
+is you want to learn the best policy
+that is supported by your data
+the best possible policy for which the
+evidence that it is good is present in
+your data set
+okay um so now one question that some of
+you might ask is
+how is this even possible
+like can we even hope to learn good
+policies by using only data sets without
+ever interacting with the world
+some of you might be wondering the
+opposite is like why is this difficult
+and
+actually both of those questions are a
+little bit non-trivial
+so
+there are a few different perspectives
+on what we should expect offline
+reinforcement learning algorithms to do
+one perspective
+is we should expect them to find the
+good stuff in a data set full of good
+and bad behaviors
+and they can definitely do that although
+that is a fairly naive view of what
+good offline rl methods should do
+so by finding the good stuff what i mean
+is you know if i give you a data set of
+human drivers driving a vehicle and some
+of them are good and some are mediocre
+and some of them are bad if you were to
+run invitational learning on that you
+would kind of get the average human
+driver if your imitation learning
+algorithm succeeds if your imitation
+algorithm fails you might just get this
+accumulating errors that we talked about
+in the beginning of the course but
+assuming that doesn't happen
+you know
+what what imitation learning is trying
+to do is give you
+the
+average
+driver in the data set
+but if you run offline rl in principle
+it should get you the behavior of the
+best driver
+it should be better
+but this of course begs the question is
+offline rl always going to be
+only as good as the best behavior in the
+data set and the answer is in general no
+in general it is possible to do better
+than the best behavior in the data set
+and this might be a little non-obvious
+but hopefully
+the intuition that will come next will
+convince you of this
+so
+the basic idea is that you're going to
+have generalization which means that
+good behavior in one place may suggest
+good behavior in another place
+so if for example
+you have some human drivers and one of
+them really knows how to
+do a really fast merge onto a highway
+and another one really knows how to
+trend transit through an intersection
+very efficiently
+but neither of them is good at both well
+you can sort of distill the best parts
+of each of them and you can even
+generalize to a degree to situations
+where you haven't seen them acting
+you can imagine such algorithms
+algorithms as combining good behaviors
+in different places to attain behaviors
+that were never actually seen in the
+data set so one really simple example of
+this is the stitching example so if in
+your data set you've seen from some
+transitions that go from a to b and
+you've seen other transitions that go
+from b to c
+then you can figure out that it's
+possible to go from a to c
+and you know figuring this out requires
+reinforcement learning
+but it actually goes a little bit
+further than that uh so of course you
+could take the stitching intuition and
+you could scale it up massively you
+could imagine that you have a
+maze navigation task where you see
+transitions between different pairs of
+start and goal states in a maze
+and from that you can figure out how to
+get between any two points in the maze
+even pairs of points between which
+you've never seen a transition
+and you can of course stitch these
+together to get transitions through the
+maze that are much much longer than any
+of the ones that were seen in the data
+set
+all right let's uh let's get into this a
+little bit more
+so
+the kind of the bad intuition in my
+opinion the bad intuition of what
+offline rl methods do is that they do
+something that is you know a bit like
+imitation learning so you have some data
+it goes between a star and a goal and
+you're going to basically imitate that
+data
+it can be shown that offline rl is
+theoretically actually better than
+imitation learning even in this setting
+but this is not really the main point
+a better intuition is that an offline rl
+method can kind of get order from chaos
+so let's say that your data set consists
+of these trajectories now clearly they
+are very suboptimal and most of them
+don't go anywhere near the goal
+but if you take kind of the best bits of
+both with a little bit of generalization
+thrown in you can get a much better
+behavior than any of the behavior you
+saw in the data set
+and you know the stitching that we
+discussed on the previous slide is of
+course one instance of this
+but it's merely the clearest example of
+a more general trend so you could
+imagine sort of microscopic level
+stitching where you have many
+trajectories that are all
+kind of a little bit sub-optimal in
+every place but if you have enough of
+them and you recombine the best parts of
+all of them you can get a highly optimal
+behavior so you could take a bunch of
+human
+behaviors for driving for instance that
+are each sub-optimal in slightly
+different ways and get a superhuman
+behavior that is essentially the best of
+the best human in every single situation
+so if we have algorithms that can
+probably perform dynamic programming we
+can take this idea much further and
+really get near optimal policies from
+from highly suboptimal data
+okay uh here's a vivid example or what i
+think is a good example from some past
+work in my group that i think kind of
+shows this point a little bit more
+concretely
+let's say that you have a robotic arm
+and that robotic arm is supposed to pick
+up an object from an open drawer so the
+training data for it the experience that
+it has is picking up the object from an
+open drawer
+and now maybe a test time the drawer is
+closed right so uh you know generally
+if your rl policy is trained with an
+open drawer
+it's not going to have any way to know
+what to do when the drawer is closed at
+test time
+so uh
+what if
+in addition to the drawer uh grasping
+you also have a bunch of experience of
+picking up and moving objects opening
+drawers closing drawers basically all
+sorts of other skills that you could do
+in this environment
+but they're all separate from the skill
+of picking up the object from the old
+controller so all this prior data
+contains a variety of skills but none of
+it contains
+the picking up from the open drawer well
+if you just take all this prior data and
+you put it into the same data set as the
+object grasping skill with the open
+drawer
+then this same stitching property that i
+discussed before will actually allow you
+to acquire a policy that can pick up the
+object in different situations
+so of course you can pick up the object
+when the drawer is open but you could
+also handle a situation where the drawer
+starts out closed because you've seen
+prior data that involves opening drawers
+and via dynamic programming by
+techniques like q learning you can
+actually connect it up to the skill of
+picking up the object from the open
+drawer so in this case none of the prior
+data has
+that full sequence none of it has the
+robot opening the drawer and picking up
+the ball but it has some opening and it
+has some picking and the rl algorithm
+can figure out how to put them together
+another example is close the top drawer
+open the bottom drawer and then pick up
+the ball
+so there it goes close the top open the
+bottom pick up the ball
+another example is
+pick up the object and move it out of
+the way
+then open the drawer then pick up the
+ball and in all these cases it's
+combining multiple
+trials in new ways by using dynamic
+programming by using q-learning
+all right so why should we care about
+this
+well if we can get this kind of offline
+oral recipe to work we don't have to
+collect image net size data sets every
+time we want to train a policy we can
+apply rl to domains that don't
+conventionally look like reinforcement
+problems ones where exploration
+uh and trial and error would be
+prohibitively expensive or dangerous
+and we can hopefully move towards you
+know a much greater level of
+generalization
+so
+uh now
+now that i've kind of discussed the the
+why why why offline arrow is good let me
+tell you some of the bad news let me
+tell you what goes wrong if we try to do
+offline rl naively using the kinds of
+techniques that we've learned about
+before so
+back in 2018 uh when i was uh working on
+robotic grasping at google
+we had a little experiment that we did
+or actually a very large experiment
+where we tried to implement an effective
+offline reinforcement learning algorithm
+with online fine-tuning
+and scale it up to see if we can get
+policies that generalize you know our
+goal was to get policies that generalize
+as effectively as these supervised
+supervised models train on things like
+imagenet so we collected a very large
+data set of robotic grasping with a
+combination of scripted policies as well
+as learned policies and we had a kind of
+a hybrid system that would use all prior
+stored data as essentially offline data
+and then it would also do some online
+collection and it was massively parallel
+and massively scaled up but at its core
+this system implemented an algorithm
+that was very much like the q-learning
+approach that we talked about before
+it's for continuous action so you use
+the optimization based uh target value
+calculation but otherwise it was
+basically a classic deep q-learning
+method
+now this worked very well and did in
+fact generalize
+but what i want to tell you about in
+this lecture you know other than using
+this as an opportunity to show you some
+cool robot videos
+is to
+compare the performance of the system
+when it was used in offline mode versus
+when it was fine-tuned with some
+additional online data collection
+and this will hopefully help illustrate
+some of the challenges with offline
+reinforcement learning
+so offline mode here actually used
+pretty good offline data so it was data
+from past rl runs that was just reloaded
+and then used to train up better
+policies
+whereas with fine tuning we had some
+additional online data collection
+the offline data set consisted of 580
+000 uh uh trials grasp attempts these
+were collected over several months
+the fine-tuned version further augmented
+it with about 28 000 trials of
+additional online fine-tuning so it's a
+lot of trials but the amount of
+additional online data is comparatively
+very small so probably whatever
+difference you see is not due to the
+difference in the data set size it's due
+to something about the difference
+between offline versus online training
+and by the way the online training here
+is still off policy so it's still using
+replay buffers it's still recycling all
+of that offline data it's just
+collecting additional data with the
+latest policy
+so the success rate for the offline
+method was 87 which means that 87 of the
+time you could successfully grasp the
+objects in front of it
+whereas the fine-tune method had a
+success rate of 96
+now you might say well these are both
+pretty good but if you look at the
+failure rate it becomes a little more
+obvious that the failure rate for the
+fully offline method is more than three
+times larger than the fine-tuned method
+so a three three-fold more than
+three-fold increase in the failure rate
+uh just from omitting those twenty-eight
+thousand online transitions
+so something here is going on uh you
+know the system worked pretty well we
+were pretty happy with it but it seems a
+little frustrating that just taking that
+data and using it as an offline data set
+doesn't yield the same kind of success
+rate as if you then did a little bit of
+online fine tuning
+so to get a little bit of intuition for
+what might be going on here
+here's a a little uh
+experiment a very controlled experiment
+uh that tries to get at this point so
+this was um this is an experiment that
+was uh conducted using the half cheetah
+benchmark task which hopefully all of
+you are familiar with from your homework
+and in this case data was collected
+using um
+basically from a the replay buffer
+uh of an rl training run this was a
+training run with soft doctor critic
+with sac and that training run was
+allowed to go up until the policy
+reached some kind of mediocre
+performance i think the reward was
+several thousand maybe around five to
+six thousand and then that entire replay
+buffer was used as an offline data set
+to train a policy
+and it was trained with a with basically
+a classic actor critic algorithm with q
+functions much like the one that we
+learned about
+a few weeks ago
+and
+the different uh curves here show
+different data set sizes ranging from 1
+000 to 1 million transitions
+and you can see that all of them do very
+badly so the data set average here is
+several thousand so if you were to just
+imitate the data set you'd get a reward
+of several thousand
+if you just run off policy actor critic
+on it the rewards are generally in the
+range of negative 750 to negative 250.
+and they're not getting better in fact
+they actually get worse right from the
+start
+the initial policy performance is at
+zero and it gets worse
+so something really terrible is going on
+here
+interestingly enough if we look at the
+actual q values that are learned by the
+cyclocritic algorithm for each dataset
+size
+the y-axis here is a log scale so the
+estimated q values are extremely large
+for example for that red curve the one
+that has a million data points it's
+estimated it's going to get
+a reward of 10 to the seventh power and
+it actually gets minus 250.
+so that's really weird right our q
+function things is going to get huge
+values but then the the if we actually
+uh train the corresponding actor and run
+the actor we get really horrible values
+so that's that's strange and it's not an
+accident
+the fundamental problem in offline url
+is really you can think of it as a
+problem of counter factual queries
+let's say that we have
+our autonomous driving example from
+before and our training data has the has
+a human driver driving the car decently
+well the human driver is not optimal
+remember we're not assuming that they're
+an expert
+but there are certain things that human
+drivers just don't do
+so they're not going to like randomly
+swerve off the road in the middle of
+nowhere they might do some things that
+are unsafe they might occasionally go
+into the opposing lane or something or
+they might occasionally make a turn on a
+red light but they're not going to do
+really crazy stuff so so their coverage
+of possible behaviors is incomplete
+there are some things they just don't do
+during training when we're updating the
+policy
+what we're really doing is we're asking
+for all the actions available to us in
+this state that we've seen before which
+action is best
+and that implicitly requires comparing
+the action that was taken in the data
+set to the other actions that were
+available
+so it requires asking is this other
+action that it didn't take is it good or
+is it bad
+how can we know that if we didn't see it
+in the data
+well for some actions we might know if
+they're good or bad because of
+generalization so we might have seen
+similar actions in other similar states
+but because our data set doesn't have
+perfect coverage there are certain
+behaviors that are unlike anything that
+we've seen but are available to us
+online rl algorithms don't have to worry
+about this because they can simply try
+that action and see what happens
+so a regular online algorithm even if
+it's an off policy algorithm it might
+decide erroneously that the action of
+swerving off the road is a good one and
+it might go and try it and then it might
+learn that it's bad and not do it again
+that's exactly that's actually exactly
+why we don't want to deploy these
+algorithms in the real world in safety
+critical settings
+but offline error algorithms have to
+somehow account for these
+unseen actions ideally in a safe way so
+they need to basically understand that
+just because
+you didn't see that it's bad doesn't
+mean that it could be good they need to
+somehow figure out that actions that are
+completely unfamiliar should not be
+assigned high values or should not be
+attempted because there is not enough
+confidence that they are good
+we refer to these actions as out of
+distribution actions in the sense that
+pi beta induces some distribution over
+actions
+and some actions are inside of that
+distribution and some are outside of it
+now it's important not to confuse auto
+distribution actions without of sample
+actions
+your q function could be quite capable
+of accurately estimating the value of
+actions that never saw before if those
+actions come from the same distribution
+and this is actually a really important
+point because if you didn't do this then
+you wouldn't get generalization and you
+wouldn't be able to build effective
+algorithms this is actually a mistake
+that
+some early research in offline areal
+made where they didn't account for the
+difference between out of sample and out
+distribution but it's a really important
+distinction so it's really out of
+distribution that we're worried about
+and at the same time you still have to
+make use of generalization to come up
+with behaviors that are better than the
+best thing
+than the best thing that you saw in the
+data so this is a subtle and delicate
+trade-off to strike you have to be
+better than the best thing in the data
+you have to recombine the best parts you
+have to generalize but at the same time
+you have to avoid assuming that an
+out-of-distribution action could be good
+when in fact you simply do not have
+enough evidence to determine its value
+okay so that's kind of the intuition but
+let's talk about some of the math behind
+this problem so this problem is uh
+often referred to in statistics as
+distribution shift distribution shift
+means that you have one particular
+distribution you use in training and
+then you need to perform well under a
+different distribution and because those
+distributions don't match you end up
+performing very poorly
+so
+whenever we
+train something with supervised learning
+uh we typically use a training set and
+the training set conf comes from some
+training distribution so let's say that
+you are learning a function f theta of x
+and you're regressing onto ground truth
+values y
+and your x's come from a distribution p
+of x
+and your y's come from a ground true
+distribution p of y given x
+so you would sample a training set from
+your training distribution and minimize
+the error on that and this is what's
+referred to as empirical risk
+minimization so your your sampled
+training set is giving you an empirical
+estimate of the risk uh and that's what
+you're minimizing and if you as long as
+you don't overfit minimizing the
+empirical risk will also minimize the
+actual risk which is what i have written
+down here so this equation is actually
+not the empirical risk this equation is
+the actual uh the real risk under the
+full distribution
+but a training set approximates us with
+samples from p of x
+so then we can ask some basic questions
+like for example given some test point x
+star
+is f theta of x star correct
+that might seem like the most basic
+question you could ask in a supervised
+learning problem
+and it's actually a surprisingly subtle
+question
+so as long as you didn't overfit
+you know that the expected value of your
+error under the training distribution is
+low
+in general the expected value of your
+error under some other distribution p
+bar of x
+is not low if p bar of x is not equal to
+p of x
+i mean the easiest way to think about it
+is to imagine that p of x is an interval
+on x from like zero to one and p by r of
+x is from like one to two right if
+you've just never seen any y values in
+that interval
+there's no reason to expect to get
+correct answers
+now what if x star is sampled from p of
+x well the thing is even then you're
+actually not guaranteed to have low
+error
+because
+you could have low error in expectation
+under p of x and still have high error
+on some individual points that are
+within the support of p of x
+so even that is not guaranteed
+now if you are a deep learning
+practitioner at this point you might be
+saying well
+yeah this is true this is like a bunch
+of kind of dusty boring statistics
+but usually we're not worried about this
+because neural networks generalize
+really well and maybe neural networks
+generalize so well
+that even though in principle they
+shouldn't be handling distributional
+shift in practice they'll learn a really
+good function and it will just
+succeed anyway
+and this is actually sometimes the case
+like you know you could say that an
+image recognition system trained on
+imagenet might be tested on new images
+that didn't come from flickr or wherever
+imagenet was collected and that might
+still work right so if you learn a
+general enough function maybe it'll just
+generalize
+but there's a little bit of a problem
+if these x-star test points are not just
+chosen arbitrarily but if they're
+actually explicitly chosen so as to
+maximize the value of f theta of x so x
+star is not arbitrary it's actually
+specifically chosen with f theta in mind
+it actually knows which function it's
+going to be tested on
+and it maximizes the value of that
+function
+now we can get into really big trouble
+no matter how good our function
+approximator is
+so imagine this green curve is the true
+function and the blue curve is our fit
+so the blue curve is f theta of x
+the blue curve is actually very good in
+most places
+but if we choose the point x that
+maximizes the blue curve we'll get
+exactly that point that has the largest
+error in the positive direction
+and this should actually come as no
+surprise to us because
+in a sense the process of creating
+adversarial examples looks very much
+like this problem adversarial examples
+are created by optimizing an image so as
+to maximize the probability of some
+desired class or minimize the
+probability of the true class so when
+you maximize whether or optimize with
+respect to inputs into a neural net you
+can fool that neural net into doing just
+about anything
+so what is what does all of this have to
+do with reinforcement learning well
+let's go back to the the classic
+q-learning framework that we talked
+about we discussed how q-learning is an
+off-policy algorithm so it's a very
+natural choice as a starting point for
+offline rl although i'll discuss how
+it's not the only starting point
+and in q learning you have to compute
+target values and when you compute
+target values uh you take the reward at
+that transition plus the maximum over
+the next time step actions and plug
+those actions into your q function
+estimate
+and you know as we discussed before when
+we talked about q learning and actor
+critic you can equivalently write this
+as the expected value of the q function
+under some policy pi nu where if you're
+doing classic q learning pi nu is just
+the greedy arc max policy
+and these are the target values y that
+we're regressing onto so the objective
+when training the q function is to
+minimize the error between q and the
+target values y
+and if we're doing offline rl we're
+doing this minimization under some
+distribution and the distribution is the
+one that produced our data set which is
+the behavior policy pi beta
+so we're minimizing the difference
+between q and y under the behavior
+policy
+just like on the previous slide we
+talked about how we had a training
+distribution p of x now our training
+distribution is pi beta s a
+which means that we expect good accuracy
+we expect q values to be accurate
+in expectation under pi beta
+and we're evaluating them in our target
+values in expectation under pi nu so
+that means that if pi beta is equal to
+pi nu
+then we would expect our target values
+to be correct
+but of course that's not ever going to
+happen because the whole point of
+running offline rl is to find a better
+policy to get pi new to be better than
+pi beta
+and even worse pi nu is selected to
+maximize the expected q value that's
+what we essentially do when we take the
+arg max policy and that's what we do
+when we train an actor in actor critic
+which is just like this problem on the
+previous slide
+put another way pinu is explicitly
+trying to find an adversarial example to
+fool the q function into outputting a
+large value
+and that's why when we actually look at
+the q values we see massive
+overestimation
+because the policy can always find some
+action that fools the q function if the
+q function is not allowed to collect
+more data and update its training
+distribution
+so that's the the fundamental problem in
+all in offline are all methods that are
+based on value functions is that
+you're maximizing the value function the
+value function is trained under some
+distribution and when you maximize it
+you're going to query it with a
+different distribution which means you
+can always fool it to output erroneously
+large values
+and there are all sorts of issues with
+generalization that are basically
+corrected by online data collection in
+the online setting but not correct in
+the offline setting so if you imagine
+that these are your actions and you're
+fitting their q value in the online
+setting uh maybe you could conclude that
+this action is the best but then you go
+and try this action and find that it's
+not the best and then you update your
+function in the offline setting you
+don't get to do that so if you
+extrapolate erroneously if you
+generalize erroneously you're basically
+stuck with that
+so that means that you get this really
+nasty out of distribution action problem
+and it also means that existing
+challenges with sampling error and
+function approximation error that occur
+in standard rl just become much more
+severe in the offline rl setting because
+you don't have this feedback effect
+where you collect more data and fix up
+your mistakes
